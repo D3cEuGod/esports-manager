@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>峡谷经理人</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>/*
+VOICE  赛事转播记分牌：干脆、硬朗、信息优先
+IDEA   赛场大屏与转播比分条——黑色条带 + 白底数据表 + 一抹信号红
+PICTURE 主页的“下一场”大比分牌；BP 界面切换为黑色“直播间”
+COLOUR 纸白 #f4f2ee 主底，墨黑 #111 条带，信号红 #e8213a 强调；蓝/红方只在 BP 出现
+TYPE   Barlow Condensed（数字、标题）+ Noto Sans SC（正文）；四级字号
+*/
+:root{--bg:#f4f2ee;--pn:#fff;--ink:#111;--mu:#76726b;--ln:#e3dfd8;--ln2:#cfc9bf;--ac:#e8213a;--bl:#1f5bff;--rd:#e8213a;--gr:#14833b;--yl:#b7791f;
+ --num:"Barlow Condensed","DIN Condensed","Arial Narrow",sans-serif;--sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);min-height:100vh;overflow-x:clip}
+a{color:var(--ink);cursor:pointer;text-decoration:underline;text-decoration-color:var(--ac);text-underline-offset:3px}
+small{color:var(--mu)}h1,h2,h3,h4{font-weight:900;letter-spacing:.5px}
+/* 顶栏 */
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px max(3vw,16px);background:var(--ink);color:#fff;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.brand{font-weight:900;font-size:22px;letter-spacing:4px;display:flex;align-items:center;gap:10px}
+.brand::before{content:"";width:10px;height:22px;background:var(--ac);display:inline-block}
+.hinfo{display:flex;gap:22px;flex-wrap:wrap}.hinfo>div{display:flex;flex-direction:column;line-height:1.2}
+.hinfo small{color:#8d8a84;font-size:11px}.hinfo b{font-family:var(--num);font-size:18px;font-weight:700}
+.top .tt b{color:#fff}.top .ovr.ovr{background:none;color:#fff;font-size:18px;padding:0}.top .ovr.s.s{color:#ff5a6e}
+.tabs{display:flex;gap:4px;padding:0 max(3vw,16px);background:var(--pn);border-bottom:1px solid var(--ln2);overflow-x:auto}
+.tabs a{padding:12px 14px;color:var(--mu);text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap;font-weight:500}
+.tabs a.on{color:var(--ink);border-color:var(--ac);font-weight:700}
+main{padding:20px max(3vw,16px);max-width:1280px;margin:0 auto}
+.card{background:var(--pn);border:1px solid var(--ln);padding:20px;margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:24px}.card h3{margin:16px 0 8px;font-size:17px}.card h3:first-child{margin-top:0}.card h4{margin:6px 0;font-size:14px;color:var(--mu)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.cols>.card{margin:0}
+/* 主页 */
+.evcard{border-top:4px solid var(--ink)}
+.evh{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}.evh h2{font-size:30px;margin:0}.evh span{color:var(--mu)}
+.fmtd{margin:8px 0 4px}.fmtd summary{cursor:pointer;color:var(--mu);font-size:13px}
+.fmt{color:#3d3a35;background:var(--bg);padding:12px 14px;white-space:pre-wrap;font-size:13px;margin:8px 0;border-left:3px solid var(--ln2)}
+.nextm{margin:18px 0 8px;background:var(--ink);color:#fff;padding:22px}
+.nextm .lbl{color:#8d8a84;font-size:13px;text-align:center}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;margin-top:8px}
+.vs .side{display:flex;flex-direction:column;align-items:center;gap:2px}.vs .side:first-child{align-items:flex-end}.vs .side:last-child{align-items:flex-start}
+.vs .side span{color:#8d8a84;font-size:13px}.vs em{font-style:normal;font-family:var(--num);font-weight:800;font-size:28px;color:var(--ac)}
+.nextm .tt b{color:#fff}.nextm .tt.me b{color:#fff;box-shadow:inset 0 -4px 0 var(--ac)}
+.stage{color:var(--mu);margin-top:10px}.stage b{color:var(--ink)}
+.done{font-size:17px;margin:12px 0;font-weight:700}
+/* 按钮 */
+.btn{background:var(--ink);color:#fff;border:2px solid var(--ink);padding:9px 16px;font-weight:700;cursor:pointer;font:700 14px var(--sans);display:inline-flex;align-items:center;gap:6px;min-height:40px;text-decoration:none}
+.btn:hover{background:var(--ac);border-color:var(--ac)}.btn:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.btn.big{padding:12px 26px;font-size:16px;min-height:48px;background:var(--ac);border-color:var(--ac)}.btn.big:hover{background:var(--ink);border-color:var(--ink)}
+.btn.sm{padding:3px 10px;font-size:12px;min-height:28px;margin:1px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ln2)}.btn.ghost:hover{border-color:var(--ink);background:transparent}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;align-items:center}
+/* 队伍/数值 */
+.tt{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}.tt b{font-family:var(--num);font-weight:700;font-size:16px;letter-spacing:.5px}
+.tt i{font-style:normal;font-size:9px;color:var(--mu);font-weight:500;letter-spacing:.5px}
+.tt.me b{color:var(--ac)}.tt.big b{font-size:clamp(30px,5vw,48px);font-weight:800;line-height:1}.tt.big i{font-size:12px}
+.ovr{font-family:var(--num);font-weight:700;font-size:16px;display:inline-block;min-width:26px}.ovr.s{color:var(--ac)}.ovr.a{color:var(--ink)}.ovr.b{color:#55514b}.ovr.c{color:#9a958d}
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{color:var(--mu);font-weight:500;text-align:left;border-bottom:2px solid var(--ink);padding:6px 8px;font-size:12px;white-space:nowrap}
+.tbl td{padding:7px 8px;border-bottom:1px solid var(--ln);vertical-align:middle}.tbl tr:hover td{background:#faf9f6}
+.tbl tr.me td{background:#fdecee}.tbl td small{font-size:12px}
+.news{list-style:none;padding:0;margin:0}.news li{padding:8px 0;border-bottom:1px solid var(--ln)}
+.tl{list-style:none;padding:0;margin:0;counter-reset:t}.tl li{padding:7px 0 7px 30px;color:var(--mu);border-bottom:1px solid var(--ln);position:relative;counter-increment:t}
+.tl li::before{content:counter(t);position:absolute;left:0;font-family:var(--num);font-weight:700;color:var(--ln2);font-size:18px;line-height:1.3}
+.tl li.now{color:var(--ink)}.tl li.now::before{color:var(--ac)}.tl li.now b{color:var(--ac)}.tl li.past b{color:var(--ink)}
+.warn{color:var(--ac);font-weight:500}.muted{color:var(--mu)}
+/* 开始页 */
+.start{max-width:1180px;margin:0 auto;padding:clamp(28px,5vw,64px) max(3vw,16px)}
+.start h1{font-size:clamp(48px,8vw,96px);margin:0;line-height:1;letter-spacing:8px;display:flex;align-items:center;gap:16px}
+.start h1::before{content:"";width:18px;height:.9em;background:var(--ac)}
+.sub{color:var(--mu);font-size:17px;margin:12px 0 28px}.start h3{border-top:2px solid var(--ink);padding-top:14px;margin-top:28px}
+.start>.btn{margin-bottom:8px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:0;margin:12px 0;border-left:1px solid var(--ln2);border-top:1px solid var(--ln2)}
+.tcard{background:var(--pn);border-right:1px solid var(--ln2);border-bottom:1px solid var(--ln2);padding:16px;cursor:pointer;position:relative;transition:background .15s}
+.tcard:hover{background:var(--ink);color:#fff}.tcard:hover .tp,.tcard:hover .tf,.tcard:hover small{color:#a9a59e}
+.tn{font-family:var(--num);font-size:34px;font-weight:800;line-height:1}.tf{color:var(--mu);font-size:12px;margin:2px 0 10px}
+.tov{position:absolute;top:14px;right:16px;font-family:var(--num);font-size:30px;font-weight:700;line-height:1;text-align:right}.tov small{display:block;font-size:10px;font-family:var(--sans)}
+.tp{font-size:12px;color:var(--mu)}.note{color:var(--mu);font-size:13px}
+/* 阵容 */
+.lineup{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:14px 0;border:2px solid var(--ink)}
+.slot{padding:12px;text-align:center;border-right:1px solid var(--ln2)}.slot:last-child{border-right:0}.slot .r{color:var(--mu);font-size:12px}
+.slot b{display:block;font-family:var(--num);font-size:22px;line-height:1.1}.slot em{display:block;color:var(--ac);font-size:11px;font-style:normal}
+.pool span{display:inline-block;font-size:11px;border:1px solid var(--ln2);padding:0 4px;margin:1px;color:#55514b}.pool span.sig{border-color:var(--ink);color:var(--ink);font-weight:700}
+.tagon{color:var(--gr);font-size:12px;margin-right:4px;font-weight:700}.fx{color:var(--yl);margin-left:4px}.act{white-space:nowrap}
+/* 筛选 */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 14px}
+select,input,textarea{background:var(--pn);color:var(--ink);border:1px solid var(--ln2);padding:7px 10px;font:15px var(--sans);min-height:38px}
+h2 .on,h2 .off{font-size:12px;margin-left:10px;padding:2px 8px;vertical-align:middle;color:#fff}h2 .on{background:var(--gr)}h2 .off{background:var(--mu)}
+.tabs a.on{background:none}.evtabs a.on,.filters a.on,.rolesel a.on{background:none}
+/* 弹窗 */
+.mask{position:fixed;inset:0;background:#111b;z-index:20}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:21;background:var(--pn);border-top:5px solid var(--ac);padding:22px;width:min(720px,94vw);max-height:88vh;overflow:auto}
+.modal h3{margin-top:0}.modal label{display:block;margin:10px 0}.g{color:var(--gr)}.y{color:var(--yl)}.r{color:var(--ac)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;z-index:30;border-left:4px solid var(--ac);font-weight:500}
+/* 赛事 */
+.evtabs{display:flex;gap:0;flex-wrap:wrap;margin-bottom:16px;border-bottom:2px solid var(--ink)}
+.evtabs a{padding:8px 12px;color:var(--mu);text-decoration:none;font-size:14px}.evtabs a.on{color:#fff;background:var(--ink)}
+.bracket{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px}.bcol{display:flex;flex-direction:column;gap:10px;justify-content:space-around;min-width:190px}
+.mc{background:var(--pn);border:1px solid var(--ln2);padding:6px 10px;font-size:13px}.mc.me{border-color:var(--ac);border-width:2px}.mc[data-a]{cursor:pointer}.mc[data-a]:hover{border-color:var(--ink)}
+.mc>div{display:flex;justify-content:space-between;align-items:baseline}.mc>div>b{font-family:var(--num);font-size:17px}.mc .win .tt b,.mc .win>b{color:var(--ink)}.mc>div:not(.win) .tt b{color:#9a958d}
+.mc small{font-size:11px;display:block;border-top:1px solid var(--ln);margin-top:3px;padding-top:2px}
+.mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:8px}
+details>summary{cursor:pointer;color:var(--mu);margin:8px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid var(--ink);padding:3px 10px;font-size:13px}
+.gd{border-top:2px solid var(--ink);padding:10px 0;margin:10px 0}.gp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;font-size:13px}
+/* ===== 比赛：黑色直播间 ===== */
+.match{min-height:100vh;background:#0d0d0f;color:#f1efe9;padding:14px max(2vw,12px)}
+.match small,.match .muted{color:#8a877f}.match .tt b{color:#f1efe9}.match .tt.me b{color:#fff;box-shadow:inset 0 -4px 0 var(--ac)}.match .tt i{color:#8a877f}
+.mh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 4px 16px;border-bottom:1px solid #2a2a2e;margin-bottom:14px}
+.mh>div:first-child{display:flex;align-items:center;gap:14px}.mh>div:last-child{display:flex;align-items:center;gap:14px;justify-content:flex-end}
+.mh .mid{text-align:center;font-size:14px}
+.sc{font-family:var(--num);font-size:clamp(44px,6vw,72px);font-weight:800;line-height:1;color:#fff}
+.center{text-align:center}
+.match .card{background:#17171a;border:1px solid #2a2a2e;color:#f1efe9}
+.match .btn{background:#f1efe9;color:#111;border-color:#f1efe9}.match .btn:hover{background:var(--ac);border-color:var(--ac);color:#fff}
+.match .btn.big{background:var(--ac);border-color:var(--ac);color:#fff}.match .btn.big:hover{background:#fff;color:#111;border-color:#fff}
+.match .btn.ghost{background:transparent;color:#f1efe9;border-color:#3a3a40}.match .btn.ghost:hover{border-color:#f1efe9}
+.draft{display:grid;grid-template-columns:240px minmax(0,1fr) 240px;gap:12px}
+.dside{background:#17171a;padding:12px;border-top:5px solid #333}.dside.blue{border-top-color:var(--bl)}.dside.red{border-top-color:var(--rd)}
+.dside.active{background:#1c1c20;outline:1px solid #55555c}
+.dh{font-weight:700;margin-bottom:10px;font-size:13px;color:#b9b6ae}.dh .tt b{font-size:20px}
+.bans{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:10px}
+.ban{font-size:11px;background:#232327;color:#8a877f;text-align:center;padding:4px 0;min-height:24px;overflow:hidden;white-space:nowrap;text-decoration:line-through;text-decoration-color:var(--ac)}
+.pk{background:#1f1f23;padding:8px 10px;margin:4px 0;display:grid;grid-template-columns:36px 1fr;font-size:13px;border-left:3px solid transparent}
+.pk .r{color:#8a877f;font-size:11px}.pk b{font-family:var(--num);font-size:16px}.pk .c{grid-column:2;font-weight:700;font-size:15px;color:#fff}
+.pk i{font-style:normal;font-size:10px;margin-left:6px;font-weight:500}.pk i.g{color:#5fd38a}.pk i.y{color:#e0b453}.pk i.r{color:#ff6b7d}
+.blue .pk.f{border-left-color:var(--bl)}.red .pk.f{border-left-color:var(--rd)}
+.dcenter{background:#17171a;padding:14px;min-height:420px}
+.turn{font-size:15px;margin-bottom:8px;color:#b9b6ae}.turn b{color:#fff;background:var(--ac);padding:1px 8px}
+.dcenter .filters a{padding:4px 12px;border:1px solid #3a3a40;color:#b9b6ae;text-decoration:none;font-size:13px}.dcenter .filters a.on{color:#111;background:#f1efe9;border-color:#f1efe9}
+.match input{background:#0d0d0f;color:#f1efe9;border-color:#3a3a40}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:4px;max-height:440px;overflow:auto;padding:2px}
+.ch{background:#1f1f23;padding:7px 8px;cursor:pointer;font-size:12px;min-height:58px;border:1px solid transparent}
+.ch:hover{border-color:#f1efe9}.ch.sel{background:var(--ac);color:#fff}.ch.sel small{color:#ffd7dc}.ch.dis{opacity:.22;cursor:not-allowed}.ch.dis:hover{border-color:transparent}
+.ch .cn{font-weight:700;font-size:14px}.ch small{display:block;font-size:10px}.ch em{font-size:10px;color:#ff6b7d;font-style:normal}.ch i{display:block;font-style:normal;font-size:10px}
+.ch .hm{color:#e0b453}.ch .ho{color:#ff8f9b}
+.rolesel{color:#b9b6ae}.rolesel a{padding:3px 10px;border:1px solid #3a3a40;margin-left:4px;color:#b9b6ae;text-decoration:none}.rolesel a.on{color:#111;background:#f1efe9}
+.prob{height:10px;background:#3a1219;max-width:440px;margin:14px auto}.prob div{height:100%;background:#f1efe9}
+.match .tbl th{color:#8a877f;border-bottom-color:#f1efe9}.match .tbl td{border-bottom-color:#2a2a2e}.match .tbl tr:hover td{background:#1f1f23}
+.match h2.g{color:#5fd38a;font-size:40px}.match h2.r{color:#ff6b7d;font-size:40px}.match h2,.match h3{margin:8px 0}
+@media(max-width:900px){.draft{grid-template-columns:1fr}.lineup{grid-template-columns:repeat(2,minmax(0,1fr))}.slot{border-bottom:1px solid var(--ln2)}}
+@media(max-width:600px){.hinfo{gap:12px}.vs{gap:8px}.card{padding:14px}.tbl{font-size:13px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head>
+<body><div id="app"></div>
+<script>window.ROSTER={"CBLOL": {"teams": [{"name": "FURIA", "short": "FUR", "cn": "FUR", "tier": 2, "players": [{"id": "guigo", "name": "Guilherme Ruiz", "role": "TOP", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Tatu", "name": "Tatu", "role": "JUG", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Tutsz", "name": "Tutsz", "role": "MID", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Ayu", "name": "Ayu", "role": "ADC", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Jojo", "name": "Jojo", "role": "SUP", "nat": "BR", "age": null, "rating": 64, "sub": false}]}, {"name": "Los Grandes", "short": "LOS", "cn": "LOS", "tier": 1, "players": [{"id": "Zest", "name": "Zest", "role": "TOP", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Curse", "name": "Curse", "role": "JUG", "nat": "BR", "age": null, "rating": 69, "sub": false}, {"id": "Feisty", "name": "Feisty", "role": "MID", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Duduhh", "name": "Duduhh", "role": "ADC", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Ackerman", "name": "Ackerman", "role": "SUP", "nat": "BR", "age": null, "rating": 66, "sub": false}]}, {"name": "LOUD", "short": "LLL", "cn": "LOUD", "tier": 3, "players": [{"id": "xyno", "name": "xyno", "role": "TOP", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "uZent", "name": "uZent", "role": "JUG", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "Envy", "name": "Envy", "role": "MID", "nat": "BR", "age": null, "rating": 66, "sub": false}, {"id": "Bull", "name": "Bull", "role": "ADC", "nat": "BR", "age": null, "rating": 66, "sub": false}, {"id": "YoungJae", "name": "YoungJae", "role": "SUP", "nat": "KR", "age": null, "rating": 66, "sub": false}]}, {"name": "paiN Gaming", "short": "PNG", "cn": "PNG", "tier": 5, "players": [{"id": "Robo", "name": "Robo", "role": "TOP", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "Cariok", "name": "Cariok", "role": "JUG", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "keine", "name": "keine", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Trigger", "name": "Trigger", "role": "ADC", "nat": "BR", "age": null, "rating": 63, "sub": false}, {"id": "Kuri", "name": "Kuri", "role": "SUP", "nat": "BR", "age": null, "rating": 62, "sub": false}]}, {"name": "Fluxo W7M", "short": "FX", "cn": "FLX", "tier": 6, "players": [{"id": "curty", "name": "curty", "role": "TOP", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Peach", "name": "Peach", "role": "JUG", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Momochi", "name": "Momochi", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "BAO", "name": "BAO", "role": "ADC", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "cody", "name": "cody", "role": "SUP", "nat": "BR", "age": null, "rating": 58, "sub": false}]}, {"name": "Leviatan", "short": "LEV", "cn": "LEV", "tier": 7, "players": [{"id": "Devost", "name": "Devost", "role": "TOP", "nat": "CL", "age": null, "rating": 60, "sub": false}, {"id": "Booki", "name": "Booki", "role": "JUG", "nat": "AR", "age": null, "rating": 60, "sub": false}, {"id": "Enga", "name": "Enga", "role": "MID", "nat": "CL", "age": null, "rating": 62, "sub": false}, {"id": "Snaker", "name": "Snaker", "role": "ADC", "nat": "CL", "age": null, "rating": 60, "sub": false}, {"id": "TopLop", "name": "TopLop", "role": "SUP", "nat": "CL", "age": null, "rating": 58, "sub": false}]}, {"name": "RED Canids Kalunga", "short": "RED", "cn": "RED", "tier": 4, "players": [{"id": "STEPZ", "name": "STEPZ", "role": "TOP", "nat": "BR", "age": null, "rating": 63, "sub": false}, {"id": "zvnts", "name": "zvnts", "role": "JUG", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Kaze", "name": "Kaze", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Morttheus", "name": "Morttheus", "role": "ADC", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "frostyy", "name": "frostyy", "role": "SUP", "nat": "BR", "age": null, "rating": 60, "sub": false}]}, {"name": "Vivo Keyd Stars", "short": "VKS", "cn": "VKS", "tier": 8, "players": [{"id": "ZekaS", "name": "ZekaS", "role": "TOP", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Disamis", "name": "Disamis", "role": "JUG", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Mireu", "name": "Mireu", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Ceo", "name": "Ceo", "role": "ADC", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Scamber", "name": "Scamber", "role": "SUP", "nat": "BR", "age": null, "rating": 58, "sub": false}]}]}, "LCK": {"teams": [{"name": "Gen.G Esports", "short": "GEN", "cn": "Gen.G", "tier": 1, "players": [{"id": "Kiin", "name": "Kim Gi-in", "role": "TOP", "nat": "KR", "age": 27, "rating": 88, "sub": false}, {"id": "Canyon", "name": "Kim Geon-bu", "role": "JUG", "nat": "KR", "age": 25, "rating": 91, "sub": false}, {"id": "Chovy", "name": "Jeong Ji-hoon", "role": "MID", "nat": "KR", "age": 25, "rating": 94, "sub": false}, {"id": "Ruler", "name": "Park Jae-hyuk", "role": "ADC", "nat": "KR", "age": 28, "rating": 91, "sub": false}, {"id": "Duro", "name": "Joo Min-kyu", "role": "SUP", "nat": "KR", "age": 24, "rating": 80, "sub": false}]}, {"name": "T1", "short": "T1", "cn": "T1", "tier": 1, "players": [{"id": "Doran", "name": "Choi Hyeon-joon", "role": "TOP", "nat": "KR", "age": 25, "rating": 85, "sub": false}, {"id": "Oner", "name": "Mun Hyeon-jun", "role": "JUG", "nat": "KR", "age": 24, "rating": 90, "sub": false}, {"id": "Faker", "name": "Lee Sang-hyeok", "role": "MID", "nat": "KR", "age": 30, "rating": 92, "sub": false}, {"id": "Peyz", "name": "Kim Su-hwan", "role": "ADC", "nat": "KR", "age": 20, "rating": 88, "sub": false}, {"id": "Keria", "name": "Ryu Min-seok", "role": "SUP", "nat": "KR", "age": 24, "rating": 93, "sub": false}]}, {"name": "Hanwha Life Esports", "short": "HLE", "cn": "韩华", "tier": 1, "players": [{"id": "Zeus", "name": "Choi Woo-je", "role": "TOP", "nat": "KR", "age": 22, "rating": 89, "sub": false}, {"id": "Kanavi", "name": "Seo Jin-hyeok", "role": "JUG", "nat": "KR", "age": 26, "rating": 87, "sub": false}, {"id": "Zeka", "name": "Kim Geon-woo", "role": "MID", "nat": "KR", "age": 23, "rating": 88, "sub": false}, {"id": "Gumayusi", "name": "Lee Min-hyeong", "role": "ADC", "nat": "KR", "age": 24, "rating": 89, "sub": false}, {"id": "Delight", "name": "Yoo Hwan-joong", "role": "SUP", "nat": "KR", "age": 23, "rating": 82, "sub": false}]}, {"name": "Dplus KIA", "short": "DK", "cn": "DK", "tier": 2, "players": [{"id": "Siwoo", "name": "Jeon Si-woo", "role": "TOP", "nat": "KR", "age": 21, "rating": 78, "sub": false}, {"id": "Lucid", "name": "Choi Yong-hyeok", "role": "JUG", "nat": "KR", "age": 22, "rating": 81, "sub": false}, {"id": "ShowMaker", "name": "Heo Su", "role": "MID", "nat": "KR", "age": 26, "rating": 88, "sub": false}, {"id": "Smash", "name": "Shin Geum-jae", "role": "ADC", "nat": "KR", "age": 21, "rating": 80, "sub": false}, {"id": "Career", "name": "Oh Hyeong-seok", "role": "SUP", "nat": "KR", "age": 22, "rating": 76, "sub": false}]}, {"name": "KT Rolster", "short": "KT", "cn": "KT", "tier": 3, "players": [{"id": "PerfecT", "name": "Lee Seung-min", "role": "TOP", "nat": "KR", "age": 21, "rating": 78, "sub": false}, {"id": "Cuzz", "name": "Mun U-chan", "role": "JUG", "nat": "KR", "age": 26, "rating": 82, "sub": false}, {"id": "Bdd", "name": "Gwak Bo-sung", "role": "MID", "nat": "KR", "age": 29, "rating": 83, "sub": false}, {"id": "Aiming", "name": "Kim Ha-ram", "role": "ADC", "nat": "KR", "age": 27, "rating": 81, "sub": false}, {"id": "Pollu", "name": "Oh Dong-gyu", "role": "SUP", "nat": "KR", "age": 21, "rating": 74, "sub": false}, {"id": "Ghost", "name": "Jang Yong-jun", "role": "SUP", "nat": "KR", "age": 26, "rating": 76, "sub": true}]}, {"name": "BNK FEARX", "short": "BFX", "cn": "FearX", "tier": 3, "players": [{"id": "Clear", "name": "Song Hyeon-min", "role": "TOP", "nat": "KR", "age": 21, "rating": 76, "sub": false}, {"id": "Raptor", "name": "Jeon Eo-jin", "role": "JUG", "nat": "KR", "age": 22, "rating": 78, "sub": false}, {"id": "VicLa", "name": "Lee Dae-kwang", "role": "MID", "nat": "KR", "age": 25, "rating": 79, "sub": false}, {"id": "Diable", "name": "Nam Dae-geun", "role": "ADC", "nat": "KR", "age": 21, "rating": 77, "sub": false}, {"id": "Kellin", "name": "Kim Hyeong-gyu", "role": "SUP", "nat": "KR", "age": 26, "rating": 78, "sub": false}, {"id": "Daystar", "name": "Yoo Ji-myeong", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "Nongshim RedForce", "short": "NS", "cn": "农心", "tier": 3, "players": [{"id": "Kingen", "name": "Hwang Seong-hoon", "role": "TOP", "nat": "KR", "age": 26, "rating": 78, "sub": false}, {"id": "Sponge", "name": "Bae Young-jun", "role": "JUG", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Scout", "name": "Lee Ye-chan", "role": "MID", "nat": "KR", "age": 28, "rating": 82, "sub": false}, {"id": "Taeyoon", "name": "Kim Tae-yoon", "role": "ADC", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Lehends", "name": "Son Si-woo", "role": "SUP", "nat": "KR", "age": 27, "rating": 80, "sub": false}, {"id": "Calix", "name": "Seon Hyeon-bin", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "DN SOOPers", "short": "DNS", "cn": "DN SOOPers", "tier": 4, "players": [{"id": "DuDu", "name": "Lee Dong-ju", "role": "TOP", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "Pyosik", "name": "Hong Chang-hyeon", "role": "JUG", "nat": "KR", "age": 25, "rating": 80, "sub": false}, {"id": "Clozer", "name": "Lee Ju-hyun", "role": "MID", "nat": "KR", "age": 21, "rating": 81, "sub": false}, {"id": "deokdam", "name": "Seo Dae-gil", "role": "ADC", "nat": "KR", "age": 25, "rating": 80, "sub": false}, {"id": "Peter", "name": "Jeong Yoon-su", "role": "SUP", "nat": "KR", "age": 25, "rating": 76, "sub": false}, {"id": "Life", "name": "Kim Jeong-min", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": true}]}, {"name": "HANJIN BRION", "short": "BRO", "cn": "BRO", "tier": 4, "players": [{"id": "Casting", "name": "Shin Min-jae", "role": "TOP", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "GIDEON", "name": "Kim Min-seong", "role": "JUG", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Fisher", "name": "Lee Jeong-tae", "role": "MID", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "Teddy", "name": "Park Jin-seong", "role": "ADC", "nat": "KR", "age": 27, "rating": 80, "sub": false}, {"id": "Namgung", "name": "Namgung Seong-hoon", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": false}, {"id": "Roamer", "name": "Cho Woo-jin", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "DRX", "short": "DRX", "cn": "DRX", "tier": 5, "players": [{"id": "Rich", "name": "Lee Jae-won", "role": "TOP", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Vincenzo", "name": "Ha Seung-min", "role": "JUG", "nat": "KR", "age": null, "rating": 73, "sub": false}, {"id": "ucal", "name": "Son Woo-hyeon", "role": "MID", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Jiwoo", "name": "Jung Ji-woo", "role": "ADC", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Andil", "name": "Mun Gwan-bin", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": false}]}]}, "LCP": {"teams": [{"name": "CTBC Flying Oyster", "short": "CFO", "cn": "CFO", "tier": 1, "players": [{"id": "Rest", "name": "Rest", "role": "TOP", "nat": "TW", "age": null, "rating": 72, "sub": false}, {"id": "Shad0w", "name": "Shad0w", "role": "JUG", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Pout", "name": "Pout", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Doggo", "name": "Doggo", "role": "ADC", "nat": "TW", "age": null, "rating": 74, "sub": false}, {"id": "Kino", "name": "Kino", "role": "SUP", "nat": "TW", "age": null, "rating": 66, "sub": false}, {"id": "Pungyeon", "name": "Pungyeon", "role": "MID", "nat": "KR", "age": null, "rating": 66, "sub": true}, {"id": "Orca", "name": "Orca", "role": "SUP", "nat": "TW", "age": null, "rating": 64, "sub": true}]}, {"name": "Secret Whales", "short": "SW", "cn": "SW", "tier": 2, "players": [{"id": "Pun", "name": "Pun", "role": "TOP", "nat": "VN", "age": null, "rating": 66, "sub": false}, {"id": "Hizto", "name": "Hizto", "role": "JUG", "nat": "VN", "age": null, "rating": 67, "sub": false}, {"id": "Dire", "name": "Dire", "role": "MID", "nat": "VN", "age": null, "rating": 68, "sub": false}, {"id": "Eddie", "name": "Eddie", "role": "ADC", "nat": "VN", "age": null, "rating": 66, "sub": false}, {"id": "Bie", "name": "Bie", "role": "SUP", "nat": "VN", "age": null, "rating": 65, "sub": false}, {"id": "Hiro02", "name": "Hiro02", "role": "TOP", "nat": "VN", "age": null, "rating": 62, "sub": true}]}, {"name": "GAM Esports", "short": "GAM", "cn": "GAM", "tier": 3, "players": [{"id": "Kiaya", "name": "Kiaya", "role": "TOP", "nat": "VN", "age": null, "rating": 67, "sub": false}, {"id": "Draktharr", "name": "Draktharr", "role": "JUG", "nat": "VN", "age": null, "rating": 66, "sub": false}, {"id": "Aress", "name": "Aress", "role": "MID", "nat": "VN", "age": null, "rating": 65, "sub": false}, {"id": "Artemis", "name": "Artemis", "role": "ADC", "nat": "VN", "age": null, "rating": 67, "sub": false}, {"id": "Taki", "name": "Taki", "role": "SUP", "nat": "VN", "age": null, "rating": 65, "sub": false}]}, {"name": "Fukuoka SoftBank HAWKS", "short": "SHG", "cn": "HAWKS", "tier": 4, "players": [{"id": "Evi", "name": "Shunsuke Murase", "role": "TOP", "nat": "JP", "age": null, "rating": 68, "sub": false}, {"id": "Van", "name": "Van", "role": "JUG", "nat": "JP", "age": null, "rating": 64, "sub": false}, {"id": "Aria", "name": "Aria", "role": "MID", "nat": "JP", "age": null, "rating": 64, "sub": false}, {"id": "Marble", "name": "Marble", "role": "ADC", "nat": "JP", "age": null, "rating": 64, "sub": false}, {"id": "Vsta", "name": "Vsta", "role": "SUP", "nat": "JP", "age": null, "rating": 62, "sub": false}]}, {"name": "MVK Esports", "short": "MVK", "cn": "MVK", "tier": 5, "players": [{"id": "Kratos", "name": "Kratos", "role": "TOP", "nat": "VN", "age": null, "rating": 64, "sub": false}, {"id": "Gury", "name": "Gury", "role": "JUG", "nat": "VN", "age": null, "rating": 65, "sub": false}, {"id": "Chika", "name": "Chika", "role": "MID", "nat": "VN", "age": null, "rating": 64, "sub": false}, {"id": "Harky", "name": "Harky", "role": "ADC", "nat": "VN", "age": null, "rating": 64, "sub": false}, {"id": "SiuLoong", "name": "SiuLoong", "role": "SUP", "nat": "VN", "age": null, "rating": 63, "sub": false}, {"id": "Kati", "name": "Kati", "role": "MID", "nat": "VN", "age": null, "rating": 62, "sub": true}, {"id": "Puddin", "name": "Puddin", "role": "ADC", "nat": "VN", "age": null, "rating": 62, "sub": true}, {"id": "Seany", "name": "Seany", "role": "MID", "nat": "VN", "age": null, "rating": 60, "sub": true}]}, {"name": "Relove Deep Cross Gaming", "short": "DCG", "cn": "DCG", "tier": 6, "players": [{"id": "Flauren", "name": "Flauren", "role": "TOP", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "665", "name": "665", "role": "JUG", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "HongSuo", "name": "HongSuo", "role": "MID", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "Feng", "name": "Feng", "role": "ADC", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "ShiauC", "name": "ShiauC", "role": "SUP", "nat": "TW", "age": null, "rating": 60, "sub": false}]}, {"name": "Ground Zero Gaming", "short": "GZG", "cn": "GZG", "tier": 7, "players": [{"id": "1Jiang", "name": "1Jiang", "role": "TOP", "nat": "TW", "age": null, "rating": 60, "sub": false}, {"id": "Karsa", "name": "Hsiao Ming-Hsin", "role": "JUG", "nat": "TW", "age": null, "rating": 64, "sub": false}, {"id": "Maple", "name": "Maple", "role": "MID", "nat": "TW", "age": null, "rating": 60, "sub": false}, {"id": "Betty", "name": "Betty", "role": "ADC", "nat": "TW", "age": null, "rating": 60, "sub": false}, {"id": "Woody", "name": "Woody", "role": "SUP", "nat": "TW", "age": null, "rating": 58, "sub": false}, {"id": "Azhi", "name": "Azhi", "role": "TOP", "nat": "TW", "age": null, "rating": 56, "sub": true}]}, {"name": "DetonatioN FocusMe", "short": "DFM", "cn": "DFM", "tier": 8, "players": [{"id": "RayFarky", "name": "RayFarky", "role": "TOP", "nat": "JP", "age": null, "rating": 60, "sub": false}, {"id": "Citrus", "name": "Citrus", "role": "JUG", "nat": "JP", "age": null, "rating": 60, "sub": false}, {"id": "DFM Mid (unverified)", "name": "Unknown", "role": "MID", "nat": "JP", "age": null, "rating": 58, "sub": false}, {"id": "Kakkun", "name": "Kakkun", "role": "ADC", "nat": "JP", "age": null, "rating": 60, "sub": false}, {"id": "Harp", "name": "Harp", "role": "SUP", "nat": "JP", "age": null, "rating": 58, "sub": false}]}]}, "LCS": {"teams": [{"name": "LYON", "short": "LYON", "cn": "LYON", "tier": 1, "players": [{"id": "Zamudo", "name": "Zamudo", "role": "TOP", "nat": "US", "age": null, "rating": 66, "sub": false}, {"id": "Inspired", "name": "Kacper Sl:oma", "role": "JUG", "nat": "PL", "age": 25, "rating": 79, "sub": false}, {"id": "Saint", "name": "Saint", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Berserker", "name": "Kim Min-cheol", "role": "ADC", "nat": "KR", "age": 24, "rating": 80, "sub": false}, {"id": "Isles", "name": "Isles", "role": "SUP", "nat": "US", "age": null, "rating": 64, "sub": false}]}, {"name": "Team Liquid", "short": "TL", "cn": "TL", "tier": 2, "players": [{"id": "Morgan", "name": "Morgan", "role": "TOP", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Josedeodo", "name": "Brandon Joel Villegas", "role": "JUG", "nat": "US", "age": null, "rating": 72, "sub": false}, {"id": "Quid", "name": "Quid", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Yeon", "name": "Yeon", "role": "ADC", "nat": "US", "age": null, "rating": 68, "sub": false}, {"id": "CoreJJ", "name": "Jo Yong-in", "role": "SUP", "nat": "KR", "age": 29, "rating": 76, "sub": false}]}, {"name": "Cloud9", "short": "C9", "cn": "C9", "tier": 3, "players": [{"id": "Thanatos", "name": "Thanatos", "role": "TOP", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Blaber", "name": "Robert Huang", "role": "JUG", "nat": "US", "age": 27, "rating": 72, "sub": false}, {"id": "APA", "name": "Eain Stearns", "role": "MID", "nat": "US", "age": null, "rating": 69, "sub": false}, {"id": "Zven", "name": "Jesper Svenningsen", "role": "ADC", "nat": "DK", "age": 29, "rating": 68, "sub": false}, {"id": "Vulcan", "name": "Philippe Laflamme", "role": "SUP", "nat": "CA", "age": null, "rating": 66, "sub": false}, {"id": "Tactical", "name": "Edward Ra", "role": "ADC", "nat": "US", "age": null, "rating": 64, "sub": true}]}, {"name": "FlyQuest", "short": "FLY", "cn": "FLY", "tier": 4, "players": [{"id": "Gakgos", "name": "Ibrahim Samet Bulut", "role": "TOP", "nat": "TR", "age": null, "rating": 66, "sub": false}, {"id": "Gryffinn", "name": "Johnson Le", "role": "JUG", "nat": "US", "age": null, "rating": 68, "sub": false}, {"id": "Quad", "name": "Song Su-hyeong", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Massu", "name": "Fahad Abdulmalek", "role": "ADC", "nat": "US", "age": null, "rating": 66, "sub": false}, {"id": "Cryogen", "name": "Cryogen", "role": "SUP", "nat": "US", "age": null, "rating": 64, "sub": false}]}, {"name": "Sentinels", "short": "SEN", "cn": "SEN", "tier": 5, "players": [{"id": "Impact", "name": "Jeong Eon-young", "role": "TOP", "nat": "US", "age": 28, "rating": 68, "sub": false}, {"id": "HamBak", "name": "HamBak", "role": "JUG", "nat": "KR", "age": null, "rating": 66, "sub": false}, {"id": "DARKWINGS", "name": "DARKWINGS", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Rahel", "name": "Rahel", "role": "ADC", "nat": "KR", "age": null, "rating": 67, "sub": false}, {"id": "Huhi", "name": "Huhi", "role": "SUP", "nat": "US", "age": null, "rating": 66, "sub": false}]}, {"name": "Shopify Rebellion", "short": "SR", "cn": "SR", "tier": 6, "players": [{"id": "Fudge", "name": "Ibrahim Allami", "role": "TOP", "nat": "AU", "age": null, "rating": 66, "sub": false}, {"id": "Contractz", "name": "Juan Garcia", "role": "JUG", "nat": "US", "age": null, "rating": 66, "sub": false}, {"id": "Zinie", "name": "Yoo Baek-jin", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Bvoy", "name": "Bvoy", "role": "ADC", "nat": "KR", "age": null, "rating": 67, "sub": false}, {"id": "Zeyzal", "name": "Tristan Stidam", "role": "SUP", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Ceos", "name": "Denilson Oliveira Goncalves", "role": "SUP", "nat": "BR", "age": null, "rating": 64, "sub": true}]}, {"name": "Disguised", "short": "DSG", "cn": "DSG", "tier": 7, "players": [{"id": "Srtty", "name": "Srtty", "role": "TOP", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "KryRa", "name": "KryRa", "role": "JUG", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Calime", "name": "Calime", "role": "MID", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Sajed", "name": "Sajed", "role": "ADC", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Lyonz", "name": "Lyonz", "role": "SUP", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Castle", "name": "Castle", "role": "TOP", "nat": "US", "age": null, "rating": 60, "sub": true}]}, {"name": "Dignitas", "short": "DIG", "cn": "DIG", "tier": 8, "players": [{"id": "Denathor", "name": "Noah Erikson", "role": "TOP", "nat": "US", "age": null, "rating": 60, "sub": false}, {"id": "eXyu", "name": "eXyu", "role": "JUG", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Palafox", "name": "Palafox", "role": "MID", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "FBI", "name": "Victor Huang", "role": "ADC", "nat": "US", "age": null, "rating": 64, "sub": false}, {"id": "IgNar", "name": "IgNar", "role": "SUP", "nat": "KR", "age": null, "rating": 60, "sub": false}, {"id": "Photon", "name": "Photon", "role": "TOP", "nat": "KR", "age": null, "rating": 62, "sub": true}]}]}, "LEC": {"teams": [{"name": "G2 Esports", "short": "G2", "cn": "G2", "tier": 1, "players": [{"id": "BrokenBlade", "name": "Sergen Celik", "role": "TOP", "nat": "TR", "age": 25, "rating": 82, "sub": false}, {"id": "SkewMond", "name": "Kim Dong-hyeon", "role": "JUG", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "Caps", "name": "Rasmus Winther", "role": "MID", "nat": "DK", "age": 27, "rating": 85, "sub": false}, {"id": "Hans Sama", "name": "Steven Liv", "role": "ADC", "nat": "FR", "age": 26, "rating": 82, "sub": false}, {"id": "Labrov", "name": "Labros Papoutsakis", "role": "SUP", "nat": "GR", "age": null, "rating": 78, "sub": false}]}, {"name": "Karmine Corp", "short": "KC", "cn": "KC", "tier": 2, "players": [{"id": "Canna", "name": "Kim Chang-dong", "role": "TOP", "nat": "KR", "age": 25, "rating": 80, "sub": false}, {"id": "Yike", "name": "Martin Sundelin", "role": "JUG", "nat": "SE", "age": null, "rating": 80, "sub": false}, {"id": "Kyeahoo", "name": "Kyeahoo", "role": "MID", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "Caliste", "name": "Caliste Henry-Hennebert", "role": "ADC", "nat": "FR", "age": null, "rating": 78, "sub": false}, {"id": "Busio", "name": "Alan Cwalina", "role": "SUP", "nat": "US", "age": null, "rating": 74, "sub": false}]}, {"name": "Movistar KOI", "short": "MKOI", "cn": "KOI", "tier": 3, "players": [{"id": "Myrwn", "name": "Alex Pastor", "role": "TOP", "nat": "ES", "age": null, "rating": 70, "sub": false}, {"id": "Elyoya", "name": "Javier Prades", "role": "JUG", "nat": "ES", "age": 27, "rating": 79, "sub": false}, {"id": "Jojopyun", "name": "Joseph Joon Pyun", "role": "MID", "nat": "CA", "age": 21, "rating": 76, "sub": false}, {"id": "Supa", "name": "Supa", "role": "ADC", "nat": "ES", "age": null, "rating": 73, "sub": false}, {"id": "Alvaro", "name": "Alvaro Fernandez", "role": "SUP", "nat": "ES", "age": null, "rating": 72, "sub": false}]}, {"name": "GIANTX", "short": "GX", "cn": "GX", "tier": 6, "players": [{"id": "Oscarinin", "name": "Oscar Munoz", "role": "TOP", "nat": "ES", "age": null, "rating": 68, "sub": false}, {"id": "ISMA", "name": "Ismael Fernandez", "role": "JUG", "nat": "ES", "age": null, "rating": 71, "sub": false}, {"id": "Jackies", "name": "Jakub Binek", "role": "MID", "nat": "CZ", "age": null, "rating": 72, "sub": false}, {"id": "Flakked", "name": "Victor Lirola", "role": "ADC", "nat": "ES", "age": null, "rating": 71, "sub": false}, {"id": "Jun", "name": "Jun", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": false}, {"id": "Lot", "name": "Lot", "role": "TOP", "nat": "ES", "age": null, "rating": 66, "sub": true}, {"id": "Noah", "name": "Noah Kim", "role": "ADC", "nat": "KR", "age": null, "rating": 69, "sub": true}]}, {"name": "Team Vitality", "short": "VIT", "cn": "VIT", "tier": 4, "players": [{"id": "Naak Nako", "name": "Naak Nako", "role": "TOP", "nat": "FR", "age": null, "rating": 73, "sub": false}, {"id": "Lyncas", "name": "Lyncas", "role": "JUG", "nat": "LT", "age": null, "rating": 72, "sub": false}, {"id": "FIESTA", "name": "FIESTA", "role": "MID", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Carzzy", "name": "Matyas Orsag", "role": "ADC", "nat": "CZ", "age": null, "rating": 77, "sub": false}, {"id": "Fleshy", "name": "Fleshy", "role": "SUP", "nat": "NL", "age": null, "rating": 73, "sub": false}, {"id": "Humanoid", "name": "Marek Brazda", "role": "MID", "nat": "CZ", "age": null, "rating": 75, "sub": true}]}, {"name": "Natus Vincere", "short": "NAVI", "cn": "NAVI", "tier": 8, "players": [{"id": "Maynter", "name": "Maynter", "role": "TOP", "nat": "FR", "age": null, "rating": 68, "sub": false}, {"id": "Rhilech", "name": "Rhilech", "role": "JUG", "nat": "ES", "age": null, "rating": 68, "sub": false}, {"id": "Poby", "name": "Poby", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Hans SamD", "name": "Hans SamD", "role": "ADC", "nat": "FR", "age": null, "rating": 68, "sub": false}, {"id": "Parus", "name": "Parus", "role": "SUP", "nat": "KR", "age": null, "rating": 68, "sub": false}]}, {"name": "Fnatic", "short": "FNC", "cn": "FNC", "tier": 5, "players": [{"id": "Soboro", "name": "Soboro", "role": "TOP", "nat": "KR", "age": null, "rating": 72, "sub": false}, {"id": "Razork", "name": "Iván Martín Díaz", "role": "JUG", "nat": "ES", "age": null, "rating": 76, "sub": false}, {"id": "Vladi", "name": "Vladimiros Kourtidis", "role": "MID", "nat": "GR", "age": null, "rating": 73, "sub": false}, {"id": "Upset", "name": "Elias Lipp", "role": "ADC", "nat": "DE", "age": 26, "rating": 78, "sub": false}, {"id": "Lospa", "name": "Lospa", "role": "SUP", "nat": "DE", "age": null, "rating": 70, "sub": false}, {"id": "Empyros", "name": "Empyros", "role": "TOP", "nat": "NL", "age": null, "rating": 68, "sub": true}]}, {"name": "SK Gaming", "short": "SK", "cn": "SK", "tier": 7, "players": [{"id": "Wunder", "name": "Martin Hansen", "role": "TOP", "nat": "DK", "age": 27, "rating": 74, "sub": false}, {"id": "Skeanz", "name": "Skeanz", "role": "JUG", "nat": "FR", "age": null, "rating": 73, "sub": false}, {"id": "SlowQ", "name": "SlowQ", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Jopa", "name": "Jopa", "role": "ADC", "nat": "SE", "age": null, "rating": 70, "sub": false}, {"id": "Mikyx", "name": "Mihael Mehle", "role": "SUP", "nat": "SI", "age": null, "rating": 75, "sub": false}, {"id": "LIDER", "name": "LIDER", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "Shifters", "short": "SHFT", "cn": "SHF", "tier": 9, "players": [{"id": "Rooster", "name": "Rooster", "role": "TOP", "nat": "FR", "age": null, "rating": 68, "sub": false}, {"id": "Sheo", "name": "Sheo", "role": "JUG", "nat": "FR", "age": null, "rating": 70, "sub": false}, {"id": "nuc", "name": "nuc", "role": "MID", "nat": "ES", "age": null, "rating": 68, "sub": false}, {"id": "Paduck", "name": "Paduck", "role": "ADC", "nat": "FR", "age": null, "rating": 67, "sub": false}, {"id": "Stend", "name": "Stend", "role": "SUP", "nat": "ES", "age": null, "rating": 66, "sub": false}, {"id": "Boukada", "name": "Boukada", "role": "JUG", "nat": "FR", "age": null, "rating": 66, "sub": true}, {"id": "Trymbi", "name": "Adam Trymbi", "role": "SUP", "nat": "PL", "age": null, "rating": 66, "sub": true}]}, {"name": "Team Heretics", "short": "TH", "cn": "TH", "tier": 10, "players": [{"id": "Tracyn", "name": "Tracyn", "role": "TOP", "nat": "EE", "age": null, "rating": 66, "sub": false}, {"id": "Daglas", "name": "Daglas", "role": "JUG", "nat": "ES", "age": null, "rating": 64, "sub": false}, {"id": "Serin", "name": "Serin", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Hype", "name": "Hype", "role": "ADC", "nat": "ES", "age": null, "rating": 64, "sub": false}, {"id": "Way", "name": "Way", "role": "SUP", "nat": "ES", "age": null, "rating": 66, "sub": false}, {"id": "Ice", "name": "Ice", "role": "ADC", "nat": "ES", "age": null, "rating": 64, "sub": true}]}]}, "LPL": {"teams": [{"name": "Bilibili Gaming", "short": "BLG", "cn": "哔哩哔哩电竞", "tier": 1, "players": [{"id": "Bin", "name": "Chen Zebin", "role": "TOP", "nat": "CN", "age": null, "rating": 92, "sub": false}, {"id": "XUN", "name": "Peng Lixun", "role": "JUG", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "knight", "name": "Zhuo Ding", "role": "MID", "nat": "CN", "age": null, "rating": 91, "sub": false}, {"id": "Viper", "name": "Park Do-hyeon", "role": "ADC", "nat": "KR", "age": null, "rating": 91, "sub": false}, {"id": "ON", "name": "Luo Wenjun", "role": "SUP", "nat": "CN", "age": null, "rating": 85, "sub": false}]}, {"name": "Anyone's Legend", "short": "AL", "cn": "AL电子竞技俱乐部", "tier": 1, "players": [{"id": "Flandre", "name": "Li Xuanjun", "role": "TOP", "nat": "CN", "age": null, "rating": 87, "sub": false}, {"id": "Tarzan", "name": "Lee Seung-yong", "role": "JUG", "nat": "KR", "age": null, "rating": 85, "sub": false}, {"id": "Shanks", "name": "Cui Xiaojun", "role": "MID", "nat": "CN", "age": null, "rating": 84, "sub": false}, {"id": "Hope", "name": "Wang Jie", "role": "ADC", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "Kael", "name": "Kim Jin-hong", "role": "SUP", "nat": "KR", "age": null, "rating": 84, "sub": false}, {"id": "Breathe", "name": "Chen Chen", "role": "TOP", "nat": "CN", "age": null, "rating": 80, "sub": true}]}, {"name": "Top Esports", "short": "TES", "cn": "TOP电竞", "tier": 2, "players": [{"id": "369", "name": "Bai Jiahao", "role": "TOP", "nat": "CN", "age": null, "rating": 88, "sub": false}, {"id": "Tian", "name": "Gao Tianliang", "role": "JUG", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "Creme", "name": "Lin Jian", "role": "MID", "nat": "CN", "age": null, "rating": 82, "sub": false}, {"id": "JackeyLove", "name": "Yu Wenbo", "role": "ADC", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "fengyue", "name": "Wang Runlai", "role": "SUP", "nat": "CN", "age": null, "rating": 78, "sub": false}, {"id": "ZUIAN", "name": "Cheng Zihao", "role": "TOP", "nat": "CN", "age": null, "rating": 77, "sub": true}]}, {"name": "Invictus Gaming", "short": "IG", "cn": "Invictus Gaming", "tier": 2, "players": [{"id": "TheShy", "name": "Kang Seung-lok", "role": "TOP", "nat": "KR", "age": null, "rating": 84, "sub": false}, {"id": "Wei", "name": "Yan Yangwei", "role": "JUG", "nat": "CN", "age": null, "rating": 84, "sub": false}, {"id": "Rookie", "name": "Song Eui-jin", "role": "MID", "nat": "KR", "age": null, "rating": 84, "sub": false}, {"id": "JiaQi", "name": "Zi Jiaqi", "role": "ADC", "nat": "CN", "age": null, "rating": 79, "sub": false}, {"id": "Meiko", "name": "Tian Ye", "role": "SUP", "nat": "CN", "age": null, "rating": 83, "sub": false}, {"id": "Soboro", "name": "Soboro", "role": "TOP", "nat": "KR", "age": null, "rating": 78, "sub": true}]}, {"name": "JD Gaming", "short": "JDG", "cn": "京东电竞", "tier": 2, "players": [{"id": "Xiaoxu", "name": "Xu Xingzu", "role": "TOP", "nat": "CN", "age": null, "rating": 78, "sub": false}, {"id": "JunJia", "name": "Yu Chun-chia", "role": "JUG", "nat": "TW", "age": null, "rating": 82, "sub": false}, {"id": "HongQ", "name": "Tsai Ming-hong", "role": "MID", "nat": "TW", "age": null, "rating": 81, "sub": false}, {"id": "GALA", "name": "Chen Wei", "role": "ADC", "nat": "CN", "age": null, "rating": 88, "sub": false}, {"id": "Vampire", "name": "Zhao Zhecan", "role": "SUP", "nat": "CN", "age": null, "rating": 80, "sub": false}]}, {"name": "Weibo Gaming", "short": "WBG", "cn": "微博电竞", "tier": 3, "players": [{"id": "Zika", "name": "Chen Chen", "role": "TOP", "nat": "CN", "age": null, "rating": 80, "sub": false}, {"id": "Jiejie", "name": "Zhao Lijie", "role": "JUG", "nat": "CN", "age": null, "rating": 80, "sub": false}, {"id": "Xiaohu", "name": "Li Yuanhao", "role": "MID", "nat": "CN", "age": null, "rating": 85, "sub": false}, {"id": "Elk", "name": "Zhao Jiahao", "role": "ADC", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "Erha", "name": "Liu Qingsong", "role": "SUP", "nat": "CN", "age": null, "rating": 74, "sub": false}]}, {"name": "LNG Esports", "short": "LNG", "cn": "LNG电子竞技俱乐部", "tier": 3, "players": [{"id": "sheer", "name": "Xu Wenjie", "role": "TOP", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Croco", "name": "Kim Dong-beom", "role": "JUG", "nat": "KR", "age": null, "rating": 80, "sub": false}, {"id": "BuLLDoG", "name": "Lee Tae-young", "role": "MID", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "1xn", "name": "Li Sau Nam", "role": "ADC", "nat": "HK", "age": null, "rating": 76, "sub": false}, {"id": "Missing", "name": "Lou Yunfeng", "role": "SUP", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "5t5", "name": "Zeng Jun", "role": "JUG", "nat": "CN", "age": null, "rating": 74, "sub": true}, {"id": "fishone", "name": "Yu Yi", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": true}, {"id": "OvO", "name": "Zhang Jiahao", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": true}]}, {"name": "EDward Gaming", "short": "EDG", "cn": "EDward Gaming", "tier": 3, "players": [{"id": "Zdz", "name": "Zdz", "role": "TOP", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Xiaohao", "name": "Xiaohao", "role": "JUG", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Angel", "name": "Angel", "role": "MID", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "Leave", "name": "Leave", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Parukia", "name": "Parukia", "role": "SUP", "nat": "CN", "age": null, "rating": 73, "sub": false}]}, {"name": "Ninjas in Pyjamas", "short": "NIP", "cn": "Ninjas in Pyjamas", "tier": 3, "players": [{"id": "HOYA", "name": "HOYA", "role": "TOP", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Guwon", "name": "Guwon", "role": "JUG", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "Care", "name": "Care", "role": "MID", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Assum", "name": "Assum", "role": "ADC", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Zhuo", "name": "Zhuo", "role": "SUP", "nat": "CN", "age": null, "rating": 73, "sub": false}]}, {"name": "Team WE", "short": "WE", "cn": "Team WE", "tier": 4, "players": [{"id": "Cube", "name": "Cube", "role": "TOP", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "Monki", "name": "Monki", "role": "JUG", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Karis", "name": "Karis", "role": "MID", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "About", "name": "About", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "yaoyao", "name": "yaoyao", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": false}]}, {"name": "Ultra Prime", "short": "UP", "cn": "Ultra Prime", "tier": 4, "players": [{"id": "Liangchen", "name": "Liangchen", "role": "TOP", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "Grizzly", "name": "Grizzly", "role": "JUG", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Saber", "name": "Saber", "role": "MID", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "Hena", "name": "Hena", "role": "ADC", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Xiaoxia", "name": "Xiaoxia", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": false}]}, {"name": "ThunderTalk Gaming", "short": "TT", "cn": "ThunderTalk Gaming", "tier": 4, "players": [{"id": "Keshi", "name": "Keshi", "role": "TOP", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Junhao", "name": "Junhao", "role": "JUG", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Heru", "name": "Heru", "role": "MID", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Ryan3", "name": "Ryan3", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Feather", "name": "Feather", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": false}]}, {"name": "Oh My God", "short": "OMG", "cn": "OMG电子竞技俱乐部", "tier": 4, "players": [{"id": "Hery", "name": "Hery", "role": "TOP", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Juhan", "name": "Juhan", "role": "JUG", "nat": "CN", "age": null, "rating": 72, "sub": false}, {"id": "haichao", "name": "haichao", "role": "MID", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Starry", "name": "Starry", "role": "ADC", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Moham", "name": "Moham", "role": "SUP", "nat": "CN", "age": null, "rating": 71, "sub": false}]}, {"name": "LGD Gaming", "short": "LGD", "cn": "LGD大鹅", "tier": 5, "players": [{"id": "sasi", "name": "sasi", "role": "TOP", "nat": "CN", "age": null, "rating": 70, "sub": false}, {"id": "Heng", "name": "Heng", "role": "JUG", "nat": "CN", "age": null, "rating": 71, "sub": false}, {"id": "Tangyuan", "name": "Tangyuan", "role": "MID", "nat": "CN", "age": null, "rating": 70, "sub": false}, {"id": "Shaoye", "name": "Shaoye", "role": "ADC", "nat": "CN", "age": null, "rating": 71, "sub": false}, {"id": "ycx", "name": "ycx", "role": "SUP", "nat": "CN", "age": null, "rating": 68, "sub": false}]}]}};
+</script>
+<script>// 英雄池：roles 可打位置；tags 阵容标签；dmg 伤害类型
+// tags: engage 开团, poke 消耗, pick 抓单, scale 后期, protect 保护, split 分推, early 前期
+window.CHAMPS = [
+ // ---- 上单 ----
+ ["Aatrox","剑魔",["TOP"],["engage","early"],"AD"],
+ ["Ambessa","安蓓萨",["TOP","MID"],["early","pick"],"AD"],
+ ["Camille","青钢影",["TOP"],["split","pick"],"AD"],
+ ["Gnar","纳尔",["TOP"],["engage","protect"],"AD"],
+ ["Gwen","格温",["TOP"],["scale","split"],"AP"],
+ ["Jax","武器大师",["TOP"],["split","scale"],"MIX"],
+ ["Jayce","杰斯",["TOP","MID"],["poke","early"],"AD"],
+ ["K'Sante","奎桑提",["TOP"],["engage","protect"],"AD"],
+ ["Kennen","凯南",["TOP"],["engage","poke"],"AP"],
+ ["Renekton","鳄鱼",["TOP"],["early"],"AD"],
+ ["Rumble","兰博",["TOP","MID","JUG"],["engage","early"],"AP"],
+ ["Sion","塞恩",["TOP"],["engage","protect"],"AD"],
+ ["Ornn","奥恩",["TOP"],["engage","protect"],"AP"],
+ ["Fiora","剑姬",["TOP"],["split","scale"],"AD"],
+ ["Gangplank","船长",["TOP"],["poke","scale"],"AD"],
+ ["Gragas","酒桶",["TOP","JUG","SUP"],["engage","early"],"AP"],
+ ["Mordekaiser","铁男",["TOP"],["pick","scale"],"AP"],
+ ["Yorick","掘墓者",["TOP"],["split"],"AD"],
+ ["Kled","克烈",["TOP"],["engage","early"],"AD"],
+ ["Malphite","石头人",["TOP","SUP"],["engage"],"AP"],
+ ["Poppy","波比",["TOP","JUG","SUP"],["protect","pick"],"AD"],
+ ["Rengar","狮子狗",["TOP","JUG"],["pick","early"],"AD"],
+ // ---- 打野 ----
+ ["Lee Sin","盲僧",["JUG"],["early","pick"],"AD"],
+ ["Xin Zhao","赵信",["JUG"],["early","engage"],"AD"],
+ ["Vi","蔚",["JUG"],["engage","pick"],"AD"],
+ ["Sejuani","猪妹",["JUG"],["engage","protect"],"AP"],
+ ["Maokai","大树",["JUG","SUP"],["engage","protect"],"AP"],
+ ["Wukong","猴子",["JUG","TOP"],["engage","scale"],"AD"],
+ ["Nidalee","豹女",["JUG"],["early","poke"],"AP"],
+ ["Viego","佛耶戈",["JUG"],["scale","pick"],"AD"],
+ ["Jarvan IV","皇子",["JUG"],["engage","early"],"AD"],
+ ["Pantheon","潘森",["JUG","SUP","TOP"],["early","pick"],"AD"],
+ ["Skarner","斯卡纳",["JUG","TOP"],["engage","pick"],"AP"],
+ ["Kindred","千珏",["JUG"],["scale","early"],"AD"],
+ ["Nocturne","梦魇",["JUG"],["pick","engage"],"AD"],
+ ["Elise","蜘蛛",["JUG"],["early","pick"],"AP"],
+ ["Rek'Sai","挖掘机",["JUG"],["early","pick"],"AD"],
+ ["Trundle","巨魔",["JUG","TOP"],["split","early"],"AD"],
+ ["Ivern","艾翁",["JUG"],["protect"],"AP"],
+ ["Brand","火男",["JUG","SUP"],["poke"],"AP"],
+ ["Zyra","婕拉",["JUG","SUP"],["poke"],"AP"],
+ // ---- 中单 ----
+ ["Azir","沙皇",["MID"],["scale","protect"],"AP"],
+ ["Orianna","发条",["MID"],["scale","engage"],"AP"],
+ ["Syndra","辛德拉",["MID"],["pick","poke"],"AP"],
+ ["Ahri","阿狸",["MID"],["pick"],"AP"],
+ ["Sylas","塞拉斯",["MID","JUG"],["engage","pick"],"AP"],
+ ["LeBlanc","妖姬",["MID"],["pick","early"],"AP"],
+ ["Taliyah","岩雀",["MID","JUG"],["pick","early"],"AP"],
+ ["Viktor","维克托",["MID"],["scale","poke"],"AP"],
+ ["Corki","飞机",["MID","ADC"],["poke","scale"],"MIX"],
+ ["Yone","永恩",["MID","TOP"],["engage","scale"],"AD"],
+ ["Yasuo","亚索",["MID","TOP"],["engage","scale"],"AD"],
+ ["Akali","阿卡丽",["MID","TOP"],["pick"],"AP"],
+ ["Galio","加里奥",["MID","SUP"],["engage","protect"],"AP"],
+ ["Ryze","瑞兹",["MID"],["scale"],"AP"],
+ ["Hwei","彗",["MID","SUP"],["poke","pick"],"AP"],
+ ["Aurora","奥罗拉",["MID","TOP"],["pick"],"AP"],
+ ["Annie","安妮",["MID"],["engage"],"AP"],
+ ["Mel","梅尔",["MID"],["poke","protect"],"AP"],
+ ["Zoe","佐伊",["MID"],["poke","pick"],"AP"],
+ ["Cassiopeia","蛇女",["MID"],["scale"],"AP"],
+ ["Twisted Fate","卡牌",["MID"],["pick"],"AP"],
+ ["Tristana","小炮",["MID","ADC"],["early","scale"],"AD"],
+ ["Lissandra","冰女",["MID"],["engage"],"AP"],
+ ["Naafiri","纳亚菲利",["MID"],["pick","early"],"AD"],
+ // ---- ADC ----
+ ["Kai'Sa","卡莎",["ADC"],["scale","pick"],"MIX"],
+ ["Varus","韦鲁斯",["ADC"],["poke","pick"],"AD"],
+ ["Ezreal","伊泽瑞尔",["ADC"],["poke"],"AD"],
+ ["Jinx","金克丝",["ADC"],["scale"],"AD"],
+ ["Xayah","霞",["ADC"],["protect","scale"],"AD"],
+ ["Aphelios","厄斐琉斯",["ADC"],["scale"],"AD"],
+ ["Zeri","泽丽",["ADC"],["scale"],"AD"],
+ ["Ashe","艾希",["ADC","SUP"],["engage","pick"],"AD"],
+ ["Kalista","滑板鞋",["ADC"],["early","engage"],"AD"],
+ ["Lucian","卢锡安",["ADC"],["early"],"AD"],
+ ["Sivir","希维尔",["ADC"],["scale","engage"],"AD"],
+ ["Jhin","烬",["ADC"],["pick","poke"],"AD"],
+ ["Caitlyn","女警",["ADC"],["poke","early"],"AD"],
+ ["Ziggs","炸弹人",["ADC","MID"],["poke"],"AP"],
+ ["Smolder","斯莫德",["ADC","MID"],["scale","poke"],"MIX"],
+ ["Draven","德莱文",["ADC"],["early"],"AD"],
+ ["Kog'Maw","大嘴",["ADC"],["scale"],"MIX"],
+ ["Miss Fortune","厄运小姐",["ADC"],["engage","early"],"AD"],
+ ["Yunara","芸阿娜",["ADC"],["scale"],"AD"],
+ ["Senna","赛娜",["ADC","SUP"],["poke","protect"],"AD"],
+ // ---- 辅助 ----
+ ["Rakan","洛",["SUP"],["engage","protect"],"AP"],
+ ["Alistar","牛头",["SUP"],["engage","protect"],"AP"],
+ ["Nautilus","泰坦",["SUP"],["engage","pick"],"AP"],
+ ["Rell","芮尔",["SUP"],["engage"],"AP"],
+ ["Leona","日女",["SUP"],["engage","early"],"AP"],
+ ["Braum","布隆",["SUP"],["protect"],"AD"],
+ ["Renata Glasc","烈娜塔",["SUP"],["protect"],"AP"],
+ ["Lulu","璐璐",["SUP"],["protect","scale"],"AP"],
+ ["Milio","米利欧",["SUP"],["protect","scale"],"AP"],
+ ["Karma","卡尔玛",["SUP","MID"],["poke","protect"],"AP"],
+ ["Bard","巴德",["SUP"],["pick"],"AP"],
+ ["Thresh","锤石",["SUP"],["pick","protect"],"AP"],
+ ["Neeko","妮蔻",["SUP","MID"],["engage","pick"],"AP"],
+ ["Pyke","派克",["SUP"],["pick","early"],"AD"],
+ ["Blitzcrank","机器人",["SUP"],["pick"],"AP"],
+ ["Nami","娜美",["SUP"],["poke","protect"],"AP"],
+ ["Taric","塔里克",["SUP"],["protect","engage"],"AP"],
+ ["Seraphine","萨勒芬妮",["SUP","ADC"],["poke","protect"],"AP"],
+ ["Janna","风女",["SUP"],["protect"],"AP"],
+ ["Morgana","莫甘娜",["SUP"],["pick","protect"],"AP"],
+];
+</script>
+<script>// ================= 基础工具 =================
+const ROLES = ['TOP','JUG','MID','ADC','SUP'];
+const ROLE_CN = {TOP:'上单',JUG:'打野',MID:'中单',ADC:'下路',SUP:'辅助'};
+const REGIONS = ['LPL','LCK','LEC','LCS','CBLOL','LCP'];
+const REGION_STR = {LCK:6,LPL:6,LEC:4,LCS:3,LCP:2,CBLOL:1};
+const CH = {}; CHAMPS.forEach(([k,cn,roles,tags,dmg])=>CH[k]={k,cn,roles,tags,dmg});
+const CHAMP_KEYS = Object.keys(CH);
+const rnd = () => Math.random();
+const randn = () => { let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+const pick = a => a[Math.floor(rnd()*a.length)];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+function hash(s){ let h=2166136261; for(const c of String(s)){ h^=c.charCodeAt(0); h=Math.imul(h,16777619);} return h>>>0; }
+function srand(seed){ let s=seed||1; return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
+const sigmoid = x => 1/(1+Math.exp(-x));
+
+const AGE_FIX = {"Faker": 30, "Ruler": 28, "Chovy": 25, "Canyon": 25, "Kiin": 27, "Keria": 24, "Oner": 24, "Peyz": 21, "Doran": 26, "Zeus": 22, "Gumayusi": 24, "Kanavi": 26, "Zeka": 24, "ShowMaker": 26, "Viper": 26, "Bin": 23, "knight": 26, "XUN": 24, "ON": 23, "Flandre": 28, "Tarzan": 27, "Shanks": 25, "369": 25, "Tian": 26, "JackeyLove": 26, "Creme": 23, "TheShy": 26, "Rookie": 29, "Wei": 23, "Meiko": 28, "Xiaohu": 28, "Elk": 25, "Jiejie": 25, "GALA": 25, "Caps": 27, "BrokenBlade": 26, "Hans Sama": 27, "CoreJJ": 32, "Inspired": 24, "Berserker": 23, "Scout": 28, "Lehends": 28, "Bdd": 27, "Aiming": 26, "Cuzz": 27, "Pyosik": 26, "Teddy": 28, "Kingen": 26, "Lucid": 22, "Delight": 24, "Mikyx": 28, "Upset": 26, "Razork": 26, "Elyoya": 26, "Wunder": 28, "Blaber": 26, "Zven": 29, "Impact": 31, "Missing": 25, "Kael": 24, "Hope": 24, "Rich": 29, "Clozer": 23, "deokdam": 26, "Fisher": 22, "Duro": 24, "Kellin": 25, "Clear": 24, "Raptor": 22, "BuLLDoG": 22, "Croco": 26, "Breathe": 24, "Leave": 25, "Assum": 26, "Carzzy": 24, "Labrov": 24, "Canna": 26, "Busio": 22, "Jojopyun": 21, "Josedeodo": 26}; // 部分知名选手2026年龄（按出生年估算）
+let S = null; // 全局存档状态
+
+// ================= 身价/薪资 =================
+function playerValue(p){
+  let v = 30*Math.pow(1.15, p.rating-60);
+  const a=p.age;
+  const af = a<=19?1.35 : a<=21?1.2 : a<=24?1.05 : a<=27?0.9 : a<=29?0.7 : 0.5;
+  v *= af;
+  return Math.max(5, Math.round(v));
+}
+function fairSalary(p){ return Math.max(15, Math.round(playerValue(p)*0.18)); }
+const fmtMoney = w => w>=10000 ? (w/10000).toFixed(2)+'亿' : Math.round(w)+'万';
+
+// ================= 初始化 =================
+function newGame(userTeam){
+  S = { ver:1, year:2026, user:userTeam, teams:{}, players:{}, events:[], evIdx:0,
+        news:[], honors:[], points:{}, rr:{}, meta:{}, patchNo:1, uid:1, lplOrder:null,
+        log:{} };
+  const order = ['LPL','LCK','LEC','LCS','CBLOL','LCP'];
+  for(const reg of order){
+    const d = ROSTER[reg]; if(!d) continue;
+    for(const t of d.teams){
+      let key=t.short; if(S.teams[key]) key=t.short+'_'+reg;
+      const tier=t.tier||3;
+      S.teams[key] = { key, short:t.short, name:t.name, cn:t.cn&&t.cn!==t.name?t.cn:'', region:reg, tier,
+        budget: Math.round((reg==='LPL'||reg==='LCK'? 1:0.6)*[0,9000,6500,4500,3200,2400,2000,1800,1600,1500,1400][Math.min(tier,10)]),
+        roster:[], lineup:{} };
+      for(const p of t.players){
+        const pid = String(p.id).trim();
+        if(S.players[pid]) continue; // 去重
+        const r = srand(hash(pid));
+        const age = AGE_FIX[pid] || p.age || (18 + Math.floor(r()*9));
+        const pl = { pid, name:p.name||pid, role:p.role, nat:p.nat||(reg==='LPL'?'CN':reg==='LCK'?'KR':'--'),
+          age, rating:p.rating||70, team:key, form:0, champs:[], sub:!!p.sub };
+        pl.pot = Math.round(clamp(pl.rating + Math.max(0,23-age)*1.6 + r()*4, pl.rating, 97));
+        pl.salary = fairSalary(pl);
+        pl.contract = 2026 + Math.floor(r()*3);
+        genChampPool(pl, r);
+        S.players[pid]=pl; S.teams[key].roster.push(pid);
+      }
+    }
+  }
+  for(let i=0;i<24;i++) genRookie(2026);
+  Object.values(S.teams).forEach(t=>autoLineup(t.key));
+  newPatch();
+  // LPL 2026 第一赛段分组（官方：按2025排名）
+  S.lplOrder = ['BLG','AL','TES','IG','JDG','WBG','NIP','WE','EDG','TT','LGD','UP','LNG','OMG'].filter(k=>S.teams[k]);
+  Object.values(S.teams).filter(t=>t.region==='LPL'&&!S.lplOrder.includes(t.key)).forEach(t=>S.lplOrder.push(t.key));
+  buildSeason();
+  addNews(`欢迎来到 ${S.year} 赛季！你执掌 ${teamName(userTeam)}。目标：拿下LPL世界赛资格，问鼎全球总决赛。`);
+}
+function genChampPool(pl, r){
+  r = r || rnd;
+  const pool = CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
+  const sorted = pool.map(k=>[k, (CH[k].roles[0]===pl.role?0.3:0)+r()]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  pl.champs = sorted.map(([c],i)=>({c, p: i<2?5:i<4?3:2}));
+}
+const RK_A=['Shy','Lin','Kai','Ming','Zero','Neo','Hao','Yun','Feng','Bai','Leo','Qing','Ace','Mist','Ray','Tian','Sky','Jin','Rin','Sol','Xia','Lan','Mo','Chen','Yu','Nova','Rex','Hex','Ark','Vex'];
+const RK_B=['','x','o','7','in','er','yu','ze','ki','an','99','ly','Q','zz','ra'];
+function genRookie(year){
+  let id; do{ id = pick(RK_A)+pick(RK_B); } while(S.players[id]);
+  const role = pick(ROLES); const age = 17+Math.floor(rnd()*3);
+  const rating = Math.round(56+rnd()*12);
+  const pl = { pid:id, name:id+'（虚构新秀）', role, nat:pick(['CN','CN','CN','KR']), age, rating, team:null, form:0, champs:[], rookie:true,
+    pot: Math.round(clamp(rating+8+rnd()*18,rating,96)) };
+  pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl);
+  S.players[id]=pl; return pl;
+}
+function newPatch(){
+  S.meta = {};
+  for(const k of CHAMP_KEYS){ const x=rnd(); S.meta[k] = x<0.08?2 : x<0.25?1 : x<0.8?0 : -1; }
+  S.patchNo++;
+}
+const teamName = k => { const t=S.teams[k]; return t? t.short : k; };
+const T = k => S.teams[k];
+const P = id => S.players[id];
+
+// ================= 阵容 =================
+function isForeign(p){ return !['CN','TW','HK','MO'].includes(p.nat); }
+function autoLineup(key){
+  const t=T(key); t.lineup={};
+  for(const r of ROLES){
+    const c = t.roster.map(P).filter(p=>p.role===r).sort((a,b)=>b.rating-a.rating)[0];
+    if(c) t.lineup[r]=c.pid;
+  }
+  // 补位：缺位用其他位置替补
+  for(const r of ROLES) if(!t.lineup[r]){
+    const used=new Set(Object.values(t.lineup));
+    const c=t.roster.map(P).filter(p=>!used.has(p.pid)).sort((a,b)=>b.rating-a.rating)[0];
+    if(c) t.lineup[r]=c.pid;
+  }
+}
+function starters(key){ const t=T(key); return ROLES.map(r=>P(t.lineup[r])).filter(Boolean); }
+function teamOvr(key){
+  const t=T(key); let s=0;
+  for(const r of ROLES){ const p=P(t.lineup[r]); s += p ? p.rating+(p.form||0)-(p.role!==r?8:0) : 45; }
+  return s/5;
+}
+function lineupProblems(key){
+  const t=T(key), probs=[];
+  for(const r of ROLES) if(!t.lineup[r]) probs.push(`缺少${ROLE_CN[r]}首发`);
+  if(t.region==='LPL'){
+    const f = starters(key).filter(isForeign).length;
+    if(f>2) probs.push(`首发外援${f}人，超过LPL上限2人（规则为推测）`);
+  }
+  return probs;
+}
+function ensureRoster(key){
+  // AI球队缺位时签自由球员
+  const t=T(key);
+  for(const r of ROLES){
+    if(t.roster.some(id=>P(id).role===r)) continue;
+    let fa = freeAgents().filter(p=>p.role===r).sort((a,b)=>b.rating-a.rating)[0];
+    if(!fa){ fa=genRookie(S.year); fa.role=r; genChampPool(fa); }
+    signPlayer(fa.pid, key, fa.salary, S.year+1);
+  }
+  if(key!==S.user) autoLineup(key);
+}
+function freeAgents(){ return Object.values(S.players).filter(p=>!p.team && !p.retired); }
+function signPlayer(pid,key,salary,contract){
+  const p=P(pid); if(p.team){ const o=T(p.team); o.roster=o.roster.filter(x=>x!==pid); for(const r of ROLES) if(o.lineup[r]===pid) delete o.lineup[r]; }
+  p.team=key; p.salary=salary; p.contract=contract; p.rookie=false;
+  T(key).roster.push(pid);
+}
+
+// ================= BP / 比赛模拟 =================
+function champFit(p, c){
+  if(!p) return -6;
+  const e=p.champs.find(x=>x.c===c);
+  let f = e? e.p : -1.5;
+  f += (S.meta[c]||0)*0.9;
+  if(!CH[c].roles.includes(p.role)) f -= 4;
+  return f;
+}
+function compInfo(champs){
+  const tags={}; let ad=0,ap=0;
+  champs.forEach(c=>{ CH[c].tags.forEach(t=>tags[t]=(tags[t]||0)+1); if(CH[c].dmg==='AD')ad++; else if(CH[c].dmg==='AP')ap++; else {ad+=.5;ap+=.5;} });
+  let score=0, notes=[];
+  if((tags.engage||0)>=2){score+=1.2; notes.push('开团充足');}
+  if((tags.engage||0)===0 && champs.length===5){score-=1; notes.push('缺乏开团');}
+  if((tags.scale||0)>=2 && (tags.protect||0)>=1){score+=1.2; notes.push('保后期');}
+  if((tags.poke||0)>=3){score+=1; notes.push('消耗阵');}
+  if((tags.early||0)>=3){score+=1; notes.push('前期压制');}
+  if((tags.pick||0)>=3){score+=0.8; notes.push('抓单阵');}
+  if(champs.length===5 && (ad>=4.5||ap>=4.5)){score-=1.5; notes.push('伤害类型单一');}
+  const style = ['engage','poke','scale','pick','early'].sort((a,b)=>(tags[b]||0)-(tags[a]||0))[0];
+  return {score, notes, style, tags};
+}
+const STYLE_CN={engage:'开团',poke:'消耗',scale:'后期',pick:'抓单',early:'前期'};
+// 克制：开团>消耗>后期>开团；前期>后期；抓单>消耗
+function styleEdge(a,b){
+  const beats={engage:['poke'],poke:['scale','pick'],scale:['engage'],early:['scale'],pick:['poke']};
+  if((beats[a]||[]).includes(b)) return 0.8;
+  if((beats[b]||[]).includes(a)) return -0.8;
+  return 0;
+}
+// draft: {A,B (team keys), first:'A'|'B', blue:'A'|'B', locked:Set-like array, bans:{A:[],B:[]}, picks:{A:{role:champ},B:{}}, step}
+const DRAFT_SEQ = [ // F=先选方 S=后选方
+  ['ban','F'],['ban','S'],['ban','F'],['ban','S'],['ban','F'],['ban','S'],
+  ['pick','F'],['pick','S'],['pick','S'],['pick','F'],['pick','F'],['pick','S'],
+  ['ban','S'],['ban','F'],['ban','S'],['ban','F'],
+  ['pick','S'],['pick','F'],['pick','F'],['pick','S']];
+function newDraft(A,B,first,blue,locked){
+  return {A,B,first,blue,locked:locked||[],bans:{A:[],B:[]},picks:{A:{},B:{}},step:0};
+}
+function draftSide(d){ if(d.step>=DRAFT_SEQ.length) return null; const [kind,w]=DRAFT_SEQ[d.step]; const side = w==='F'? d.first : (d.first==='A'?'B':'A'); return {kind,side}; }
+function unavailable(d){ const u=new Set(d.locked); ['A','B'].forEach(s=>{ d.bans[s].forEach(c=>u.add(c)); Object.values(d.picks[s]).forEach(c=>u.add(c)); }); return u; }
+function lineupMap(key){ const t=T(key), m={}; ROLES.forEach(r=>m[r]=P(t.lineup[r])); return m; }
+function bestRoleFor(d, side, c){
+  const team=d[side], lu=lineupMap(team), open=ROLES.filter(r=>!d.picks[side][r] && CH[c].roles.includes(r));
+  if(!open.length) return null;
+  return open.sort((a,b)=>champFit(lu[b],c)-champFit(lu[a],c))[0];
+}
+function draftAct(d, c, role){
+  const cur=draftSide(d); if(!cur) return false;
+  if(unavailable(d).has(c)) return false;
+  if(cur.kind==='ban'){ d.bans[cur.side].push(c); }
+  else { role = role || bestRoleFor(d,cur.side,c); if(!role) return false; d.picks[cur.side][role]=c; }
+  d.step++; return true;
+}
+function aiChoose(d){
+  const cur=draftSide(d); const un=unavailable(d);
+  const me=cur.side, opp= me==='A'?'B':'A';
+  let best=null,bs=-1e9;
+  if(cur.kind==='ban'){
+    const lu=lineupMap(d[opp]);
+    for(const c of CHAMP_KEYS){ if(un.has(c)) continue;
+      const open=ROLES.filter(r=>!d.picks[opp][r] && CH[c].roles.includes(r)); if(!open.length) continue;
+      const s=Math.max(...open.map(r=>champFit(lu[r],c)))+rnd()*2.2;
+      if(s>bs){bs=s;best=c;} }
+    if(!best) best = CHAMP_KEYS.find(c=>!un.has(c));
+    return {c:best};
+  }
+  const lu=lineupMap(d[me]); const mine=Object.values(d.picks[me]);
+  const base=compInfo(mine).score;
+  let br=null;
+  for(const c of CHAMP_KEYS){ if(un.has(c)) continue;
+    for(const r of ROLES){ if(d.picks[me][r]||!CH[c].roles.includes(r)) continue;
+      const s=champFit(lu[r],c) + (compInfo(mine.concat(c)).score-base)*0.8 + rnd()*1.8;
+      if(s>bs){bs=s;best=c;br=r;} } }
+  return {c:best, role:br};
+}
+function autoDraftRest(d){ while(draftSide(d)){ const ch=aiChoose(d); if(!ch.c){ break; } if(!draftAct(d,ch.c,ch.role)) break; } }
+function draftPower(d, side){
+  const team=d[side], lu=lineupMap(team), picks=d.picks[side];
+  let s=0, det=[];
+  for(const r of ROLES){ const p=lu[r], c=picks[r];
+    const base = p? p.rating+(p.form||0)-(p.role!==r?8:0) : 45;
+    const fit = c? champFit(p,c):0;
+    s += base + fit*0.8; det.push({r,p,c,fit}); }
+  const ci = compInfo(Object.values(picks));
+  return {power:s/5 + ci.score, comp:ci, det};
+}
+function evalDraft(d){
+  const a=draftPower(d,'A'), b=draftPower(d,'B');
+  let diff = a.power - b.power + styleEdge(a.comp.style,b.comp.style) + (d.blue==='A'?0.3:-0.3);
+  return {a,b,diff,pA: sigmoid(diff/4)};
+}
+function playGame(d){
+  const ev=evalDraft(d);
+  const winA = rnd() < sigmoid((ev.diff + randn()*2.8)/5.2);
+  const dur = Math.round(24+rnd()*14 + (Math.abs(ev.diff)<2?4:0));
+  const wk = 10+Math.floor(rnd()*14), lk = 3+Math.floor(rnd()*(wk-2));
+  const stats = side => { const win = (side==='A')===winA; const tk = win?wk:lk, td = win?lk:wk;
+    const lu=lineupMap(d[side]); const w={TOP:.18,JUG:.2,MID:.26,ADC:.3,SUP:.06};
+    return ROLES.map(r=>{ const k=Math.round(tk*w[r]*(0.5+rnd())); const de=Math.round(td*0.2*(0.4+rnd()*1.2)); const a=Math.round(tk*(r==='SUP'?.7:r==='JUG'?.6:.45)*(0.6+rnd()*0.6));
+      return {pid:lu[r]&&lu[r].pid, r, c:d.picks[side][r], k, d:de, a}; }); };
+  const sa=stats('A'), sb=stats('B');
+  const pool = winA? sa:sb;
+  const mvp = pool.slice().sort((x,y)=>(y.k*2+y.a-y.d*1.5+ rnd()*4)-(x.k*2+x.a-x.d*1.5+rnd()*4))[0].pid;
+  return { w: winA?'A':'B', dur, kA: winA?wk:lk, kB: winA?lk:wk, mvp, pA:ev.pA, sa, sb,
+    bans:{A:d.bans.A.slice(),B:d.bans.B.slice()}, picks:{A:{...d.picks.A},B:{...d.picks.B}}, blue:d.blue, first:d.first,
+    styleA:ev.a.comp.style, styleB:ev.b.comp.style };
+}
+// 系列赛（AI 自动）
+function simSeries(m, keepGames){
+  const need=Math.ceil(m.bo/2); let wa=0,wb=0; const games=[]; let locked=[];
+  let chooser = rnd()<0.5?'A':'B';
+  if(m.hiSeed) chooser = m.hiSeed;
+  while(wa<need && wb<need){
+    // 先手选择：chooser 选择先选权，对方拿蓝色方（AI默认）
+    const first = chooser, blue = chooser==='A'?'B':'A';
+    const d=newDraft(m.a,m.b,first,blue,locked);
+    autoDraftRest(d);
+    const g=playGame(d); games.push(g);
+    if(g.w==='A')wa++; else wb++;
+    locked = locked.concat(Object.values(g.picks.A), Object.values(g.picks.B)); // 无畏征召
+    chooser = g.w==='A'?'B':'A'; // 败者获得先手选择权
+  }
+  return finishSeries(m, wa, wb, games, keepGames);
+}
+function finishSeries(m, wa, wb, games, keep){
+  m.s=[wa,wb]; m.w = wa>wb? m.a : m.b; m.l = wa>wb? m.b : m.a;
+  if(keep) m.gm = games.map(g=>({w:g.w,dur:g.dur,kA:g.kA,kB:g.kB,mvp:g.mvp,picks:g.picks,bans:g.bans,blue:g.blue}));
+  // 英雄统计
+  for(const g of games){ for(const s of ['A','B']) Object.values(g.picks[s]).forEach(c=>{ S.log[c]=S.log[c]||{p:0,w:0,b:0}; S.log[c].p++; if(g.w===s)S.log[c].w++; }); [...g.bans.A,...g.bans.B].forEach(c=>{S.log[c]=S.log[c]||{p:0,w:0,b:0};S.log[c].b++;}); }
+  return m;
+}
+
+// ================= 赛事结构：循环赛 / 对阵图 / 瑞士轮 =================
+function mkMatch(a,b,bo,label,extra){ return Object.assign({id:'m'+(S.uid++), a, b, bo, label, w:null, s:null}, extra||{}); }
+function rrRounds(teams){
+  const t=teams.slice(); if(t.length%2) t.push(null);
+  const n=t.length, rounds=[];
+  for(let r=0;r<n-1;r++){ const pr=[]; for(let i=0;i<n/2;i++){ const a=t[i], b=t[n-1-i]; if(a&&b) pr.push(r%2?[b,a]:[a,b]); } rounds.push(pr); t.splice(1,0,t.pop()); }
+  return rounds;
+}
+function mkRR(name, groups, bo, doubleFor){
+  // groups: {组名:[teams]}, doubleFor: {组名:true}
+  const st={kind:'rr', name, groups, bo, matches:[]};
+  const perGroup={};
+  for(const g in groups){ let rs=rrRounds(groups[g]); if(doubleFor[g]) rs=rs.concat(rs.map(r=>r.map(([a,b])=>[b,a]))); perGroup[g]=rs; }
+  const maxR=Math.max(...Object.values(perGroup).map(r=>r.length));
+  for(let i=0;i<maxR;i++) for(const g in perGroup){ const r=perGroup[g][i]; if(r) r.forEach(([a,b])=>st.matches.push(mkMatch(a,b,bo,`${g} 第${i+1}轮`,{g}))); }
+  return st;
+}
+function rrTable(st, g){
+  const rows={}; st.groups[g].forEach(t=>rows[t]={t,w:0,l:0,gw:0,gl:0});
+  st.matches.filter(m=>m.g===g&&m.w).forEach(m=>{ rows[m.w].w++; rows[m.l].l++;
+    rows[m.a].gw+=m.s[0]; rows[m.a].gl+=m.s[1]; rows[m.b].gw+=m.s[1]; rows[m.b].gl+=m.s[0]; });
+  return Object.values(rows).sort((x,y)=> (y.w-x.w) || ((y.gw-y.gl)-(x.gw-x.gl)) || (y.gw-x.gw) || (teamOvr(y.t)-teamOvr(x.t)));
+}
+// 对阵图节点：a/b 可为队伍key 或 {w:节点id} / {l:节点id}
+function mkBR(name, nodes, places){
+  const st={kind:'br', name, matches:[], places};
+  for(const n of nodes) st.matches.push(Object.assign(mkMatch(null,null,n.bo,n.label),{nid:n.id, ra:n.a, rb:n.b, col:n.col||0, row:n.row||0, hiSeed:'A'}));
+  resolveBR(st); return st;
+}
+function refTeam(st, r){
+  if(typeof r==='string') return r;
+  const m=st.matches.find(x=>x.nid===(r.w||r.l)); if(!m||!m.w) return null;
+  return r.w? m.w : m.l;
+}
+function resolveBR(st){ for(const m of st.matches){ if(!m.a) m.a=refTeam(st,m.ra); if(!m.b) m.b=refTeam(st,m.rb); } }
+function brPlaces(st){ return st.places.map(r=>refTeam(st,r)); }
+function de8Nodes(s, bo){
+  return [
+    {id:'U1',a:s[0],b:s[7],bo,label:'胜者组第一轮',col:0,row:0},{id:'U2',a:s[3],b:s[4],bo,label:'胜者组第一轮',col:0,row:1},
+    {id:'U3',a:s[1],b:s[6],bo,label:'胜者组第一轮',col:0,row:2},{id:'U4',a:s[2],b:s[5],bo,label:'胜者组第一轮',col:0,row:3},
+    {id:'L1',a:{l:'U1'},b:{l:'U2'},bo,label:'败者组第一轮',col:1,row:4},{id:'L2',a:{l:'U3'},b:{l:'U4'},bo,label:'败者组第一轮',col:1,row:5},
+    {id:'U5',a:{w:'U1'},b:{w:'U2'},bo,label:'胜者组半决赛',col:1,row:0},{id:'U6',a:{w:'U3'},b:{w:'U4'},bo,label:'胜者组半决赛',col:1,row:1},
+    {id:'L3',a:{w:'L1'},b:{l:'U6'},bo,label:'败者组第二轮',col:2,row:4},{id:'L4',a:{w:'L2'},b:{l:'U5'},bo,label:'败者组第二轮',col:2,row:5},
+    {id:'U7',a:{w:'U5'},b:{w:'U6'},bo,label:'胜者组决赛',col:2,row:0},
+    {id:'L5',a:{w:'L3'},b:{w:'L4'},bo,label:'败者组第三轮',col:3,row:4},
+    {id:'L6',a:{w:'L5'},b:{l:'U7'},bo,label:'败者组决赛',col:4,row:4},
+    {id:'GF',a:{w:'U7'},b:{w:'L6'},bo,label:'总决赛',col:5,row:0}];
+}
+const DE8_PLACES=[{w:'GF'},{l:'GF'},{l:'L6'},{l:'L5'},{l:'L3'},{l:'L4'},{l:'L1'},{l:'L2'}];
+function gslNodes(t, mode, bo, boElim){ // t[4]，mode 'top2'（前二晋级）或 'top1'（4队双败，1队晋级）
+  const e=boElim||bo;
+  const n=[{id:'M1',a:t[0],b:t[3],bo,label:'首轮',col:0,row:0},{id:'M2',a:t[1],b:t[2],bo,label:'首轮',col:0,row:1},
+    {id:'WM',a:{w:'M1'},b:{w:'M2'},bo,label:'胜者组',col:1,row:0},{id:'LM',a:{l:'M1'},b:{l:'M2'},bo:e,label:'败者组（淘汰赛）',col:1,row:1}];
+  if(mode==='top2'){ n.push({id:'DM',a:{l:'WM'},b:{w:'LM'},bo:e,label:'晋级战（淘汰赛）',col:2,row:1}); return {nodes:n, places:[{w:'WM'},{w:'DM'},{l:'DM'},{l:'LM'}]}; }
+  n.push({id:'LF',a:{l:'WM'},b:{w:'LM'},bo:e,label:'败者组决赛',col:2,row:1});
+  n.push({id:'GF',a:{w:'WM'},b:{w:'LF'},bo:e,label:'决赛',col:3,row:0});
+  return {nodes:n, places:[{w:'GF'},{l:'GF'},{l:'LF'},{l:'LM'}]};
+}
+function seNodes(t, bo, finalBo, pre){ // 4 或 8 队单败
+  pre=pre||''; const n=[]; let ids=[];
+  let col=0;
+  if(t.length===8){ for(let i=0;i<4;i++){ n.push({id:'Q'+i,a:t[i*2],b:t[i*2+1],bo,label:'八强赛',col,row:i}); } ids=['Q0','Q1','Q2','Q3']; col++;
+    n.push({id:'S0',a:{w:'Q0'},b:{w:'Q1'},bo,label:'半决赛',col,row:0},{id:'S1',a:{w:'Q2'},b:{w:'Q3'},bo,label:'半决赛',col,row:1}); }
+  else { n.push({id:'S0',a:t[0],b:t[1],bo,label:'半决赛',col,row:0},{id:'S1',a:t[2],b:t[3],bo,label:'半决赛',col,row:1}); }
+  col++;
+  n.push({id:'F',a:{w:'S0'},b:{w:'S1'},bo:finalBo||bo,label:'决赛',col,row:0});
+  const places=[{w:'F'},{l:'F'},{l:'S0'},{l:'S1'}]; if(t.length===8) places.push({l:'Q0'},{l:'Q1'},{l:'Q2'},{l:'Q3'});
+  return {nodes:n, places};
+}
+// 瑞士轮：3胜晋级 3负淘汰；晋级/淘汰关键局 BO3，其余 BO1（参照2025世界赛，2026细节为推测）
+function mkSwiss(name, teams){
+  const st={kind:'swiss', name, teams, rec:{}, met:{}, round:0, matches:[]};
+  teams.forEach(t=>{st.rec[t]=[0,0]; st.met[t]=[];});
+  swissNextRound(st); return st;
+}
+function swissNextRound(st){
+  const active = st.teams.filter(t=>st.rec[t][0]<3 && st.rec[t][1]<3);
+  if(!active.length) return false;
+  st.round++;
+  const groups={};
+  active.forEach(t=>{const k=st.rec[t].join('-'); (groups[k]=groups[k]||[]).push(t);});
+  for(const k in groups){
+    let best=null, bestBad=1e9;
+    for(let tries=0;tries<80;tries++){
+      const g=shuffle(groups[k]); let bad=0; const pr=[];
+      for(let i=0;i<g.length;i+=2){ const a=g[i],b=g[i+1]; if(!b) continue; if(st.met[a].includes(b)) bad+=10; if(st.round===1&&T(a).region===T(b).region) bad+=5; pr.push([a,b]); }
+      if(bad<bestBad){bestBad=bad;best=pr;} if(!bad) break;
+    }
+    const [w,l]=k.split('-').map(Number);
+    for(const [a,b] of best){ const decisive = (w===2||l===2); st.matches.push(mkMatch(a,b,decisive?3:1,`第${st.round}轮（${k}）`,{rnd:st.round})); }
+  }
+  return true;
+}
+function swissReport(st, m){ st.rec[m.w][0]++; st.rec[m.l][1]++; st.met[m.a].push(m.b); st.met[m.b].push(m.a); }
+
+// ================= 赛季日程 =================
+const EVENT_INFO = {
+  lpl_s1:{name:'LPL 第一赛段', date:'1月14日 - 3月8日', loc:'中国',
+    fmt:'✅ 14队按上赛季排名分三组：登峰组6队、坚毅组4队、涅槃组4队，组内双循环BO3（双边无畏征召）。✅ 登峰组前4直通季后赛；登峰组5-6、坚毅组全部、涅槃组前2进入“骑士之路”BO5单败；涅槃组后2淘汰。✅ 季后赛8队双败BO5。✅ 冠军80分、亚军50分，前两名出战全球先锋赛。⚠️ 3-8名积分为推测值。'},
+  fst:{name:'全球先锋赛 First Stand', date:'3月16日 - 22日', loc:'巴西 圣保罗',
+    fmt:'✅ 8队：LCK 2、LPL 2、LEC/LCS/CBLOL/LCP 各1。✅ 全程BO5无畏征召，小组赛+淘汰赛。✅ 冠军赛区获得MSI额外直通名额。⚠️ 小组赛具体结构为推测：两组各4队双败（GSL），各组前2进半决赛。'},
+  lpl_s2:{name:'LPL 第二赛段', date:'3月下旬 - 6月', loc:'中国',
+    fmt:'✅ 第一赛段季后赛8队进登峰组（双循环BO3），其余6队进涅槃组（单循环BO3）。✅ 登峰组前2直通季后赛；涅槃组后2淘汰（无缘第三赛段）；其余队伍跨组BO5单败“骑士之路”。✅ 季后赛8队双败，前二出战MSI。⚠️ 骑士之路对阵细节、积分值为推测；冠军代表LPL参加EWC为推测。'},
+  msi:{name:'MSI 季中冠军赛', date:'6月28日 - 7月12日', loc:'韩国 大田',
+    fmt:'✅ 11队：LCK/LPL/LEC/LCS/LCP 各2、CBLOL 1。✅ 各赛区一号种子 + 先锋赛冠军赛区二号种子直通对阵图（7队）。✅ 入围赛4队双败，1队晋级。✅ 对阵图8队双败，全程BO5无畏征召。✅ 冠军与亚军赛区各获得一个额外世界赛名额。'},
+  ewc:{name:'电竞世界杯 EWC', date:'7月15日 - 19日', loc:'法国 巴黎',
+    fmt:'✅ 16队：卫冕冠军（Gen.G）+ 六大赛区冠军 + 9支线上预选赛队伍。✅ 4个GSL双败小组，前2晋级；小组赛BO1，淘汰局BO3。✅ 淘汰赛单败BO3，决赛BO5。⚠️ 9个预选赛名额按各赛区实力分配为简化处理。'},
+  lpl_s3:{name:'LPL 第三赛段', date:'7月22日 - 9月', loc:'中国 · 五大城市主场',
+    fmt:'✅ 12队：第二赛段季后赛8队进登峰组，其余4队进涅槃组，组内双循环BO3。✅ 登峰组前6直通季后赛；登峰组7-8与涅槃组前2进行BO5单败骑士之路，争夺最后2席。✅ 季后赛8队。✅ 冠军为LPL一号种子出战世界赛。⚠️ 积分值为推测。'},
+  lpl_rf:{name:'LPL 世界赛资格赛', date:'9月', loc:'中国',
+    fmt:'⚠️ 未能查到2026官方细则，按往年惯例简化：第三赛段冠军为一号种子；其余名额按全年积分排名，最后一个名额由积分排名紧随其后的两队BO5决出。'},
+  worlds:{name:'全球总决赛 Worlds', date:'10月15日 - 11月14日', loc:'美国 洛杉矶 / 德州艾伦 / 纽约',
+    fmt:'✅ 19队：LCK/LPL/LEC/LCS/LCP 各3、CBLOL 2，另MSI冠军与亚军赛区各+1。✅ 入围赛4队双败BO5，1队晋级。✅ 瑞士轮16队（德州艾伦）→ 淘汰赛8队 → 决赛（纽约巴克莱中心）。⚠️ 入围赛参赛队伍、瑞士轮BO数（BO1/关键局BO3）、淘汰赛BO5沿用2025规则，为推测。'},
+  window:{name:'转会窗口', date:'', loc:'', fmt:'转会窗口开启：可以买卖、交换选手，签约自由球员。'},
+  off:{name:'休赛期', date:'11月 - 次年1月', loc:'', fmt:'合同到期、续约、转会期。选手年龄+1，能力成长或衰退。'},
+};
+function buildSeason(){
+  S.events = ['lpl_s1','fst','window','lpl_s2','msi','ewc','window','lpl_s3','lpl_rf','worlds','off'].map(type=>({type, stages:[], si:0, done:false, started:false, res:{}}));
+  S.evIdx=0; S.points={}; S.lplOrder.forEach(k=>S.points[k]=0);
+  S.rr={}; S.log={};
+}
+const curEvent = () => S.events[S.evIdx];
+function regionRank(region, split){
+  S.rr[region]=S.rr[region]||{};
+  if(!S.rr[region][split]){
+    const ts=Object.values(S.teams).filter(t=>t.region===region).map(t=>[t.key, teamOvr(t.key)+randn()*2.2]);
+    S.rr[region][split]=ts.sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  }
+  return S.rr[region][split];
+}
+function addPoints(order, table){ order.forEach((k,i)=>{ if(k && table[i]) S.points[k]=(S.points[k]||0)+table[i]; }); }
+
+const EV = {}; // 每类赛事：init(ev) 开始, next(ev) 当前阶段结束后调用
+// ---------- LPL S1 ----------
+EV.lpl_s1 = {
+  init(ev){ const o=S.lplOrder; ev.stages.push(mkRR('常规赛（组内赛）',{登峰组:o.slice(0,6),坚毅组:o.slice(6,10),涅槃组:o.slice(10,14)},3,{登峰组:1,坚毅组:1,涅槃组:1})); },
+  next(ev){
+    const st=ev.stages[ev.si];
+    if(ev.si===0){
+      const A=rrTable(st,'登峰组').map(r=>r.t), P_=rrTable(st,'坚毅组').map(r=>r.t), N=rrTable(st,'涅槃组').map(r=>r.t);
+      ev.res.A=A; ev.res.P=P_; ev.res.N=N;
+      ev.stages.push(mkBR('骑士之路（第一轮）',[
+        {id:'K1',a:A[4],b:P_[1],bo:5,label:'登峰5 vs 坚毅2'},{id:'K2',a:A[5],b:P_[0],bo:5,label:'登峰6 vs 坚毅1'},
+        {id:'K3',a:P_[2],b:N[1],bo:5,label:'坚毅3 vs 涅槃2'},{id:'K4',a:P_[3],b:N[0],bo:5,label:'坚毅4 vs 涅槃1'}],[]));
+    } else if(ev.si===1){
+      const g=k=>st.matches.find(m=>m.nid===k);
+      const seedOrd=[...ev.res.A,...ev.res.P,...ev.res.N];
+      ev.res.adv56=[g('K1').w,g('K2').w].sort((a,b)=>seedOrd.indexOf(a)-seedOrd.indexOf(b));
+      const r3=[g('K1').l,g('K2').l,g('K3').w,g('K4').w].sort((a,b)=>seedOrd.indexOf(a)-seedOrd.indexOf(b));
+      ev.stages.push(mkBR('骑士之路（第二轮）',[{id:'K5',a:r3[0],b:r3[3],bo:5,label:'决胜轮'},{id:'K6',a:r3[1],b:r3[2],bo:5,label:'决胜轮'}],[]));
+    } else if(ev.si===2){
+      const g=k=>st.matches.find(m=>m.nid===k);
+      const seeds=[...ev.res.A.slice(0,4), ...ev.res.adv56, g('K5').w, g('K6').w];
+      ev.stages.push(mkBR('季后赛',de8Nodes(seeds,5),DE8_PLACES));
+    } else {
+      const top8=brPlaces(st); const rest=[...ev.res.A,...ev.res.P,...ev.res.N].filter(t=>!top8.includes(t));
+      ev.res.final=[...top8,...rest];
+      addPoints(ev.res.final,[80,50,30,30,20,20,10,10]);
+      S.lplOrder=ev.res.final; ev.done=true;
+      ev.res.champ=top8[0];
+      addNews(`🏆 ${teamName(top8[0])} 夺得LPL第一赛段冠军！${teamName(top8[0])}、${teamName(top8[1])} 将代表LPL出战全球先锋赛。`);
+      splitEnd('s1', ev.res.final);
+    }
+  }
+};
+// ---------- LPL S2 ----------
+EV.lpl_s2 = {
+  init(ev){ const o=S.lplOrder; ev.stages.push(mkRR('常规赛（组内赛）',{登峰组:o.slice(0,8),涅槃组:o.slice(8,14)},3,{登峰组:1})); },
+  next(ev){
+    const st=ev.stages[ev.si]; const g=k=>st.matches.find(m=>m.nid===k);
+    if(ev.si===0){
+      const A=rrTable(st,'登峰组').map(r=>r.t), N=rrTable(st,'涅槃组').map(r=>r.t);
+      ev.res.A=A; ev.res.N=N; ev.res.out=N.slice(4);
+      ev.stages.push(mkBR('骑士之路（第一轮）',[{id:'K1',a:N[0],b:N[3],bo:5,label:'涅槃1 vs 涅槃4'},{id:'K2',a:N[1],b:N[2],bo:5,label:'涅槃2 vs 涅槃3'}],[]));
+    } else if(ev.si===1){
+      const A=ev.res.A;
+      ev.res.out = ev.res.out.concat([g('K1').l,g('K2').l]);
+      ev.stages.push(mkBR('骑士之路（第二轮）',[
+        {id:'K3',a:A[2],b:g('K2').w,bo:5,label:'登峰3 vs 涅槃晋级者'},{id:'K4',a:A[3],b:g('K1').w,bo:5,label:'登峰4 vs 涅槃晋级者'},
+        {id:'K5',a:A[4],b:A[7],bo:5,label:'登峰5 vs 登峰8'},{id:'K6',a:A[5],b:A[6],bo:5,label:'登峰6 vs 登峰7'}],[]));
+    } else if(ev.si===2){
+      const ord=[...ev.res.A,...ev.res.N];
+      ev.res.adv=['K3','K4','K5','K6'].map(k=>g(k).w).sort((a,b)=>ord.indexOf(a)-ord.indexOf(b));
+      const r3=['K3','K4','K5','K6'].map(k=>g(k).l).sort((a,b)=>ord.indexOf(a)-ord.indexOf(b));
+      ev.stages.push(mkBR('骑士之路（决胜轮）',[{id:'K7',a:r3[0],b:r3[3],bo:5,label:'决胜轮'},{id:'K8',a:r3[1],b:r3[2],bo:5,label:'决胜轮'}],[]));
+    } else if(ev.si===3){
+      const seeds=[...ev.res.A.slice(0,2),...ev.res.adv,g('K7').w,g('K8').w];
+      ev.stages.push(mkBR('季后赛',de8Nodes(seeds,5),DE8_PLACES));
+    } else {
+      // 被淘汰的两支涅槃组队伍 = 第一轮骑士之路的输家？官方：涅槃组后2淘汰 → 无缘第三赛段
+      const top8=brPlaces(st); const ord=[...ev.res.A,...ev.res.N];
+      const out2 = ev.res.N.slice(4);
+      const rest = ord.filter(t=>!top8.includes(t) && !out2.includes(t));
+      ev.res.final=[...top8,...rest,...out2]; ev.res.s3teams=[...top8,...rest];
+      addPoints(ev.res.final,[100,70,50,40,30,30,20,20]);
+      S.lplOrder=ev.res.final; ev.done=true; ev.res.champ=top8[0];
+      addNews(`🏆 ${teamName(top8[0])} 夺得LPL第二赛段冠军！${teamName(top8[0])}、${teamName(top8[1])} 出战MSI。${out2.map(teamName).join('、')} 无缘第三赛段。`);
+      splitEnd('s2', ev.res.final);
+    }
+  }
+};
+// ---------- LPL S3 ----------
+EV.lpl_s3 = {
+  init(ev){ const s2=S.events.find(e=>e.type==='lpl_s2').res; const t=s2.s3teams; ev.stages.push(mkRR('常规赛（组内赛）',{登峰组:t.slice(0,8),涅槃组:t.slice(8)},3,{登峰组:1,涅槃组:1})); },
+  next(ev){
+    const st=ev.stages[ev.si]; const g=k=>st.matches.find(m=>m.nid===k);
+    if(ev.si===0){
+      const A=rrTable(st,'登峰组').map(r=>r.t), N=rrTable(st,'涅槃组').map(r=>r.t); ev.res.A=A; ev.res.N=N;
+      ev.stages.push(mkBR('骑士之路',[{id:'K1',a:A[6],b:N[1],bo:5,label:'登峰7 vs 涅槃2'},{id:'K2',a:A[7],b:N[0],bo:5,label:'登峰8 vs 涅槃1'}],[]));
+    } else if(ev.si===1){
+      ev.stages.push(mkBR('季后赛',de8Nodes([...ev.res.A.slice(0,6),g('K1').w,g('K2').w],5),DE8_PLACES));
+    } else {
+      const top8=brPlaces(st); const ord=[...ev.res.A,...ev.res.N];
+      const s2=S.events.find(e=>e.type==='lpl_s2').res;
+      ev.res.final=[...top8, ...ord.filter(t=>!top8.includes(t)), ...s2.final.filter(t=>!ord.includes(t))];
+      addPoints(ev.res.final.slice(1),[90,70,50,30,30,20,20]);
+      S.lplOrder=ev.res.final; ev.done=true; ev.res.champ=top8[0];
+      addNews(`🏆 ${teamName(top8[0])} 夺得LPL第三赛段冠军，锁定LPL一号种子出战全球总决赛！`);
+      splitEnd('s3', ev.res.final);
+    }
+  }
+};
+// ---------- LPL 世界赛资格赛 ----------
+function worldsSlots(){
+  const slots={LPL:3,LCK:3,LEC:3,LCS:3,LCP:3,CBLOL:2};
+  const msi=S.events.find(e=>e.type==='msi');
+  if(msi&&msi.done){ slots[T(msi.res.champ).region]++; slots[T(msi.res.runner).region]++; }
+  return slots;
+}
+EV.lpl_rf = {
+  init(ev){
+    const champ=S.events.find(e=>e.type==='lpl_s3').res.champ;
+    const n=worldsSlots().LPL;
+    const rest=S.lplOrder.filter(t=>t!==champ).sort((a,b)=>(S.points[b]||0)-(S.points[a]||0));
+    ev.res.slots=n; ev.res.seeds=[champ, ...rest.slice(0,n-2)];
+    ev.res.cands=[rest[n-2],rest[n-1]];
+    ev.stages.push(mkBR('最后一个世界赛名额',[{id:'Q',a:rest[n-2],b:rest[n-1],bo:5,label:`争夺LPL${n}号种子`}],[{w:'Q'}]));
+  },
+  next(ev){ const w=brPlaces(ev.stages[0])[0]; ev.res.seeds.push(w); ev.done=true;
+    addNews(`🌍 LPL世界赛代表确定：${ev.res.seeds.map((t,i)=>`${i+1}号种子 ${teamName(t)}`).join('，')}。`); }
+};
+// ---------- 先锋赛 ----------
+EV.fst = {
+  init(ev){
+    const lpl=S.events.find(e=>e.type==='lpl_s1').res.final;
+    const lck=regionRank('LCK','s1');
+    const others=['LEC','LCS','CBLOL','LCP'].map(r=>regionRank(r,'s1')[0]);
+    const o=shuffle(others);
+    const flip=rnd()<0.5;
+    const gA=[flip?lck[0]:lpl[0], o[0], flip?lpl[1]:lck[1], o[1]];
+    const gB=[flip?lpl[0]:lck[0], o[2], flip?lck[1]:lpl[1], o[3]];
+    ev.res.teams=[...gA,...gB];
+    const a=gslNodes(gA,'top2',5), b=gslNodes(gB,'top2',5);
+    ev.stages.push(mkBR('小组赛 A组',a.nodes,a.places)); ev.stages.push(mkBR('小组赛 B组',b.nodes,b.places));
+    ev.parallel=[0,1];
+  },
+  next(ev){
+    if(ev.si<=1){ if(ev.si===0){ return 'wait'; }
+      const A=brPlaces(ev.stages[0]), B=brPlaces(ev.stages[1]);
+      const k=seNodes([A[0],B[1],B[0],A[1]],5,5);
+      ev.stages.push(mkBR('淘汰赛',k.nodes,k.places));
+    } else { const pl=brPlaces(ev.stages[2]); ev.res.champ=pl[0]; ev.res.runner=pl[1]; ev.done=true;
+      addNews(`🏆 ${teamName(pl[0])}（${T(pl[0]).region}）夺得全球先锋赛冠军！${T(pl[0]).region}赛区获得MSI额外直通名额。`);
+      intlPrize(pl,[600,300,150,150]); }
+  }
+};
+// ---------- MSI ----------
+EV.msi = {
+  init(ev){
+    const lpl=S.events.find(e=>e.type==='lpl_s2').res.final;
+    const fstReg = T(S.events.find(e=>e.type==='fst').res.champ).region;
+    const seeds={LPL:lpl.slice(0,2)}; ['LCK','LEC','LCS','LCP'].forEach(r=>seeds[r]=regionRank(r,'s2').slice(0,2)); seeds.CBLOL=[regionRank('CBLOL','s2')[0]];
+    const bye=REGIONS.map(r=>seeds[r][0]); bye.push(seeds[fstReg][1]);
+    const playin=[]; REGIONS.forEach(r=>{ if(seeds[r][1] && r!==fstReg) playin.push(seeds[r][1]); });
+    ev.res.bye=bye; ev.res.playin=playin; ev.res.fstReg=fstReg;
+    playin.sort((a,b)=>REGION_STR[T(b).region]-REGION_STR[T(a).region]);
+    const g=gslNodes(playin,'top1',5);
+    ev.stages.push(mkBR('入围赛',g.nodes,g.places));
+  },
+  next(ev){
+    if(ev.si===0){
+      const win=brPlaces(ev.stages[0])[0];
+      const all=[...ev.res.bye, win].sort((a,b)=>(REGION_STR[T(b).region]-REGION_STR[T(a).region]) || (ev.res.bye.indexOf(a)-ev.res.bye.indexOf(b)));
+      // 档位抽签：1档对4档、2档对3档，同赛区分开半区
+      const tiers=[all.slice(0,2),all.slice(2,4),all.slice(4,6),all.slice(6,8)].map(shuffle);
+      let s=[tiers[0][0],tiers[0][1],tiers[1][0],tiers[1][1],tiers[2][1],tiers[2][0],tiers[3][1],tiers[3][0]];
+      // s 顺序映射 de8: U1 s0-s7, U2 s3-s4, U3 s1-s6, U4 s2-s5 ；半区1={s0,s7,s3,s4} 半区2={s1,s6,s2,s5}
+      for(let t=0;t<30;t++){ const h1=[s[0],s[7],s[3],s[4]].map(x=>T(x).region), h2=[s[1],s[6],s[2],s[5]].map(x=>T(x).region);
+        if(new Set(h1).size===4 && new Set(h2).size===4) break; const i=pick([2,3,4,5,6,7]), j=pick([2,3,4,5,6,7]); [s[i],s[j]]=[s[j],s[i]]; }
+      ev.stages.push(mkBR('对阵图阶段',de8Nodes(s,5),DE8_PLACES));
+    } else { const pl=brPlaces(ev.stages[1]); ev.res.champ=pl[0]; ev.res.runner=pl[1]; ev.done=true;
+      addNews(`🏆 ${teamName(pl[0])} 夺得MSI冠军！${T(pl[0]).region}与${T(pl[1]).region}赛区获得额外世界赛名额。`);
+      intlPrize(pl,[1000,500,250,200,100,100,60,60]); }
+  }
+};
+// ---------- EWC ----------
+const EWC_DEFENDING = 'GEN'; // EWC 2025 冠军：Gen.G（已核实）；之后赛季为上届EWC冠军
+EV.ewc = {
+  init(ev){
+    const champs=[S.events.find(e=>e.type==='lpl_s2').res.champ, ...['LCK','LEC','LCS','LCP','CBLOL'].map(r=>regionRank(r,'s2')[0])];
+    const set=new Set(champs);
+    const dfd=S.ewcDefending||EWC_DEFENDING; if(T(dfd)) set.add(dfd); ev.res.defending=dfd;
+    const lpl=S.events.find(e=>e.type==='lpl_s2').res.final;
+    const quota={LCK:3,LPL:2,LEC:2,LCS:1,LCP:1,CBLOL:1};
+    const pools={LPL:lpl}; ['LCK','LEC','LCS','LCP','CBLOL'].forEach(r=>pools[r]=regionRank(r,'s2'));
+    for(const r of ['LCK','LPL','LEC','LCS','LCP','CBLOL']){ let n=0; for(const t of pools[r]){ if(set.size>=16||n>=quota[r]) break; if(!set.has(t)){set.add(t);n++;} } }
+    const all=[...set].slice(0,16).sort((a,b)=>teamOvr(b)-teamOvr(a));
+    // 蛇形分组
+    const G=[[],[],[],[]]; all.forEach((t,i)=>{ const row=Math.floor(i/4), c=i%4; G[row%2?3-c:c].push(t); });
+    ev.res.teams=all;
+    'ABCD'.split('').forEach((n,i)=>{ const g=gslNodes([G[i][0],G[i][1],G[i][2],G[i][3]],'top2',1,3); ev.stages.push(mkBR(`小组赛 ${n}组`,g.nodes,g.places)); });
+    ev.parallel=[0,1,2,3];
+  },
+  next(ev){
+    if(ev.si<=3){ if(ev.si<3) return 'wait';
+      const p=[0,1,2,3].map(i=>brPlaces(ev.stages[i]));
+      const k=seNodes([p[0][0],p[1][1],p[1][0],p[0][1],p[2][0],p[3][1],p[3][0],p[2][1]],3,5);
+      ev.stages.push(mkBR('淘汰赛',k.nodes,k.places));
+    } else { const pl=brPlaces(ev.stages[4]); ev.res.champ=pl[0]; ev.done=true; S.ewcDefending=pl[0];
+      addNews(`🏆 ${teamName(pl[0])} 夺得电竞世界杯（EWC）英雄联盟项目冠军！`);
+      intlPrize(pl,[1200,600,300,300,150,150,150,150]); }
+  }
+};
+// ---------- 全球总决赛 ----------
+EV.worlds = {
+  init(ev){
+    const slots=worldsSlots(); ev.res.slots=slots;
+    const seeds={LPL:S.events.find(e=>e.type==='lpl_rf').res.seeds};
+    REGIONS.filter(r=>r!=='LPL').forEach(r=>seeds[r]=regionRank(r,'s3').slice(0,slots[r]));
+    ev.res.seeds=seeds;
+    // 入围赛：额外名额的末位种子 + LCP末位 + CBLOL末位（推测）
+    const playin=[];
+    const base={LPL:3,LCK:3,LEC:3,LCS:3,LCP:3,CBLOL:2};
+    REGIONS.forEach(r=>{ for(let i=base[r];i<slots[r];i++) playin.push(seeds[r][i]); });
+    for(const [r,i] of [['LCP',2],['CBLOL',1],['LCS',2],['LEC',2]]){ if(playin.length>=4) break; if(!playin.includes(seeds[r][i])) playin.push(seeds[r][i]); }
+    ev.res.playin=playin.slice(0,4);
+    ev.res.direct=REGIONS.flatMap(r=>seeds[r]).filter(t=>!ev.res.playin.includes(t));
+    const g=gslNodes(ev.res.playin.sort((a,b)=>teamOvr(b)-teamOvr(a)),'top1',5);
+    ev.stages.push(mkBR('入围赛（洛杉矶）',g.nodes,g.places));
+  },
+  next(ev){
+    if(ev.si===0){ const w=brPlaces(ev.stages[0])[0]; ev.stages.push(mkSwiss('瑞士轮（德州艾伦）',[...ev.res.direct,w])); }
+    else if(ev.si===1){
+      const st=ev.stages[1]; const adv=st.teams.filter(t=>st.rec[t][0]===3).sort((a,b)=>st.rec[a][1]-st.rec[b][1]);
+      // 高战绩对低战绩，尽量避开同赛区
+      let hi=adv.slice(0,4), lo=adv.slice(4).reverse(), pairs=[];
+      for(let t=0;t<40;t++){ const L=t?shuffle(lo):lo; if(hi.every((h,i)=>T(h).region!==T(L[i]).region)){lo=L;break;} }
+      hi.forEach((h,i)=>pairs.push(h,lo[i]));
+      // 同一半区避开第1、2名
+      const k=seNodes([pairs[0],pairs[1],pairs[4],pairs[5],pairs[2],pairs[3],pairs[6],pairs[7]],5,5);
+      ev.stages.push(mkBR('淘汰赛（八强-决赛）',k.nodes,k.places));
+    } else { const pl=brPlaces(ev.stages[2]); ev.res.champ=pl[0]; ev.res.runner=pl[1]; ev.done=true;
+      addNews(`🏆🏆 ${teamName(pl[0])} 在纽约巴克莱中心捧起召唤师杯，成为${S.year}全球总决赛冠军！`);
+      intlPrize(pl,[3000,1500,700,700,350,350,350,350]);
+      S.honors.push({year:S.year, worlds:pl[0], runner:pl[1]}); }
+  }
+};
+EV.window={ init(ev){ ev.done=false; }, next(){} };
+EV.off={ init(ev){}, next(){} };
+
+function intlPrize(pl, table){ pl.forEach((t,i)=>{ if(t&&table[i]) T(t).budget+=table[i]; }); const u=pl.indexOf(S.user); if(u>=0&&table[u]) addNews(`💰 ${teamName(S.user)} 获得奖金 ${fmtMoney(table[u])}。`); }
+function splitEnd(split, order){
+  // 其他赛区本赛段排名
+  REGIONS.filter(r=>r!=='LPL').forEach(r=>regionRank(r,split));
+  // 财务：LPL奖金+赞助 − 1/3年薪
+  order.forEach((k,i)=>{ const t=T(k); const income = 300 + [500,300,200,150,100,100,80,80][i]||40; t.budget += income;
+    const pay = t.roster.map(P).reduce((s,p)=>s+p.salary,0)/3; t.budget -= Math.round(pay);
+    if(k===S.user) addNews(`💼 赛段结算：收入 ${fmtMoney(income)}，支付薪资 ${fmtMoney(pay)}，余额 ${fmtMoney(t.budget)}。`); });
+  Object.values(S.teams).filter(t=>t.region!=='LPL').forEach(t=>{ t.budget += 400 - Math.round(t.roster.map(P).reduce((s,p)=>s+p.salary,0)/3*0.6); });
+  // 成长与状态
+  Object.values(S.players).forEach(p=>{ if(p.retired) return;
+    let d = p.age<=22 ? (p.pot-p.rating)*0.1+randn()*0.7 : p.age<=26 ? randn()*0.7 : -0.35+randn()*0.7;
+    p.rating = clamp(Math.round((p.rating+d)*10)/10, 45, 97); p.form = Math.round(randn()*1.5*10)/10; });
+  newPatch();
+  addNews(`🔧 新版本 ${S.year%100}.${S.patchNo} 上线，英雄强度发生变化。`);
+}
+
+// ---------- 推进逻辑 ----------
+function stageMatches(ev){ // 当前可进行的比赛（含并行小组）
+  const idxs = ev.parallel && ev.si<=Math.max(...ev.parallel) ? ev.parallel : [ev.si];
+  const out=[];
+  for(const i of idxs){ const st=ev.stages[i]; if(!st) continue; if(st.kind==='br') resolveBR(st);
+    for(const m of st.matches) if(!m.w && m.a && m.b) out.push({m,st}); }
+  // 循环赛按轮次：只给出最早轮次
+  return out;
+}
+function nextReadyMatch(){ const ev=curEvent(); if(!ev||ev.done) return null; const a=stageMatches(ev); return a[0]||null; }
+function stageDone(st){ if(st.kind==='br') resolveBR(st); return st.matches.every(m=>m.w); }
+function startEvent(){ const ev=curEvent(); if(!ev.started){ ev.started=true; EV[ev.type].init(ev); } }
+function afterMatch(st, m){
+  if(st.kind==='swiss') swissReport(st,m);
+  if(st.kind==='br') resolveBR(st);
+  const ev=curEvent();
+  // 阶段推进
+  let guard=0;
+  while(!ev.done && guard++<10){
+    const idxs = ev.parallel && ev.si<=Math.max(...ev.parallel) ? ev.parallel : [ev.si];
+    const cur=ev.stages[ev.si];
+    if(cur.kind==='swiss'){ if(cur.matches.every(x=>x.w)){ if(swissNextRound(cur)) break; } else break; }
+    if(!idxs.every(i=>stageDone(ev.stages[i]))) break;
+    if(ev.parallel && idxs.length>1){ ev.si=Math.max(...idxs); EV[ev.type].next(ev); ev.si++; delete ev.parallel; continue; }
+    EV[ev.type].next(ev); if(!ev.done) ev.si++;
+  }
+  if(ev.parallel && ev.si>Math.max(...ev.parallel)) delete ev.parallel;
+}
+// 修正并行逻辑：对 FST/EWC，next 在 si = 最后一个小组时执行
+function playAI(item){ simSeries(item.m, isBig(item.st,item.m)); afterMatch(item.st,item.m); }
+function isBig(st,m){ return m.a===S.user||m.b===S.user||/决赛/.test(m.label); }
+function userInvolved(m){ return m.a===S.user||m.b===S.user; }
+function simUntilUser(limitAll){
+  startEvent();
+  let n=0;
+  while(true){ const it=nextReadyMatch(); if(!it) break;
+    if(userInvolved(it.m) && !limitAll) return it;
+    if(userInvolved(it.m) && limitAll){ simSeries(it.m,true); afterMatch(it.st,it.m); n++; continue; }
+    playAI(it); n++; if(n>2000) break; }
+  return null;
+}
+function advanceEvent(){
+  const ev=curEvent(); if(!ev.done) return;
+  S.evIdx++;
+  if(S.evIdx>=S.events.length){ S.evIdx=S.events.length-1; }
+}
+function addNews(t){ S.news.unshift({y:S.year, ev:curEvent()?EVENT_INFO[curEvent().type].name:'', t}); if(S.news.length>300) S.news.length=300; }
+
+// ================= 转会 =================
+function askPrice(p){
+  const t=T(p.team); let f=1.0;
+  if(t && Object.values(t.lineup).includes(p.pid)) f+=0.35;
+  if(t && t.tier<=2) f+=0.15;
+  if(p.contract<=S.year) f*=0.7;
+  return Math.round(playerValue(p)*f);
+}
+function evaluateOffer(pid, cash, givePid){
+  const p=P(pid), seller=T(p.team); const ask=askPrice(p);
+  let offerVal=cash; let gp=null;
+  if(givePid){ gp=P(givePid); offerVal += playerValue(gp)*(gp.role===p.role?0.95:0.7); }
+  const ratio=offerVal/ask;
+  return {ask, offerVal, ratio, accept: ratio>=1, chance: clamp((ratio-0.85)/0.3,0,1)};
+}
+function makeOffer(pid, cash, givePid){
+  const p=P(pid), me=T(S.user);
+  if(cash>me.budget) return {ok:false,msg:'预算不足'};
+  if(!p.team){ // 自由球员
+    signPlayer(pid,S.user,Math.round(p.salary*1.1),S.year+2); me.budget-=cash;
+    addNews(`✍️ ${teamName(S.user)} 签下自由球员 ${p.pid}（${ROLE_CN[p.role]}）。`); return {ok:true,msg:`签约成功！${p.pid} 加盟。`};
+  }
+  const e=evaluateOffer(pid,cash,givePid);
+  const accept = e.ratio>=1.05 || (e.ratio>=0.9 && rnd()<e.chance);
+  if(!accept) return {ok:false,msg:`${teamName(p.team)} 拒绝了报价（对方心理价位约 ${fmtMoney(e.ask)}）。`};
+  const seller=p.team;
+  me.budget-=cash; T(seller).budget+=cash;
+  signPlayer(pid,S.user,Math.max(p.salary,Math.round(fairSalary(p)*1.05)),S.year+2);
+  if(givePid){ signPlayer(givePid,seller,P(givePid).salary,P(givePid).contract); }
+  ensureRoster(seller);
+  addNews(`🔁 转会：${p.pid} 从 ${teamName(seller)} 加盟 ${teamName(S.user)}${cash?`，转会费 ${fmtMoney(cash)}`:''}${givePid?`，${givePid} 反向加盟 ${teamName(seller)}`:''}。`);
+  return {ok:true,msg:'交易达成！'};
+}
+function bidsFor(pid){
+  const p=P(pid), v=playerValue(p);
+  return Object.values(S.teams).filter(t=>t.key!==S.user && t.budget>v*0.8)
+    .map(t=>{ const cur=P(t.lineup[p.role]); const need = cur? (p.rating-cur.rating) : 10; return {t:t.key, need, price: Math.round(v*(0.75+rnd()*0.35+Math.max(0,need)*0.02))}; })
+    .filter(b=>b.need>-2 && b.price<=T(b.t).budget).sort((a,b)=>b.price-a.price).slice(0,3);
+}
+function sellPlayer(pid, buyer, price){
+  const p=P(pid); const me=T(S.user);
+  me.budget+=price; T(buyer).budget-=price;
+  signPlayer(pid,buyer,p.salary,Math.max(p.contract,S.year+1)); autoLineup(buyer);
+  addNews(`💸 ${teamName(S.user)} 将 ${pid} 以 ${fmtMoney(price)} 出售给 ${teamName(buyer)}。`);
+}
+function releasePlayer(pid){ const p=P(pid); const t=T(p.team); const pay=Math.round(p.salary*0.5); t.budget-=pay; t.roster=t.roster.filter(x=>x!==pid); for(const r of ROLES) if(t.lineup[r]===pid) delete t.lineup[r]; p.team=null; addNews(`📤 ${teamName(S.user)} 与 ${pid} 解约（支付违约金 ${fmtMoney(pay)}）。`); }
+function aiTransfers(n){
+  // AI 球队之间的转会
+  const ts=Object.values(S.teams).filter(t=>t.key!==S.user);
+  for(let i=0;i<n;i++){
+    const buyer=pick(ts); const role=pick(ROLES); const cur=P(buyer.lineup[role]); if(!cur) continue;
+    const cands=Object.values(S.players).filter(p=>p.role===role && p.team && p.team!==buyer.key && p.team!==S.user && p.rating>cur.rating+2 && askPrice(p)<buyer.budget*0.6);
+    if(!cands.length) continue;
+    const p=pick(cands.slice(0,40)); const price=askPrice(p); const from=p.team;
+    buyer.budget-=price; T(from).budget+=price;
+    signPlayer(p.pid,buyer.key,fairSalary(p),S.year+2);
+    // 原首发转去对方 or 成为替补
+    autoLineup(buyer.key); ensureRoster(from);
+    addNews(`🔁 ${p.pid} 以 ${fmtMoney(price)} 从 ${teamName(from)} 转会至 ${teamName(buyer.key)}。`);
+  }
+}
+// ================= 休赛期 / 新赛季 =================
+function finishOffseason(){
+  const y=S.year;
+  // 合同到期：AI 自动续约(80%)；用户未续约的成为自由球员
+  Object.values(S.players).forEach(p=>{ if(!p.team || p.contract>y) return;
+    if(p.team===S.user){ if(!p.renewed){ const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; addNews(`📤 ${p.pid} 合同到期离队，成为自由球员。`);} }
+    else if(rnd()<0.8 || T(p.team).roster.length<=5){ p.contract=y+1+Math.floor(rnd()*2); p.salary=fairSalary(p); }
+    else { const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; }
+    p.renewed=false; });
+  // 退役
+  Object.values(S.players).forEach(p=>{ if(!p.team && !p.retired && p.age>=29 && rnd()<0.5){ p.retired=true; } p.age++; });
+  for(let i=0;i<20;i++) genRookie(y+1);
+  Object.values(S.teams).forEach(t=>ensureRoster(t.key));
+  aiTransfers(12);
+  Object.values(S.teams).forEach(t=>{ if(t.key!==S.user) autoLineup(t.key); else { for(const r of ROLES) if(t.lineup[r] && P(t.lineup[r]).team!==t.key) delete t.lineup[r]; } });
+  // 用户队伍保底
+  ensureRoster(S.user);
+  // 新赛季
+  const s3=S.events.find(e=>e.type==='lpl_s3').res.final;
+  const ranked=s3.slice(0,8).concat(S.lplOrder.filter(t=>!s3.slice(0,8).includes(t)).sort((a,b)=>(S.points[b]||0)-(S.points[a]||0)));
+  S.history = S.history||[]; S.history.push({year:y, points:{...S.points}, lpl:S.events.filter(e=>/lpl_s/.test(e.type)).map(e=>e.res.champ), fst:S.events[1].res.champ, msi:S.events[4].res.champ, ewc:S.events[5].res.champ, worlds:S.events[9].res.champ});
+  S.year=y+1; S.lplOrder=ranked;
+  buildSeason();
+  addNews(`🎆 ${S.year} 赛季开始！`);
+}
+function renewPlayer(pid){ const p=P(pid); const s=Math.round(fairSalary(p)*1.1); p.salary=s; p.contract=S.year+2; p.renewed=true; addNews(`✍️ ${teamName(S.user)} 与 ${pid} 续约两年，年薪 ${fmtMoney(s)}。`); return s; }
+</script>
+<script>// ================= 界面 =================
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null };
+const SAVE_KEY='lolm_save_v1';
+const $app = () => document.getElementById('app');
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){ console.warn(e); } }
+function load(){ try{ const s=localStorage.getItem(SAVE_KEY); if(s){ S=JSON.parse(s); return true; } }catch(e){} return false; }
+function toast(t){ UI.toast=t; render(); setTimeout(()=>{ if(UI.toast===t){UI.toast=null; render();} },2600); }
+const teamTag = (k,cls='') => { const t=T(k); if(!t) return '—'; return `<span class="tt ${cls} ${k===S.user?'me':''}" title="${esc(t.name)}"><b>${esc(t.short)}</b><i>${t.region}</i></span>`; };
+const champName = c => c? (CH[c]?CH[c].cn:c) : '';
+const ovrBadge = v => `<b class="ovr ${v>=88?'s':v>=80?'a':v>=72?'b':'c'}">${Math.round(v)}</b>`;
+const transferOpen = () => { const ev=curEvent(); return ev.type==='window'||ev.type==='off'||(ev.type==='lpl_s1'&&!ev.started); };
+
+function render(){
+  if(!S){ $app().innerHTML = startScreen(); return; }
+  if(UI.match){ $app().innerHTML = matchScreen() + toastHtml(); return; }
+  const me=T(S.user);
+  const ev=curEvent();
+  $app().innerHTML = `
+  <header class="top">
+    <div class="brand">峡谷经理人</div>
+    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div><div><small>战力</small>${ovrBadge(teamOvr(S.user))}</div></div>
+  </header>
+  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['news','资讯'],['rules','规则'],['sys','存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
+  <main>${VIEWS[UI.view]()}</main>
+  ${UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:''}
+  ${toastHtml()}`;
+}
+const toastHtml = () => UI.toast?`<div class="toast">${esc(UI.toast)}</div>`:'';
+
+// ---------- 开始界面 ----------
+function startScreen(){
+  const has=!!localStorage.getItem(SAVE_KEY);
+  const lpl=ROSTER.LPL.teams;
+  // 临时计算战力
+  const ovr = t => { const best={}; t.players.forEach(p=>{ if(!best[p.role]||best[p.role]<p.rating) best[p.role]=p.rating; }); return ROLES.reduce((s,r)=>s+(best[r]||45),0)/5; };
+  return `<div class="start">
+    <h1>峡谷经理人</h1><p class="sub">英雄联盟电竞经理 · 2026 赛季</p>
+    ${has?`<button class="btn big" data-a="continue">继续存档</button>`:''}
+    <h3>选择你要执掌的 LPL 战队</h3>
+    <div class="tgrid">${lpl.map(t=>`<div class="tcard" data-a="newgame" data-k="${t.short}">
+      <div class="tn">${esc(t.short)}</div><div class="tf">${esc(t.cn||t.name)}</div>
+      <div class="tov">${Math.round(ovr(t))}<small>战力</small></div>
+      <div class="tp">${t.players.filter(p=>!p.sub).map(p=>esc(p.id)).join(' · ')}</div></div>`).join('')}</div>
+    <p class="note">选手名单整理自公开资料，部分队伍/能力值为估算，详见“赛制说明”。本游戏为粉丝向原创作品，界面与美术均为原创。</p>
+  </div>`;
+}
+
+// ---------- 主页 / 赛程 ----------
+const VIEWS = {};
+VIEWS.home = () => {
+  const ev=curEvent(), info=EVENT_INFO[ev.type];
+  let body='';
+  if(ev.type==='window'){
+    body=`<p>转会窗口开启中。你可以前往 <a data-a="view" data-v="market">转会市场</a> 买入/交换选手，或在 <a data-a="view" data-v="roster">阵容</a> 中出售选手。</p>
+      <button class="btn big" data-a="endWindow">结束转会窗口，继续赛程 ▶</button>`;
+  } else if(ev.type==='off'){
+    const exp=T(S.user).roster.map(P).filter(p=>p.contract<=S.year);
+    body=`<p>${S.year} 赛季结束。处理合同、转会后开始新赛季。</p>
+      ${exp.length?`<h4>合同到期选手（不续约将离队）</h4><table class="tbl">${exp.map(p=>`<tr><td>${ROLE_CN[p.role]}</td><td><b>${esc(p.pid)}</b></td><td>${ovrBadge(p.rating)}</td><td>${p.age}岁</td><td>${p.renewed?'✅ 已续约':`<button class="btn sm" data-a="renew" data-p="${esc(p.pid)}">续约2年（年薪约 ${fmtMoney(fairSalary(p)*1.1)}）</button>`}</td></tr>`).join('')}</table>`:'<p>没有合同到期的选手。</p>'}
+      <button class="btn big" data-a="newSeason">开始 ${S.year+1} 赛季 ▶</button>`;
+  } else if(!ev.started){
+    body = `<p>赛事即将开始。${ev.type==='lpl_s1'?'开赛前转会窗口仍然开放，可以先去调整阵容和转会。':''}</p>${probs()}
+      <div class="btns"><button class="btn big" data-a="startEv">开始赛事 ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事（含我的比赛）</button></div>`;
+  } else {
+    const nxt = nextReadyMatch();
+    const myNext = findMyNext();
+    if(ev.done){
+      body = `<div class="done">✅ 赛事已结束 ${ev.res.champ?`· 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
+        <button class="btn big" data-a="nextEvent">进入下一项赛事 ▶</button>`;
+    } else {
+      const inEvent = eventHasUser(ev);
+      body = `<div class="stage">当前阶段：<b>${esc(ev.stages[ev.si]?ev.stages[ev.si].name:'')}</b></div>
+       ${myNext?`<div class="nextm"><div class="lbl">下一场 · ${esc(myNext.m.label)} · BO${myNext.m.bo}</div>
+          <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}<span>战力 ${Math.round(teamOvr(myNext.m.a))}</span></div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}<span>战力 ${Math.round(teamOvr(myNext.m.b))}</span></div></div></div>`:
+         `<p class="muted">${inEvent?'等待其他比赛结果…':'你的战队没有参加本项赛事（或已被淘汰），可以直接模拟观看结果。'}</p>`}
+       <div class="btns">
+         ${myNext?`<button class="btn big" data-a="toMyMatch">${nxt&&userInvolved(nxt.m)?'进入比赛（BP）':'模拟至我的比赛'} ▶</button>`:''}
+         <button class="btn" data-a="simStage">模拟本阶段</button>
+         <button class="btn ghost" data-a="simEvent">快速模拟整项赛事（含我的比赛）</button>
+       </div>
+       ${probs()}`;
+    }
+  }
+  return `<section class="card evcard"><div class="evh"><h2>${info.name}</h2><span>${info.date} ${info.loc?'· '+info.loc:''}</span></div>
+    <details class="fmtd"><summary>赛制</summary><p class="fmt">${esc(info.fmt)}</p></details>${body}</section>
+    <div class="cols"><section class="card">${seasonTimeline()}</section><section class="card"><h3>LPL 积分榜（世界赛资格）</h3>${pointsTable()}</section></div>
+    <section class="card"><h3>最新动态</h3><ul class="news">${S.news.slice(0,8).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`;
+};
+function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">⚠️ ${p.join('；')} —— 请到“阵容”调整</p>`:''; }
+function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
+function findMyNext(){ const ev=curEvent(); if(!ev.started||ev.done) return null; for(const st of ev.stages){ if(st.kind==='br') resolveBR(st); const m=st.matches.find(m=>!m.w&&userInvolved(m)&&m.a&&m.b); if(m) return {m,st}; } return null; }
+function seasonTimeline(){
+  return `<h3>${S.year} 赛季日程</h3><ol class="tl">${S.events.map((e,i)=>{ const inf=EVENT_INFO[e.type];
+    const st = i<S.evIdx||e.done?'past':i===S.evIdx?'now':'';
+    return `<li class="${st}"><b>${inf.name}</b> <small>${inf.date}</small> ${e.res&&e.res.champ?`· 冠军 ${teamTag(e.res.champ)}`:''}</li>`; }).join('')}</ol>`;
+}
+function pointsTable(){
+  const rows=S.lplOrder.slice().sort((a,b)=>(S.points[b]||0)-(S.points[a]||0));
+  return `<table class="tbl"><tr><th>#</th><th>战队</th><th>积分</th><th>战力</th></tr>${rows.map((k,i)=>`<tr class="${k===S.user?'me':''}"><td>${i+1}</td><td>${teamTag(k)}</td><td>${S.points[k]||0}</td><td>${ovrBadge(teamOvr(k))}</td></tr>`).join('')}</table>`;
+}
+function eventSummary(ev){
+  const r=ev.res; let h='';
+  if(r.champ) h+=`<p>🏆 冠军：${teamTag(r.champ)}</p>`;
+  if(r.final) h+=`<p>最终排名：${r.final.slice(0,8).map((t,i)=>`${i+1}. ${teamTag(t)}`).join(' ')}</p>`;
+  if(r.seeds && Array.isArray(r.seeds)) h+=`<p>LPL世界赛代表：${r.seeds.map((t,i)=>`${i+1}号种子 ${teamTag(t)}`).join(' ')}</p>`;
+  if(r.runner) h+=`<p>亚军：${teamTag(r.runner)}</p>`;
+  return h;
+}
+
+// ---------- 阵容 ----------
+VIEWS.roster = () => {
+  const t=T(S.user); const ps=t.roster.map(P).sort((a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||b.rating-a.rating);
+  const sal=ps.reduce((s,p)=>s+p.salary,0);
+  return `<section class="card"><h2>${esc(t.name)} ${t.cn?`<small>${esc(t.cn)}</small>`:''}</h2>
+   <p>战力 ${ovrBadge(teamOvr(S.user))} · 预算 ${fmtMoney(t.budget)} · 年薪总额 ${fmtMoney(sal)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</p>
+   ${probs()}
+   <div class="lineup">${ROLES.map(r=>{ const p=P(t.lineup[r]); return `<div class="slot"><div class="r">${ROLE_CN[r]}</div>${p?`<b>${esc(p.pid)}</b>${ovrBadge(p.rating+(p.form||0))}${p.role!==r?'<em>非本位</em>':''}`:'<em>空缺</em>'}</div>`; }).join('')}</div>
+   <button class="btn sm ghost" data-a="autoLineup">自动最佳阵容</button>
+   <table class="tbl roster"><tr><th>位置</th><th>选手</th><th>国籍</th><th>年龄</th><th>能力</th><th>状态</th><th>潜力</th><th>身价</th><th>年薪</th><th>合同至</th><th>英雄池</th><th></th></tr>
+   ${ps.map(p=>{ const st=Object.entries(t.lineup).find(([r,id])=>id===p.pid); return `<tr>
+     <td>${ROLE_CN[p.role]}</td><td><b>${esc(p.pid)}</b><br><small>${esc(p.name)}</small></td><td>${esc(p.nat)}${isForeign(p)?'<small class="fx">外援</small>':''}</td><td>${p.age}</td>
+     <td>${ovrBadge(p.rating)}</td><td>${p.form>0?'+':''}${p.form||0}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${fmtMoney(p.salary)}</td><td>${p.contract}</td>
+     <td class="pool">${p.champs.map(c=>`<span class="${c.p>=5?'sig':''}">${champName(c.c)}</span>`).join('')}</td>
+     <td class="act">${st?`<span class="tagon">首发·${ROLE_CN[st[0]]}</span>`:`<button class="btn sm" data-a="setStarter" data-p="${esc(p.pid)}" data-r="${p.role}">设为${ROLE_CN[p.role]}首发</button>`}
+       ${transferOpen()?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}</td></tr>`; }).join('')}
+   </table>${transferOpen()?'':'<p class="muted">转会窗口关闭中（季后/休赛期与赛段之间开放），目前只能调整首发。</p>'}</section>`;
+};
+
+// ---------- 转会市场 ----------
+VIEWS.market = () => {
+  const f=UI.mk;
+  let ps=Object.values(S.players).filter(p=>!p.retired && p.team!==S.user);
+  if(f.fa) ps=ps.filter(p=>!p.team); else ps=ps.filter(p=>p.team);
+  if(f.region!=='ALL') ps=ps.filter(p=>p.team&&T(p.team).region===f.region);
+  if(f.role!=='ALL') ps=ps.filter(p=>p.role===f.role);
+  if(f.q) ps=ps.filter(p=>(p.pid+p.name+(p.team||'')).toLowerCase().includes(f.q.toLowerCase()));
+  const key={rating:p=>-p.rating, value:p=>-playerValue(p), age:p=>p.age, pot:p=>-p.pot}[f.sort];
+  ps.sort((a,b)=>key(a)-key(b));
+  const open=transferOpen();
+  return `<section class="card"><h2>转会市场 ${open?'<span class="on">窗口开放</span>':'<span class="off">窗口关闭</span>'}</h2>
+  ${open?'':'<p class="warn">当前不在转会窗口内，可以浏览，但无法报价。窗口在第一赛段开赛前、先锋赛后、EWC后以及休赛期开放。</p>'}
+  <div class="filters">
+    <select data-f="region">${['ALL',...REGIONS].map(r=>`<option ${f.region===r?'selected':''} value="${r}">${r==='ALL'?'全部赛区':r}</option>`).join('')}</select>
+    <select data-f="role">${['ALL',...ROLES].map(r=>`<option ${f.role===r?'selected':''} value="${r}">${r==='ALL'?'全部位置':ROLE_CN[r]}</option>`).join('')}</select>
+    <select data-f="sort">${[['rating','按能力'],['value','按身价'],['pot','按潜力'],['age','按年龄']].map(([k,n])=>`<option ${f.sort===k?'selected':''} value="${k}">${n}</option>`).join('')}</select>
+    <label><input type="checkbox" data-f="fa" ${f.fa?'checked':''}> 只看自由球员/新秀</label>
+    <input data-f="q" placeholder="搜索选手/战队" value="${esc(f.q)}">
+    <span class="muted">共 ${ps.length} 人 · 我的预算 ${fmtMoney(T(S.user).budget)}</span>
+  </div>
+  <table class="tbl"><tr><th>选手</th><th>战队</th><th>位置</th><th>国籍</th><th>年龄</th><th>能力</th><th>潜力</th><th>身价</th><th>要价</th><th>合同至</th><th></th></tr>
+  ${ps.slice(0,150).map(p=>`<tr><td><b>${esc(p.pid)}</b><br><small>${esc(p.name)}</small></td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${esc(p.nat)}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${p.team?fmtMoney(askPrice(p)):'—'}</td><td>${p.contract}</td>
+   <td>${open?`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`:''}</td></tr>`).join('')}</table>
+   ${ps.length>150?'<p class="muted">仅显示前150人，请使用筛选。</p>':''}</section>`;
+};
+function offerModal(pid){
+  return () => { const p=P(pid); const me=T(S.user);
+    const cash = UI.offerCash!=null?UI.offerCash:(p.team?askPrice(p):0); const give=UI.offerGive||'';
+    const e = p.team? evaluateOffer(pid,cash,give||null):null;
+    const verdict = !e? '' : e.ratio>=1.05?'<b class="g">对方大概率接受</b>':e.ratio>=0.9?'<b class="y">有机会，对方在犹豫</b>':'<b class="r">对方很可能拒绝</b>';
+    return `<h3>${p.team?'报价':'签约'}：${esc(p.pid)} <small>${ROLE_CN[p.role]} · ${p.team?teamTag(p.team):'自由球员'}</small></h3>
+     <p>能力 ${ovrBadge(p.rating)} · 潜力 ${p.pot} · ${p.age}岁 · 身价 ${fmtMoney(playerValue(p))} · 预计年薪 ${fmtMoney(Math.max(p.salary,fairSalary(p)))}</p>
+     ${p.team?`<label>转会费（万）：<input type="number" min="0" step="10" data-o="cash" value="${cash}"></label>
+     <label>附加交换选手：<select data-o="give"><option value="">（不交换）</option>${me.roster.map(P).map(x=>`<option value="${esc(x.pid)}" ${give===x.pid?'selected':''}>${esc(x.pid)} · ${ROLE_CN[x.role]} · ${x.rating.toFixed(0)} · 身价${fmtMoney(playerValue(x))}</option>`).join('')}</select></label>
+     <p>评估：${verdict}（报价价值 ${fmtMoney(e.offerVal)}）</p>`:'<p>自由球员可直接签约，无需转会费。</p>'}
+     <div class="btns"><button class="btn" data-a="doOffer" data-p="${esc(pid)}">${p.team?'提交报价':'签约'}</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; };
+}
+function sellModal(pid, bids){
+  return () => `<h3>出售 ${esc(pid)}</h3>${bids.length?`<p>收到以下报价：</p><table class="tbl">${bids.map(b=>`<tr><td>${teamTag(b.t)}</td><td>${fmtMoney(b.price)}</td><td><button class="btn sm" data-a="acceptBid" data-p="${esc(pid)}" data-t="${b.t}" data-price="${b.price}">接受</button></td></tr>`).join('')}</table>`:'<p>暂时没有球队有能力或意愿报价。</p>'}
+   <button class="btn ghost" data-a="closeModal">关闭</button>`;
+}
+
+// ---------- 赛事浏览 ----------
+VIEWS.events = () => {
+  const i = UI.evSel==null? S.evIdx : UI.evSel;
+  const evs=S.events.map((e,k)=>[e,k]).filter(([e])=>!['window','off'].includes(e.type));
+  const ev=S.events[i];
+  return `<section class="card"><div class="evtabs">${evs.map(([e,k])=>`<a data-a="evSel" data-i="${k}" class="${k===i?'on':''}">${EVENT_INFO[e.type].name}</a>`).join('')}</div>
+   ${!ev||['window','off'].includes(ev.type)?'<p>请选择赛事</p>': !ev.started?'<p class="muted">赛事尚未开始。</p><p class="fmt">'+esc(EVENT_INFO[ev.type].fmt)+'</p>' :
+     ev.stages.map(st=>stageView(st)).join('') + eventSummary(ev)}</section>`;
+};
+function matchCell(m){
+  const sc = m.w? `${m.s[0]}:${m.s[1]}` : 'BO'+m.bo;
+  return `<div class="mc ${userInvolved(m)?'me':''}" ${m.gm?`data-a="showMatch" data-m="${m.id}"`:''}>
+    <div class="${m.w&&m.w===m.a?'win':''}">${m.a?teamTag(m.a):'<i>待定</i>'}<b>${m.w?m.s[0]:''}</b></div>
+    <div class="${m.w&&m.w===m.b?'win':''}">${m.b?teamTag(m.b):'<i>待定</i>'}<b>${m.w?m.s[1]:''}</b></div>
+    <small>${esc(m.label)} · BO${m.bo}${m.gm?' · 🔍':''}</small></div>`;
+}
+function stageView(st){
+  if(st.kind==='rr'){
+    return `<h3>${esc(st.name)}</h3><div class="cols">${Object.keys(st.groups).map(g=>`<div><h4>${g}</h4><table class="tbl"><tr><th>#</th><th>战队</th><th>胜</th><th>负</th><th>小局</th></tr>${rrTable(st,g).map((r,i)=>`<tr class="${r.t===S.user?'me':''}"><td>${i+1}</td><td>${teamTag(r.t)}</td><td>${r.w}</td><td>${r.l}</td><td>${r.gw}-${r.gl}</td></tr>`).join('')}</table></div>`).join('')}</div>
+     <details><summary>全部比赛（${st.matches.filter(m=>m.w).length}/${st.matches.length}）</summary><div class="mlist">${st.matches.map(matchCell).join('')}</div></details>`;
+  }
+  if(st.kind==='swiss'){
+    const rows=st.teams.slice().sort((a,b)=>(st.rec[b][0]-st.rec[b][1])-(st.rec[a][0]-st.rec[a][1]));
+    return `<h3>${esc(st.name)}</h3><table class="tbl"><tr><th>战队</th><th>战绩</th><th>状态</th></tr>${rows.map(t=>`<tr class="${t===S.user?'me':''}"><td>${teamTag(t)}</td><td>${st.rec[t][0]}-${st.rec[t][1]}</td><td>${st.rec[t][0]>=3?'✅ 晋级':st.rec[t][1]>=3?'❌ 淘汰':'进行中'}</td></tr>`).join('')}</table>
+     <details><summary>全部比赛</summary><div class="mlist">${st.matches.map(matchCell).join('')}</div></details>`;
+  }
+  const cols={}; st.matches.forEach(m=>(cols[m.col]=cols[m.col]||[]).push(m));
+  return `<h3>${esc(st.name)}</h3><div class="bracket">${Object.keys(cols).sort((a,b)=>a-b).map(c=>`<div class="bcol">${cols[c].sort((a,b)=>a.row-b.row).map(matchCell).join('')}</div>`).join('')}</div>`;
+}
+function matchDetail(mid){
+  return () => { let m=null; S.events.forEach(e=>e.stages.forEach(st=>st.matches.forEach(x=>{ if(x.id===mid) m=x; })));
+    if(!m) return '无数据';
+    return `<h3>${teamTag(m.a)} ${m.s[0]} : ${m.s[1]} ${teamTag(m.b)} <small>${esc(m.label)}</small></h3>
+     ${m.gm.map((g,i)=>`<div class="gd"><b>第${i+1}局</b> 胜者 ${teamTag(g.w==='A'?m.a:m.b)} · ${g.dur}分钟 · 击杀 ${g.kA}:${g.kB} · MVP ${esc(g.mvp||'')} · 蓝色方 ${teamTag(g.blue==='A'?m.a:m.b)}
+       <div class="gp"><div>${teamTag(m.a)} ${ROLES.map(r=>champName(g.picks.A[r])).join(' / ')}<br><small>禁用：${g.bans.A.map(champName).join(' ')}</small></div>
+       <div>${teamTag(m.b)} ${ROLES.map(r=>champName(g.picks.B[r])).join(' / ')}<br><small>禁用：${g.bans.B.map(champName).join(' ')}</small></div></div></div>`).join('')}
+     <button class="btn ghost" data-a="closeModal">关闭</button>`; };
+}
+
+// ---------- 版本 ----------
+VIEWS.meta = () => {
+  const strong=CHAMP_KEYS.filter(k=>S.meta[k]>=1).sort((a,b)=>S.meta[b]-S.meta[a]);
+  const st=Object.entries(S.log).map(([c,v])=>({c,...v})).sort((a,b)=>(b.p+b.b)-(a.p+a.b)).slice(0,30);
+  return `<section class="card"><h2>当前版本 ${S.year%100}.${S.patchNo}</h2><p>版本强势英雄（🔥=T0，↑=T1）：</p>
+   <div class="chips">${strong.map(k=>`<span class="chip">${S.meta[k]>=2?'🔥':'↑'} ${CH[k].cn} <small>${CH[k].roles.map(r=>ROLE_CN[r]).join('/')}</small></span>`).join('')}</div>
+   <h3>本赛季英雄数据（全部赛区）</h3><table class="tbl"><tr><th>英雄</th><th>登场</th><th>禁用</th><th>胜率</th></tr>${st.map(x=>`<tr><td>${CH[x.c]?CH[x.c].cn:x.c}</td><td>${x.p}</td><td>${x.b}</td><td>${x.p?Math.round(x.w/x.p*100)+'%':'-'}</td></tr>`).join('')}</table></section>`;
+};
+VIEWS.news = () => `<section class="card"><h2>新闻</h2><ul class="news">${S.news.map(n=>`<li><small>${n.y} · ${esc(n.ev)}</small> ${esc(n.t)}</li>`).join('')}</ul>
+  <h3>历届冠军</h3><table class="tbl"><tr><th>年份</th><th>LPL S1/S2/S3</th><th>先锋赛</th><th>MSI</th><th>EWC</th><th>世界赛</th></tr>${(S.history||[]).map(h=>`<tr><td>${h.year}</td><td>${h.lpl.map(teamTag).join(' ')}</td><td>${teamTag(h.fst)}</td><td>${teamTag(h.msi)}</td><td>${teamTag(h.ewc)}</td><td>${teamTag(h.worlds)}</td></tr>`).join('')}</table></section>`;
+VIEWS.rules = () => `<section class="card"><h2>赛制说明（2026）</h2><p>✅ = 已从拳头官方/主流媒体核实；⚠️ = 未查到官方细则，游戏内为推测或简化。</p>
+  ${['lpl_s1','fst','lpl_s2','msi','ewc','lpl_s3','lpl_rf','worlds'].map(k=>`<h3>${EVENT_INFO[k].name} <small>${EVENT_INFO[k].date} · ${EVENT_INFO[k].loc}</small></h3><p class="fmt">${esc(EVENT_INFO[k].fmt)}</p>`).join('')}
+  <h3>BP规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 2026新规“先手选择权”：拥有选择权的一方选择蓝/红方或BP先后手，另一方获得剩余选项；系列赛中输掉上一局的一方获得下一局选择权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。</p>
+  <h3>其他说明</h3><p class="fmt">⚠️ LPL首发外援上限2人为沿用往年规则的推测。✅ EWC卫冕冠军：Gen.G（EWC 2025冠军），之后赛季为上届冠军。⚠️ 其他赛区不进行逐场模拟，按战力+随机生成各赛段排名。⚠️ 选手能力值、潜力、身价均为游戏估算；部分小赛区名单（LCP、CBLOL）可信度较低，部分选手年龄为随机生成。虚构新秀为游戏生成的原创角色。</p></section>`;
+VIEWS.sys = () => `<section class="card"><h2>存档</h2><p>游戏会在每场比赛后自动保存在浏览器本地。</p>
+  <div class="btns"><button class="btn" data-a="export">导出存档</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除存档并重新开始</button></div></section>`;
+
+// ================= 比赛（BP）界面 =================
+function beginUserMatch(item){
+  const m=item.m; const me = m.a===S.user?'A':'B';
+  UI.match = { item, me, wa:0, wb:0, games:[], locked:[], chooser: m.hiSeed? m.hiSeed : (rnd()<0.5?'A':'B'), phase:'choose', draft:null, sel:null, roleSel:null, filter:'ALL', q:'' };
+  if(UI.match.chooser!==me){ aiFirstChoice(); }
+  render();
+}
+function aiFirstChoice(){ const M=UI.match; M.aiTook='first'; M.phase='choose'; }
+function setupDraft(first, blue){ const M=UI.match; M.draft=newDraft(M.item.m.a, M.item.m.b, first, blue, M.locked); M.phase='draft'; M.sel=null; queueAI(); }
+function queueAI(){ const M=UI.match; if(!M||M.phase!=='draft') return; const cur=draftSide(M.draft);
+  if(!cur){ M.phase='ready'; render(); return; }
+  if(cur.side!==M.me){ setTimeout(()=>{ if(UI.match!==M||M.phase!=='draft') return; const ch=aiChoose(M.draft); draftAct(M.draft,ch.c,ch.role); render(); queueAI(); }, 380); }
+}
+function matchScreen(){
+  const M=UI.match, m=M.item.m; const opp = M.me==='A'?'B':'A';
+  const head = `<div class="mh"><div>${teamTag(m.a,'big')} <span class="sc">${M.wa}</span></div><div class="mid">${esc(m.label)} · BO${m.bo}<br><small>第 ${M.games.length+1} 局 · 无畏征召已锁定 ${M.locked.length} 名英雄</small></div><div><span class="sc">${M.wb}</span> ${teamTag(m.b,'big')}</div></div>`;
+  if(M.phase==='choose'){
+    const mine = M.chooser===M.me;
+    return `<div class="match">${head}<div class="card center">
+      ${mine?`<h3>你拥有本局“先手选择权”</h3><p>选择阵营或BP顺序之一，对手获得剩余选项。</p>
+        <div class="btns"><button class="btn" data-a="choose" data-c="blue">选择 蓝色方</button><button class="btn" data-a="choose" data-c="red">选择 红色方</button><button class="btn" data-a="choose" data-c="first">选择 BP先手</button><button class="btn" data-a="choose" data-c="second">选择 BP后手</button></div>`
+      :`<h3>对手拥有先手选择权，已选择 BP先手</h3><p>请你选择阵营：</p><div class="btns"><button class="btn" data-a="chooseSide" data-c="blue">蓝色方</button><button class="btn" data-a="chooseSide" data-c="red">红色方</button></div>`}
+      <div class="btns"><button class="btn ghost" data-a="autoSeries">自动模拟剩余系列赛</button></div></div></div>`;
+  }
+  const d=M.draft; const cur=draftSide(d); const un=unavailable(d);
+  const side = s => { const key=d[s]; const lu=lineupMap(key); const isBlue=d.blue===s;
+    return `<div class="dside ${isBlue?'blue':'red'} ${cur&&cur.side===s?'active':''}"><div class="dh">${teamTag(key)} ${isBlue?'蓝色方':'红色方'} · ${d.first===s?'BP先手':'BP后手'}</div>
+      <div class="bans">${[0,1,2,3,4].map(i=>`<span class="ban">${d.bans[s][i]?champName(d.bans[s][i]):'禁'}</span>`).join('')}</div>
+      ${ROLES.map(r=>{ const c=d.picks[s][r]; const p=lu[r]; const fit=c?champFit(p,c):null; return `<div class="pk ${c?'f':''}"><span class="r">${ROLE_CN[r]}</span><b>${p?esc(p.pid):'—'}</b><span class="c">${c?champName(c):''}${c?`<i class="${fit>=4?'g':fit>=1?'y':'r'}">${fit>=4?'招牌':fit>=1?'熟练':'生疏'}</i>`:''}</span></div>`; }).join('')}</div>`; };
+  let center='';
+  if(M.phase==='draft'){
+    const myTurn = cur && cur.side===M.me;
+    const mylu=lineupMap(d[M.me]); const opplu=lineupMap(d[opp]);
+    const list=CHAMP_KEYS.filter(k=>(M.filter==='ALL'||CH[k].roles.includes(M.filter)) && (!M.q || (k+CH[k].cn).toLowerCase().includes(M.q.toLowerCase())));
+    const hint = k => { const mine=ROLES.find(r=>mylu[r]&&mylu[r].champs.some(x=>x.c===k&&x.p>=3)); const theirs=ROLES.find(r=>opplu[r]&&opplu[r].champs.some(x=>x.c===k&&x.p>=5));
+      return (mine?`<i class="hm">★${esc(mylu[mine].pid)}</i>`:'')+(theirs?`<i class="ho">⚠${esc(opplu[theirs].pid)}</i>`:''); };
+    center = `<div class="dcenter"><div class="turn">${cur?`第 ${d.step+1}/20 步：${myTurn?'<b>轮到你</b>':'对手'}${cur.kind==='ban'?'禁用':'选择'}英雄`:''}</div>
+      <div class="filters">${['ALL',...ROLES].map(r=>`<a class="${M.filter===r?'on':''}" data-a="dFilter" data-r="${r}">${r==='ALL'?'全部':ROLE_CN[r]}</a>`).join('')}<input data-d="q" placeholder="搜索英雄" value="${esc(M.q)}"></div>
+      <div class="cgrid">${list.map(k=>{ const dis=un.has(k) || (myTurn && cur.kind==='pick' && !ROLES.some(r=>!d.picks[M.me][r]&&CH[k].roles.includes(r))); const locked=M.locked.includes(k); return `<div class="ch ${dis?'dis':''} ${M.sel===k?'sel':''}" ${dis||!myTurn?'':`data-a="dSel" data-c="${esc(k)}"`}>
+        <div class="cn">${CH[k].cn}${S.meta[k]>=2?'🔥':S.meta[k]>=1?'↑':''}</div><small>${esc(k)}</small>${locked?'<em>无畏锁定</em>':''}${hint(k)}</div>`; }).join('')}</div>
+      <div class="btns">${myTurn&&M.sel?`<button class="btn big" data-a="dLock">${cur.kind==='ban'?'确认禁用':'确认选择'}：${champName(M.sel)}</button>`:''}
+        ${myTurn&&M.sel&&cur.kind==='pick'?roleChooser(d,M.me,M.sel):''}
+        <button class="btn ghost" data-a="dAuto">自动完成本局BP</button><button class="btn ghost" data-a="autoSeries">自动模拟剩余系列赛</button></div></div>`;
+  } else if(M.phase==='ready'){
+    const e=evalDraft(d); const meP = M.me==='A'?e.pA:1-e.pA; const a=M.me==='A'?e.a:e.b, b=M.me==='A'?e.b:e.a;
+    center = `<div class="dcenter center"><h3>BP完成</h3><p>我方阵容：<b>${STYLE_CN[a.comp.style]}</b> ${a.comp.notes.join('、')}；对方阵容：<b>${STYLE_CN[b.comp.style]}</b> ${b.comp.notes.join('、')}</p>
+      <div class="prob"><div style="width:${Math.round(meP*100)}%"></div></div><p>赛前预测胜率：<b>${Math.round(meP*100)}%</b></p>
+      <button class="btn big" data-a="playGame">开始对局 ▶</button></div>`;
+  } else if(M.phase==='result'){
+    const g=M.games[M.games.length-1]; const won=(g.w===M.me);
+    const fin = Math.max(M.wa,M.wb)>=Math.ceil(m.bo/2);
+    const box = s => `<table class="tbl"><tr><th></th><th>选手</th><th>英雄</th><th>K/D/A</th></tr>${(s==='A'?g.sa:g.sb).map(x=>`<tr><td>${ROLE_CN[x.r]}</td><td>${esc(x.pid||'')}${x.pid===g.mvp?' 🏅':''}</td><td>${champName(x.c)}</td><td>${x.k}/${x.d}/${x.a}</td></tr>`).join('')}</table>`;
+    center = `<div class="dcenter center"><h2 class="${won?'g':'r'}">${won?'胜利！':'失败'}</h2><p>${g.dur}分钟 · 击杀 ${g.kA}:${g.kB} · MVP ${esc(g.mvp||'')}</p>
+      <div class="cols">${box('A')}${box('B')}</div>
+      ${fin?`<h3>系列赛结束：${teamTag(m.a)} ${M.wa}:${M.wb} ${teamTag(m.b)}</h3><button class="btn big" data-a="finishSeries">返回 ▶</button>`:`<button class="btn big" data-a="nextGame">下一局 ▶</button>`}</div>`;
+  }
+  return `<div class="match">${head}<div class="draft">${side('A')}${center}${side('B')}</div></div>`;
+}
+function roleChooser(d,side,c){
+  const open=ROLES.filter(r=>!d.picks[side][r]&&CH[c].roles.includes(r)); if(open.length<=1) return '';
+  const M=UI.match; const cur=M.roleSel&&open.includes(M.roleSel)?M.roleSel:bestRoleFor(d,side,c);
+  return `<span class="rolesel">位置：${open.map(r=>`<a class="${r===cur?'on':''}" data-a="dRole" data-r="${r}">${ROLE_CN[r]}</a>`).join('')}</span>`;
+}
+function endUserGame(g){
+  const M=UI.match; M.games.push(g); if(g.w==='A')M.wa++; else M.wb++;
+  M.locked = M.locked.concat(Object.values(g.picks.A),Object.values(g.picks.B));
+  M.chooser = g.w==='A'?'B':'A'; M.phase='result';
+}
+
+// ================= 交互 =================
+const ACT = {
+  view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
+  newgame:d=>{ newGame(d.k); save(); UI.view='home'; render(); },
+  continue:()=>{ load(); render(); },
+  closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerGive=null; render(); },
+  endWindow:()=>{ curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
+  nextEvent:()=>{ advanceEvent(); save(); render(); },
+  renew:d=>{ renewPlayer(d.p); save(); render(); },
+  newSeason:()=>{ finishOffseason(); save(); render(); toast(`${S.year} 赛季开始！`); },
+  toMyMatch:()=>{ if(lineupProblems(S.user).some(x=>x.startsWith('缺少'))){ toast('首发阵容不完整'); return; }
+    const it=simUntilUser(false); save(); if(it && userInvolved(it.m)) beginUserMatch(it); else render(); },
+  simStage:()=>{ startEvent(); const ev=curEvent(); const si=ev.si; let n=0; while(!ev.done && ev.si===si && n++<500){ const it=nextReadyMatch(); if(!it) break; if(userInvolved(it.m)){ simSeries(it.m,true); afterMatch(it.st,it.m);} else playAI(it); } save(); render(); },
+  simEvent:()=>{ simUntilUser(true); save(); render(); },
+  evSel:d=>{ UI.evSel=+d.i; render(); },
+  showMatch:d=>{ UI.modal=matchDetail(d.m); render(); },
+  autoLineup:()=>{ autoLineup(S.user); save(); render(); },
+  setStarter:d=>{ T(S.user).lineup[d.r]=d.p; save(); render(); },
+  sell:d=>{ UI.modal=sellModal(d.p,bidsFor(d.p)); render(); },
+  acceptBid:d=>{ sellPlayer(d.p,d.t,+d.price); UI.modal=null; save(); render(); toast('出售成功'); },
+  release:d=>{ UI.modal=()=>`<h3>确定与 ${esc(d.p)} 解约？</h3><p>需支付半年薪违约金（${fmtMoney(P(d.p).salary*0.5)}），选手将成为自由球员。</p><div class="btns"><button class="btn" data-a="doRelease" data-p="${esc(d.p)}">确定解约</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
+  doRelease:d=>{ releasePlayer(d.p); UI.modal=null; save(); render(); },
+  startEv:()=>{ startEvent(); save(); render(); },
+  offer:d=>{ UI.offerCash=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
+  doOffer:d=>{ const p=P(d.p); const cash=p.team?(UI.offerCash!=null?UI.offerCash:askPrice(p)):0; const r=makeOffer(d.p,cash,UI.offerGive||null); if(r.ok){ UI.modal=null; save(); } toast(r.msg); render(); },
+  export:()=>{ UI.modal=()=>`<h3>导出存档</h3><p>复制下面的文本保存到本地文件（.json），以后可用“导入存档”恢复。</p><textarea id="expt" readonly style="width:100%;height:200px">${esc(JSON.stringify(S))}</textarea><div class="btns"><button class="btn" data-a="copyExp">复制</button><button class="btn ghost" data-a="dlExp">下载文件</button><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); },
+  copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
+  dlExp:()=>{ try{ const b=new Blob([JSON.stringify(S)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`lol-manager-${S.year}.json`; a.click(); }catch(e){ toast('当前环境不支持下载，请用复制'); } },
+  reset:()=>{ UI.modal=()=>`<h3>确定删除存档并重新开始？</h3><div class="btns"><button class="btn" data-a="doReset">确定删除</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
+  doReset:()=>{ localStorage.removeItem(SAVE_KEY); S=null; UI.modal=null; render(); },
+  // 比赛
+  choose:d=>{ const M=UI.match, me=M.me, op=me==='A'?'B':'A';
+    if(d.c==='blue'||d.c==='red'){ const blue = d.c==='blue'?me:op; setupDraft(op, blue); } // 对手选BP先手
+    else { const first = d.c==='first'?me:op; setupDraft(first, op); } // 对手选蓝色方
+    render(); },
+  chooseSide:d=>{ const M=UI.match, me=M.me, op=me==='A'?'B':'A'; setupDraft(op, d.c==='blue'?me:op); render(); },
+  dFilter:d=>{ UI.match.filter=d.r; render(); },
+  dSel:d=>{ UI.match.sel=d.c; UI.match.roleSel=null; render(); },
+  dRole:d=>{ UI.match.roleSel=d.r; render(); },
+  dLock:()=>{ const M=UI.match; const cur=draftSide(M.draft); let role=null; if(cur.kind==='pick'){ const open=ROLES.filter(r=>!M.draft.picks[M.me][r]&&CH[M.sel].roles.includes(r)); role = M.roleSel&&open.includes(M.roleSel)?M.roleSel:null; }
+    if(draftAct(M.draft,M.sel,role)){ M.sel=null; M.roleSel=null; render(); queueAI(); } else toast('该英雄无法选择（没有空余对应位置）'); },
+  dAuto:()=>{ const M=UI.match; autoDraftRest(M.draft); M.phase='ready'; render(); },
+  playGame:()=>{ const g=playGame(UI.match.draft); endUserGame(g); render(); },
+  nextGame:()=>{ const M=UI.match; M.phase='choose'; M.draft=null; if(M.chooser!==M.me) aiFirstChoice(); render(); },
+  autoSeries:()=>{ const M=UI.match; const m=M.item.m; const need=Math.ceil(m.bo/2);
+    if(M.phase==='draft'||M.phase==='ready'){ autoDraftRest(M.draft); endUserGame(playGame(M.draft)); }
+    while(M.wa<need&&M.wb<need){ const first=M.chooser, blue=first==='A'?'B':'A'; const d=newDraft(m.a,m.b,first,blue,M.locked); autoDraftRest(d); endUserGame(playGame(d)); }
+    ACT.finishSeries(); },
+  finishSeries:()=>{ const M=UI.match; const m=M.item.m; finishSeries(m,M.wa,M.wb,M.games,true); afterMatch(M.item.st,m);
+    const won=m.w===S.user; addNews(`${won?'✅':'❌'} ${teamName(m.a)} ${M.wa}:${M.wb} ${teamName(m.b)}（${m.label}）`);
+    UI.match=null; save(); render(); toast(won?'系列赛获胜！':'系列赛失利'); },
+};
+document.addEventListener('click', e=>{ const el=e.target.closest('[data-a]'); if(!el) return; const f=ACT[el.dataset.a]; if(f){ e.preventDefault(); f(el.dataset); } });
+document.addEventListener('change', e=>{
+  const el=e.target;
+  if(el.dataset.f){ UI.mk[el.dataset.f] = el.type==='checkbox'? el.checked : el.value; render(); }
+  if(el.dataset.o==='give'){ UI.offerGive=el.value; render(); }
+  if(el.id==='imp' && el.files[0]){ el.files[0].text().then(t=>{ try{ S=JSON.parse(t); save(); render(); toast('导入成功'); }catch(x){ toast('存档格式错误'); } }); }
+});
+document.addEventListener('input', e=>{
+  const el=e.target;
+  if(el.dataset.f==='q'){ UI.mk.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-f=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },300); }
+  if(el.dataset.d==='q'){ UI.match.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-d=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },250); }
+  if(el.dataset.o==='cash'){ UI.offerCash=Math.max(0,+el.value||0); clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-o=cash]'); if(i){ i.focus(); } },500); }
+});
+window.addEventListener('load', render);
+</script>
+</body></html>

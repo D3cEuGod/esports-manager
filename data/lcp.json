@@ -1,0 +1,493 @@
+{
+ "region": "LCP",
+ "sourceNotes": "LCP 2026 had 8 teams (Secret Whales, Relove Deep Cross Gaming, GAM, Ground Zero Gaming, CTBC Flying Oyster, SoftBank HAWKS, MVK, DFM). Full Split 2 rosters could not be fetched (Leaguepedia/Liquipedia roster tabs blocked). Built from Hotspawn offseason tracker (Dec 2025) and Wikipedia All-Pros (Pout mid, Kino support for CFO; Chika mid and Harky ADC for MVK; 1Jiang top for GZG). LOW CONFIDENCE for DCG, GZG, DFM (DFM mid unknown placeholder; GZG jungle/mid/ADC/support taken from 2025 names, likely wrong). Ratings estimated; ages unknown. Tier by estimate. Post-Worlds not verified.",
+ "teams": [
+  {
+   "name": "CTBC Flying Oyster",
+   "short": "CFO",
+   "cn": "CFO",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Rest",
+     "name": "Rest",
+     "role": "TOP",
+     "nat": "TW",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    },
+    {
+     "id": "Shad0w",
+     "name": "Shad0w",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Pout",
+     "name": "Pout",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Doggo",
+     "name": "Doggo",
+     "role": "ADC",
+     "nat": "TW",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Kino",
+     "name": "Kino",
+     "role": "SUP",
+     "nat": "TW",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Pungyeon",
+     "name": "Pungyeon",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 66,
+     "sub": true
+    },
+    {
+     "id": "Orca",
+     "name": "Orca",
+     "role": "SUP",
+     "nat": "TW",
+     "age": null,
+     "rating": 64,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Secret Whales",
+   "short": "SW",
+   "cn": "SW",
+   "tier": 2,
+   "players": [
+    {
+     "id": "Pun",
+     "name": "Pun",
+     "role": "TOP",
+     "nat": "VN",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Hizto",
+     "name": "Hizto",
+     "role": "JUG",
+     "nat": "VN",
+     "age": null,
+     "rating": 67,
+     "sub": false
+    },
+    {
+     "id": "Dire",
+     "name": "Dire",
+     "role": "MID",
+     "nat": "VN",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Eddie",
+     "name": "Eddie",
+     "role": "ADC",
+     "nat": "VN",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Bie",
+     "name": "Bie",
+     "role": "SUP",
+     "nat": "VN",
+     "age": null,
+     "rating": 65,
+     "sub": false
+    },
+    {
+     "id": "Hiro02",
+     "name": "Hiro02",
+     "role": "TOP",
+     "nat": "VN",
+     "age": null,
+     "rating": 62,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "GAM Esports",
+   "short": "GAM",
+   "cn": "GAM",
+   "tier": 3,
+   "players": [
+    {
+     "id": "Kiaya",
+     "name": "Kiaya",
+     "role": "TOP",
+     "nat": "VN",
+     "age": null,
+     "rating": 67,
+     "sub": false
+    },
+    {
+     "id": "Draktharr",
+     "name": "Draktharr",
+     "role": "JUG",
+     "nat": "VN",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Aress",
+     "name": "Aress",
+     "role": "MID",
+     "nat": "VN",
+     "age": null,
+     "rating": 65,
+     "sub": false
+    },
+    {
+     "id": "Artemis",
+     "name": "Artemis",
+     "role": "ADC",
+     "nat": "VN",
+     "age": null,
+     "rating": 67,
+     "sub": false
+    },
+    {
+     "id": "Taki",
+     "name": "Taki",
+     "role": "SUP",
+     "nat": "VN",
+     "age": null,
+     "rating": 65,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Fukuoka SoftBank HAWKS",
+   "short": "SHG",
+   "cn": "HAWKS",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Evi",
+     "name": "Shunsuke Murase",
+     "role": "TOP",
+     "nat": "JP",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Van",
+     "name": "Van",
+     "role": "JUG",
+     "nat": "JP",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Aria",
+     "name": "Aria",
+     "role": "MID",
+     "nat": "JP",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Marble",
+     "name": "Marble",
+     "role": "ADC",
+     "nat": "JP",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Vsta",
+     "name": "Vsta",
+     "role": "SUP",
+     "nat": "JP",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "MVK Esports",
+   "short": "MVK",
+   "cn": "MVK",
+   "tier": 5,
+   "players": [
+    {
+     "id": "Kratos",
+     "name": "Kratos",
+     "role": "TOP",
+     "nat": "VN",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Gury",
+     "name": "Gury",
+     "role": "JUG",
+     "nat": "VN",
+     "age": null,
+     "rating": 65,
+     "sub": false
+    },
+    {
+     "id": "Chika",
+     "name": "Chika",
+     "role": "MID",
+     "nat": "VN",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Harky",
+     "name": "Harky",
+     "role": "ADC",
+     "nat": "VN",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "SiuLoong",
+     "name": "SiuLoong",
+     "role": "SUP",
+     "nat": "VN",
+     "age": null,
+     "rating": 63,
+     "sub": false
+    },
+    {
+     "id": "Kati",
+     "name": "Kati",
+     "role": "MID",
+     "nat": "VN",
+     "age": null,
+     "rating": 62,
+     "sub": true
+    },
+    {
+     "id": "Puddin",
+     "name": "Puddin",
+     "role": "ADC",
+     "nat": "VN",
+     "age": null,
+     "rating": 62,
+     "sub": true
+    },
+    {
+     "id": "Seany",
+     "name": "Seany",
+     "role": "MID",
+     "nat": "VN",
+     "age": null,
+     "rating": 60,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Relove Deep Cross Gaming",
+   "short": "DCG",
+   "cn": "DCG",
+   "tier": 6,
+   "players": [
+    {
+     "id": "Flauren",
+     "name": "Flauren",
+     "role": "TOP",
+     "nat": "TW",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "665",
+     "name": "665",
+     "role": "JUG",
+     "nat": "TW",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "HongSuo",
+     "name": "HongSuo",
+     "role": "MID",
+     "nat": "TW",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Feng",
+     "name": "Feng",
+     "role": "ADC",
+     "nat": "TW",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "ShiauC",
+     "name": "ShiauC",
+     "role": "SUP",
+     "nat": "TW",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Ground Zero Gaming",
+   "short": "GZG",
+   "cn": "GZG",
+   "tier": 7,
+   "players": [
+    {
+     "id": "1Jiang",
+     "name": "1Jiang",
+     "role": "TOP",
+     "nat": "TW",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Karsa",
+     "name": "Hsiao Ming-Hsin",
+     "role": "JUG",
+     "nat": "TW",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Maple",
+     "name": "Maple",
+     "role": "MID",
+     "nat": "TW",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Betty",
+     "name": "Betty",
+     "role": "ADC",
+     "nat": "TW",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Woody",
+     "name": "Woody",
+     "role": "SUP",
+     "nat": "TW",
+     "age": null,
+     "rating": 58,
+     "sub": false
+    },
+    {
+     "id": "Azhi",
+     "name": "Azhi",
+     "role": "TOP",
+     "nat": "TW",
+     "age": null,
+     "rating": 56,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "DetonatioN FocusMe",
+   "short": "DFM",
+   "cn": "DFM",
+   "tier": 8,
+   "players": [
+    {
+     "id": "RayFarky",
+     "name": "RayFarky",
+     "role": "TOP",
+     "nat": "JP",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Citrus",
+     "name": "Citrus",
+     "role": "JUG",
+     "nat": "JP",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "DFM Mid (unverified)",
+     "name": "Unknown",
+     "role": "MID",
+     "nat": "JP",
+     "age": null,
+     "rating": 58,
+     "sub": false
+    },
+    {
+     "id": "Kakkun",
+     "name": "Kakkun",
+     "role": "ADC",
+     "nat": "JP",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Harp",
+     "name": "Harp",
+     "role": "SUP",
+     "nat": "JP",
+     "age": null,
+     "rating": 58,
+     "sub": false
+    }
+   ]
+  }
+ ]
+}

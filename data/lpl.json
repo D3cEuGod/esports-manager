@@ -1,0 +1,802 @@
+{
+ "region": "LPL",
+ "sourceNotes": "Compiled 2026-11-22 from Liquipedia team pages (JDG, BLG, TES, AL, LNG), esports.net 2026 roster guide, Hotspawn LPL 2026 roster tracker, GosuGamers Worlds 2026 qualified list. Liquipedia pages for several teams were stale or unreachable; mid-season changes may be missed. Ages are null (not verified). Ratings are subjective estimates. LOW CONFIDENCE rosters (names only from preseason trackers, real names unknown so ID reused): EDG, NIP, WE, UP, TT, OMG, LGD (conflicting: climber/xqw/Sav1or in Hotspawn vs Heng/Tangyuan/Shaoye in esports.net). Conflicts: IG bot (JiaQi per GosuGamers Worlds list, Photic per preseason), IG top (TheShy per Worlds list, Soboro preseason); TES support fengyue vs Hang; LPL 2026 had 14 teams per trackers; Rare Atom/other 2026 teams not found.",
+ "teams": [
+  {
+   "name": "Bilibili Gaming",
+   "short": "BLG",
+   "cn": "哔哩哔哩电竞",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Bin",
+     "name": "Chen Zebin",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 92,
+     "sub": false
+    },
+    {
+     "id": "XUN",
+     "name": "Peng Lixun",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 86,
+     "sub": false
+    },
+    {
+     "id": "knight",
+     "name": "Zhuo Ding",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 91,
+     "sub": false
+    },
+    {
+     "id": "Viper",
+     "name": "Park Do-hyeon",
+     "role": "ADC",
+     "nat": "KR",
+     "age": null,
+     "rating": 91,
+     "sub": false
+    },
+    {
+     "id": "ON",
+     "name": "Luo Wenjun",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 85,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Anyone's Legend",
+   "short": "AL",
+   "cn": "AL电子竞技俱乐部",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Flandre",
+     "name": "Li Xuanjun",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 87,
+     "sub": false
+    },
+    {
+     "id": "Tarzan",
+     "name": "Lee Seung-yong",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 85,
+     "sub": false
+    },
+    {
+     "id": "Shanks",
+     "name": "Cui Xiaojun",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 84,
+     "sub": false
+    },
+    {
+     "id": "Hope",
+     "name": "Wang Jie",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 86,
+     "sub": false
+    },
+    {
+     "id": "Kael",
+     "name": "Kim Jin-hong",
+     "role": "SUP",
+     "nat": "KR",
+     "age": null,
+     "rating": 84,
+     "sub": false
+    },
+    {
+     "id": "Breathe",
+     "name": "Chen Chen",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 80,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Top Esports",
+   "short": "TES",
+   "cn": "TOP电竞",
+   "tier": 2,
+   "players": [
+    {
+     "id": "369",
+     "name": "Bai Jiahao",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 88,
+     "sub": false
+    },
+    {
+     "id": "Tian",
+     "name": "Gao Tianliang",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 86,
+     "sub": false
+    },
+    {
+     "id": "Creme",
+     "name": "Lin Jian",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 82,
+     "sub": false
+    },
+    {
+     "id": "JackeyLove",
+     "name": "Yu Wenbo",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 86,
+     "sub": false
+    },
+    {
+     "id": "fengyue",
+     "name": "Wang Runlai",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "ZUIAN",
+     "name": "Cheng Zihao",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 77,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Invictus Gaming",
+   "short": "IG",
+   "cn": "Invictus Gaming",
+   "tier": 2,
+   "players": [
+    {
+     "id": "TheShy",
+     "name": "Kang Seung-lok",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 84,
+     "sub": false
+    },
+    {
+     "id": "Wei",
+     "name": "Yan Yangwei",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 84,
+     "sub": false
+    },
+    {
+     "id": "Rookie",
+     "name": "Song Eui-jin",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 84,
+     "sub": false
+    },
+    {
+     "id": "JiaQi",
+     "name": "Zi Jiaqi",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 79,
+     "sub": false
+    },
+    {
+     "id": "Meiko",
+     "name": "Tian Ye",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 83,
+     "sub": false
+    },
+    {
+     "id": "Soboro",
+     "name": "Soboro",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 78,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "JD Gaming",
+   "short": "JDG",
+   "cn": "京东电竞",
+   "tier": 2,
+   "players": [
+    {
+     "id": "Xiaoxu",
+     "name": "Xu Xingzu",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "JunJia",
+     "name": "Yu Chun-chia",
+     "role": "JUG",
+     "nat": "TW",
+     "age": null,
+     "rating": 82,
+     "sub": false
+    },
+    {
+     "id": "HongQ",
+     "name": "Tsai Ming-hong",
+     "role": "MID",
+     "nat": "TW",
+     "age": null,
+     "rating": 81,
+     "sub": false
+    },
+    {
+     "id": "GALA",
+     "name": "Chen Wei",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 88,
+     "sub": false
+    },
+    {
+     "id": "Vampire",
+     "name": "Zhao Zhecan",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 80,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Weibo Gaming",
+   "short": "WBG",
+   "cn": "微博电竞",
+   "tier": 3,
+   "players": [
+    {
+     "id": "Zika",
+     "name": "Chen Chen",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Jiejie",
+     "name": "Zhao Lijie",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Xiaohu",
+     "name": "Li Yuanhao",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 85,
+     "sub": false
+    },
+    {
+     "id": "Elk",
+     "name": "Zhao Jiahao",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 86,
+     "sub": false
+    },
+    {
+     "id": "Erha",
+     "name": "Liu Qingsong",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "LNG Esports",
+   "short": "LNG",
+   "cn": "LNG电子竞技俱乐部",
+   "tier": 3,
+   "players": [
+    {
+     "id": "sheer",
+     "name": "Xu Wenjie",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Croco",
+     "name": "Kim Dong-beom",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "BuLLDoG",
+     "name": "Lee Tae-young",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "1xn",
+     "name": "Li Sau Nam",
+     "role": "ADC",
+     "nat": "HK",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Missing",
+     "name": "Lou Yunfeng",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "5t5",
+     "name": "Zeng Jun",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": true
+    },
+    {
+     "id": "fishone",
+     "name": "Yu Yi",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": true
+    },
+    {
+     "id": "OvO",
+     "name": "Zhang Jiahao",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 72,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "EDward Gaming",
+   "short": "EDG",
+   "cn": "EDward Gaming",
+   "tier": 3,
+   "players": [
+    {
+     "id": "Zdz",
+     "name": "Zdz",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Xiaohao",
+     "name": "Xiaohao",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 77,
+     "sub": false
+    },
+    {
+     "id": "Angel",
+     "name": "Angel",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Leave",
+     "name": "Leave",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Parukia",
+     "name": "Parukia",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 73,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Ninjas in Pyjamas",
+   "short": "NIP",
+   "cn": "Ninjas in Pyjamas",
+   "tier": 3,
+   "players": [
+    {
+     "id": "HOYA",
+     "name": "HOYA",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Guwon",
+     "name": "Guwon",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 77,
+     "sub": false
+    },
+    {
+     "id": "Care",
+     "name": "Care",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Assum",
+     "name": "Assum",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Zhuo",
+     "name": "Zhuo",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 73,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Team WE",
+   "short": "WE",
+   "cn": "Team WE",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Cube",
+     "name": "Cube",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Monki",
+     "name": "Monki",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Karis",
+     "name": "Karis",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "About",
+     "name": "About",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "yaoyao",
+     "name": "yaoyao",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Ultra Prime",
+   "short": "UP",
+   "cn": "Ultra Prime",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Liangchen",
+     "name": "Liangchen",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Grizzly",
+     "name": "Grizzly",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Saber",
+     "name": "Saber",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Hena",
+     "name": "Hena",
+     "role": "ADC",
+     "nat": "KR",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Xiaoxia",
+     "name": "Xiaoxia",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "ThunderTalk Gaming",
+   "short": "TT",
+   "cn": "ThunderTalk Gaming",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Keshi",
+     "name": "Keshi",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Junhao",
+     "name": "Junhao",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 73,
+     "sub": false
+    },
+    {
+     "id": "Heru",
+     "name": "Heru",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Ryan3",
+     "name": "Ryan3",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Feather",
+     "name": "Feather",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Oh My God",
+   "short": "OMG",
+   "cn": "OMG电子竞技俱乐部",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Hery",
+     "name": "Hery",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 73,
+     "sub": false
+    },
+    {
+     "id": "Juhan",
+     "name": "Juhan",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    },
+    {
+     "id": "haichao",
+     "name": "haichao",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Starry",
+     "name": "Starry",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 73,
+     "sub": false
+    },
+    {
+     "id": "Moham",
+     "name": "Moham",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 71,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "LGD Gaming",
+   "short": "LGD",
+   "cn": "LGD大鹅",
+   "tier": 5,
+   "players": [
+    {
+     "id": "sasi",
+     "name": "sasi",
+     "role": "TOP",
+     "nat": "CN",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Heng",
+     "name": "Heng",
+     "role": "JUG",
+     "nat": "CN",
+     "age": null,
+     "rating": 71,
+     "sub": false
+    },
+    {
+     "id": "Tangyuan",
+     "name": "Tangyuan",
+     "role": "MID",
+     "nat": "CN",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Shaoye",
+     "name": "Shaoye",
+     "role": "ADC",
+     "nat": "CN",
+     "age": null,
+     "rating": 71,
+     "sub": false
+    },
+    {
+     "id": "ycx",
+     "name": "ycx",
+     "role": "SUP",
+     "nat": "CN",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    }
+   ]
+  }
+ ]
+}

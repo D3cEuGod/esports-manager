@@ -1,0 +1,466 @@
+{
+ "region": "LCS",
+ "sourceNotes": "In 2026 Riot dissolved the LTA; LCS (North America, 8 teams: 7 partner + Disguised guest) and CBLOL returned as separate leagues. Rosters from esports.net (preseason), Sheep Esports/Hotspawn Summer 2026 notes (Zeyzal returned replacing benched Ceos at Shopify; Srtty starting top for Disguised; Denathor top for Dignitas; Tactical signed to Cloud9 six-man roster, role assumed ADC, 'Loki' also joined C9 role unknown and omitted). Roles/ratings/ages/nationalities largely estimated. Dignitas leaves LCS for 2027 (ignored). Standings snapshot: C9, LYON, TL top. Post-Worlds not verified.",
+ "teams": [
+  {
+   "name": "LYON",
+   "short": "LYON",
+   "cn": "LYON",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Zamudo",
+     "name": "Zamudo",
+     "role": "TOP",
+     "nat": "US",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Inspired",
+     "name": "Kacper Sl:oma",
+     "role": "JUG",
+     "nat": "PL",
+     "age": 25,
+     "rating": 79,
+     "sub": false
+    },
+    {
+     "id": "Saint",
+     "name": "Saint",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Berserker",
+     "name": "Kim Min-cheol",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 24,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Isles",
+     "name": "Isles",
+     "role": "SUP",
+     "nat": "US",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Team Liquid",
+   "short": "TL",
+   "cn": "TL",
+   "tier": 2,
+   "players": [
+    {
+     "id": "Morgan",
+     "name": "Morgan",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Josedeodo",
+     "name": "Brandon Joel Villegas",
+     "role": "JUG",
+     "nat": "US",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    },
+    {
+     "id": "Quid",
+     "name": "Quid",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Yeon",
+     "name": "Yeon",
+     "role": "ADC",
+     "nat": "US",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "CoreJJ",
+     "name": "Jo Yong-in",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 29,
+     "rating": 76,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Cloud9",
+   "short": "C9",
+   "cn": "C9",
+   "tier": 3,
+   "players": [
+    {
+     "id": "Thanatos",
+     "name": "Thanatos",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Blaber",
+     "name": "Robert Huang",
+     "role": "JUG",
+     "nat": "US",
+     "age": 27,
+     "rating": 72,
+     "sub": false
+    },
+    {
+     "id": "APA",
+     "name": "Eain Stearns",
+     "role": "MID",
+     "nat": "US",
+     "age": null,
+     "rating": 69,
+     "sub": false
+    },
+    {
+     "id": "Zven",
+     "name": "Jesper Svenningsen",
+     "role": "ADC",
+     "nat": "DK",
+     "age": 29,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Vulcan",
+     "name": "Philippe Laflamme",
+     "role": "SUP",
+     "nat": "CA",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Tactical",
+     "name": "Edward Ra",
+     "role": "ADC",
+     "nat": "US",
+     "age": null,
+     "rating": 64,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "FlyQuest",
+   "short": "FLY",
+   "cn": "FLY",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Gakgos",
+     "name": "Ibrahim Samet Bulut",
+     "role": "TOP",
+     "nat": "TR",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Gryffinn",
+     "name": "Johnson Le",
+     "role": "JUG",
+     "nat": "US",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Quad",
+     "name": "Song Su-hyeong",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Massu",
+     "name": "Fahad Abdulmalek",
+     "role": "ADC",
+     "nat": "US",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Cryogen",
+     "name": "Cryogen",
+     "role": "SUP",
+     "nat": "US",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Sentinels",
+   "short": "SEN",
+   "cn": "SEN",
+   "tier": 5,
+   "players": [
+    {
+     "id": "Impact",
+     "name": "Jeong Eon-young",
+     "role": "TOP",
+     "nat": "US",
+     "age": 28,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "HamBak",
+     "name": "HamBak",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "DARKWINGS",
+     "name": "DARKWINGS",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Rahel",
+     "name": "Rahel",
+     "role": "ADC",
+     "nat": "KR",
+     "age": null,
+     "rating": 67,
+     "sub": false
+    },
+    {
+     "id": "Huhi",
+     "name": "Huhi",
+     "role": "SUP",
+     "nat": "US",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Shopify Rebellion",
+   "short": "SR",
+   "cn": "SR",
+   "tier": 6,
+   "players": [
+    {
+     "id": "Fudge",
+     "name": "Ibrahim Allami",
+     "role": "TOP",
+     "nat": "AU",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Contractz",
+     "name": "Juan Garcia",
+     "role": "JUG",
+     "nat": "US",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Zinie",
+     "name": "Yoo Baek-jin",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Bvoy",
+     "name": "Bvoy",
+     "role": "ADC",
+     "nat": "KR",
+     "age": null,
+     "rating": 67,
+     "sub": false
+    },
+    {
+     "id": "Zeyzal",
+     "name": "Tristan Stidam",
+     "role": "SUP",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Ceos",
+     "name": "Denilson Oliveira Goncalves",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Disguised",
+   "short": "DSG",
+   "cn": "DSG",
+   "tier": 7,
+   "players": [
+    {
+     "id": "Srtty",
+     "name": "Srtty",
+     "role": "TOP",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "KryRa",
+     "name": "KryRa",
+     "role": "JUG",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Calime",
+     "name": "Calime",
+     "role": "MID",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Sajed",
+     "name": "Sajed",
+     "role": "ADC",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Lyonz",
+     "name": "Lyonz",
+     "role": "SUP",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Castle",
+     "name": "Castle",
+     "role": "TOP",
+     "nat": "US",
+     "age": null,
+     "rating": 60,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Dignitas",
+   "short": "DIG",
+   "cn": "DIG",
+   "tier": 8,
+   "players": [
+    {
+     "id": "Denathor",
+     "name": "Noah Erikson",
+     "role": "TOP",
+     "nat": "US",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "eXyu",
+     "name": "eXyu",
+     "role": "JUG",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Palafox",
+     "name": "Palafox",
+     "role": "MID",
+     "nat": "US",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "FBI",
+     "name": "Victor Huang",
+     "role": "ADC",
+     "nat": "US",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "IgNar",
+     "name": "IgNar",
+     "role": "SUP",
+     "nat": "KR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Photon",
+     "name": "Photon",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 62,
+     "sub": true
+    }
+   ]
+  }
+ ]
+}

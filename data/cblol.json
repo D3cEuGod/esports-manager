@@ -1,0 +1,430 @@
+{
+ "region": "CBLOL",
+ "sourceNotes": "CBLOL returned in 2026 as its own league (8 teams, Leviatan partner, Los Grandes guest replacing Isurus). Rosters from GeekPop News (Split 2) and Strafe (Worlds 2026: LOS 1st seed, FURIA 2nd seed). No subs found. Role order from article tables; names/ratings/ages/nationalities estimated; paiN mid 'keine' possibly misspelled. Tiers by Worlds seeding and playoff favorites (LOUD, RED, FURIA favorites in May). Post-Worlds not verified.",
+ "teams": [
+  {
+   "name": "FURIA",
+   "short": "FUR",
+   "cn": "FUR",
+   "tier": 2,
+   "players": [
+    {
+     "id": "guigo",
+     "name": "Guilherme Ruiz",
+     "role": "TOP",
+     "nat": "BR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Tatu",
+     "name": "Tatu",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Tutsz",
+     "name": "Tutsz",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Ayu",
+     "name": "Ayu",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Jojo",
+     "name": "Jojo",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Los Grandes",
+   "short": "LOS",
+   "cn": "LOS",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Zest",
+     "name": "Zest",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": false
+    },
+    {
+     "id": "Curse",
+     "name": "Curse",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 69,
+     "sub": false
+    },
+    {
+     "id": "Feisty",
+     "name": "Feisty",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Duduhh",
+     "name": "Duduhh",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 68,
+     "sub": false
+    },
+    {
+     "id": "Ackerman",
+     "name": "Ackerman",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "LOUD",
+   "short": "LLL",
+   "cn": "LOUD",
+   "tier": 3,
+   "players": [
+    {
+     "id": "xyno",
+     "name": "xyno",
+     "role": "TOP",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "uZent",
+     "name": "uZent",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Envy",
+     "name": "Envy",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "Bull",
+     "name": "Bull",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    },
+    {
+     "id": "YoungJae",
+     "name": "YoungJae",
+     "role": "SUP",
+     "nat": "KR",
+     "age": null,
+     "rating": 66,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "paiN Gaming",
+   "short": "PNG",
+   "cn": "PNG",
+   "tier": 5,
+   "players": [
+    {
+     "id": "Robo",
+     "name": "Robo",
+     "role": "TOP",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "Cariok",
+     "name": "Cariok",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "keine",
+     "name": "keine",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Trigger",
+     "name": "Trigger",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 63,
+     "sub": false
+    },
+    {
+     "id": "Kuri",
+     "name": "Kuri",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Fluxo W7M",
+   "short": "FX",
+   "cn": "FLX",
+   "tier": 6,
+   "players": [
+    {
+     "id": "curty",
+     "name": "curty",
+     "role": "TOP",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Peach",
+     "name": "Peach",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Momochi",
+     "name": "Momochi",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "BAO",
+     "name": "BAO",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "cody",
+     "name": "cody",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 58,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Leviatan",
+   "short": "LEV",
+   "cn": "LEV",
+   "tier": 7,
+   "players": [
+    {
+     "id": "Devost",
+     "name": "Devost",
+     "role": "TOP",
+     "nat": "CL",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Booki",
+     "name": "Booki",
+     "role": "JUG",
+     "nat": "AR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Enga",
+     "name": "Enga",
+     "role": "MID",
+     "nat": "CL",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Snaker",
+     "name": "Snaker",
+     "role": "ADC",
+     "nat": "CL",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "TopLop",
+     "name": "TopLop",
+     "role": "SUP",
+     "nat": "CL",
+     "age": null,
+     "rating": 58,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "RED Canids Kalunga",
+   "short": "RED",
+   "cn": "RED",
+   "tier": 4,
+   "players": [
+    {
+     "id": "STEPZ",
+     "name": "STEPZ",
+     "role": "TOP",
+     "nat": "BR",
+     "age": null,
+     "rating": 63,
+     "sub": false
+    },
+    {
+     "id": "zvnts",
+     "name": "zvnts",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Kaze",
+     "name": "Kaze",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Morttheus",
+     "name": "Morttheus",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 64,
+     "sub": false
+    },
+    {
+     "id": "frostyy",
+     "name": "frostyy",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Vivo Keyd Stars",
+   "short": "VKS",
+   "cn": "VKS",
+   "tier": 8,
+   "players": [
+    {
+     "id": "ZekaS",
+     "name": "ZekaS",
+     "role": "TOP",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Disamis",
+     "name": "Disamis",
+     "role": "JUG",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Mireu",
+     "name": "Mireu",
+     "role": "MID",
+     "nat": "BR",
+     "age": null,
+     "rating": 62,
+     "sub": false
+    },
+    {
+     "id": "Ceo",
+     "name": "Ceo",
+     "role": "ADC",
+     "nat": "BR",
+     "age": null,
+     "rating": 60,
+     "sub": false
+    },
+    {
+     "id": "Scamber",
+     "name": "Scamber",
+     "role": "SUP",
+     "nat": "BR",
+     "age": null,
+     "rating": 58,
+     "sub": false
+    }
+   ]
+  }
+ ]
+}

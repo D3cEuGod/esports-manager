@@ -1,0 +1,581 @@
+{
+ "region": "LCK",
+ "sourceNotes": "Compiled 2026-11-22 from sheepesports 'All LCK Cup 2026 rosters', strafe rostermania, Inven (LCK regular-season roster reveal), Liquipedia team list. These reflect early-2026 (LCK Cup/regular season) rosters; mid-season and pre-Worlds changes NOT verified. Ratings and ages are estimates; many ages null. Team tiers/ratings are subjective. Sub entries are only where sources listed dual slots. Sources conflicted on KT (Cuzz name spelling), BRO Casting given name, T1/HLE sidebar notes referencing 2027 moves (ignored).",
+ "teams": [
+  {
+   "name": "Gen.G Esports",
+   "short": "GEN",
+   "cn": "Gen.G",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Kiin",
+     "name": "Kim Gi-in",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 27,
+     "rating": 88,
+     "sub": false
+    },
+    {
+     "id": "Canyon",
+     "name": "Kim Geon-bu",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 25,
+     "rating": 91,
+     "sub": false
+    },
+    {
+     "id": "Chovy",
+     "name": "Jeong Ji-hoon",
+     "role": "MID",
+     "nat": "KR",
+     "age": 25,
+     "rating": 94,
+     "sub": false
+    },
+    {
+     "id": "Ruler",
+     "name": "Park Jae-hyuk",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 28,
+     "rating": 91,
+     "sub": false
+    },
+    {
+     "id": "Duro",
+     "name": "Joo Min-kyu",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 24,
+     "rating": 80,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "T1",
+   "short": "T1",
+   "cn": "T1",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Doran",
+     "name": "Choi Hyeon-joon",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 25,
+     "rating": 85,
+     "sub": false
+    },
+    {
+     "id": "Oner",
+     "name": "Mun Hyeon-jun",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 24,
+     "rating": 90,
+     "sub": false
+    },
+    {
+     "id": "Faker",
+     "name": "Lee Sang-hyeok",
+     "role": "MID",
+     "nat": "KR",
+     "age": 30,
+     "rating": 92,
+     "sub": false
+    },
+    {
+     "id": "Peyz",
+     "name": "Kim Su-hwan",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 20,
+     "rating": 88,
+     "sub": false
+    },
+    {
+     "id": "Keria",
+     "name": "Ryu Min-seok",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 24,
+     "rating": 93,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Hanwha Life Esports",
+   "short": "HLE",
+   "cn": "韩华",
+   "tier": 1,
+   "players": [
+    {
+     "id": "Zeus",
+     "name": "Choi Woo-je",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 22,
+     "rating": 89,
+     "sub": false
+    },
+    {
+     "id": "Kanavi",
+     "name": "Seo Jin-hyeok",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 26,
+     "rating": 87,
+     "sub": false
+    },
+    {
+     "id": "Zeka",
+     "name": "Kim Geon-woo",
+     "role": "MID",
+     "nat": "KR",
+     "age": 23,
+     "rating": 88,
+     "sub": false
+    },
+    {
+     "id": "Gumayusi",
+     "name": "Lee Min-hyeong",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 24,
+     "rating": 89,
+     "sub": false
+    },
+    {
+     "id": "Delight",
+     "name": "Yoo Hwan-joong",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 23,
+     "rating": 82,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "Dplus KIA",
+   "short": "DK",
+   "cn": "DK",
+   "tier": 2,
+   "players": [
+    {
+     "id": "Siwoo",
+     "name": "Jeon Si-woo",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 21,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "Lucid",
+     "name": "Choi Yong-hyeok",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 22,
+     "rating": 81,
+     "sub": false
+    },
+    {
+     "id": "ShowMaker",
+     "name": "Heo Su",
+     "role": "MID",
+     "nat": "KR",
+     "age": 26,
+     "rating": 88,
+     "sub": false
+    },
+    {
+     "id": "Smash",
+     "name": "Shin Geum-jae",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 21,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Career",
+     "name": "Oh Hyeong-seok",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 22,
+     "rating": 76,
+     "sub": false
+    }
+   ]
+  },
+  {
+   "name": "KT Rolster",
+   "short": "KT",
+   "cn": "KT",
+   "tier": 3,
+   "players": [
+    {
+     "id": "PerfecT",
+     "name": "Lee Seung-min",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 21,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "Cuzz",
+     "name": "Mun U-chan",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 26,
+     "rating": 82,
+     "sub": false
+    },
+    {
+     "id": "Bdd",
+     "name": "Gwak Bo-sung",
+     "role": "MID",
+     "nat": "KR",
+     "age": 29,
+     "rating": 83,
+     "sub": false
+    },
+    {
+     "id": "Aiming",
+     "name": "Kim Ha-ram",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 27,
+     "rating": 81,
+     "sub": false
+    },
+    {
+     "id": "Pollu",
+     "name": "Oh Dong-gyu",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 21,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Ghost",
+     "name": "Jang Yong-jun",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 26,
+     "rating": 76,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "BNK FEARX",
+   "short": "BFX",
+   "cn": "FearX",
+   "tier": 3,
+   "players": [
+    {
+     "id": "Clear",
+     "name": "Song Hyeon-min",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 21,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Raptor",
+     "name": "Jeon Eo-jin",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 22,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "VicLa",
+     "name": "Lee Dae-kwang",
+     "role": "MID",
+     "nat": "KR",
+     "age": 25,
+     "rating": 79,
+     "sub": false
+    },
+    {
+     "id": "Diable",
+     "name": "Nam Dae-geun",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 21,
+     "rating": 77,
+     "sub": false
+    },
+    {
+     "id": "Kellin",
+     "name": "Kim Hyeong-gyu",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 26,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "Daystar",
+     "name": "Yoo Ji-myeong",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "Nongshim RedForce",
+   "short": "NS",
+   "cn": "农心",
+   "tier": 3,
+   "players": [
+    {
+     "id": "Kingen",
+     "name": "Hwang Seong-hoon",
+     "role": "TOP",
+     "nat": "KR",
+     "age": 26,
+     "rating": 78,
+     "sub": false
+    },
+    {
+     "id": "Sponge",
+     "name": "Bae Young-jun",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Scout",
+     "name": "Lee Ye-chan",
+     "role": "MID",
+     "nat": "KR",
+     "age": 28,
+     "rating": 82,
+     "sub": false
+    },
+    {
+     "id": "Taeyoon",
+     "name": "Kim Tae-yoon",
+     "role": "ADC",
+     "nat": "KR",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Lehends",
+     "name": "Son Si-woo",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 27,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Calix",
+     "name": "Seon Hyeon-bin",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "DN SOOPers",
+   "short": "DNS",
+   "cn": "DN SOOPers",
+   "tier": 4,
+   "players": [
+    {
+     "id": "DuDu",
+     "name": "Lee Dong-ju",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Pyosik",
+     "name": "Hong Chang-hyeon",
+     "role": "JUG",
+     "nat": "KR",
+     "age": 25,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Clozer",
+     "name": "Lee Ju-hyun",
+     "role": "MID",
+     "nat": "KR",
+     "age": 21,
+     "rating": 81,
+     "sub": false
+    },
+    {
+     "id": "deokdam",
+     "name": "Seo Dae-gil",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 25,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Peter",
+     "name": "Jeong Yoon-su",
+     "role": "SUP",
+     "nat": "KR",
+     "age": 25,
+     "rating": 76,
+     "sub": false
+    },
+    {
+     "id": "Life",
+     "name": "Kim Jeong-min",
+     "role": "SUP",
+     "nat": "KR",
+     "age": null,
+     "rating": 72,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "HANJIN BRION",
+   "short": "BRO",
+   "cn": "BRO",
+   "tier": 4,
+   "players": [
+    {
+     "id": "Casting",
+     "name": "Shin Min-jae",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "GIDEON",
+     "name": "Kim Min-seong",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Fisher",
+     "name": "Lee Jeong-tae",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 77,
+     "sub": false
+    },
+    {
+     "id": "Teddy",
+     "name": "Park Jin-seong",
+     "role": "ADC",
+     "nat": "KR",
+     "age": 27,
+     "rating": 80,
+     "sub": false
+    },
+    {
+     "id": "Namgung",
+     "name": "Namgung Seong-hoon",
+     "role": "SUP",
+     "nat": "KR",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    },
+    {
+     "id": "Roamer",
+     "name": "Cho Woo-jin",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 70,
+     "sub": true
+    }
+   ]
+  },
+  {
+   "name": "DRX",
+   "short": "DRX",
+   "cn": "DRX",
+   "tier": 5,
+   "players": [
+    {
+     "id": "Rich",
+     "name": "Lee Jae-won",
+     "role": "TOP",
+     "nat": "KR",
+     "age": null,
+     "rating": 75,
+     "sub": false
+    },
+    {
+     "id": "Vincenzo",
+     "name": "Ha Seung-min",
+     "role": "JUG",
+     "nat": "KR",
+     "age": null,
+     "rating": 73,
+     "sub": false
+    },
+    {
+     "id": "ucal",
+     "name": "Son Woo-hyeon",
+     "role": "MID",
+     "nat": "KR",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Jiwoo",
+     "name": "Jung Ji-woo",
+     "role": "ADC",
+     "nat": "KR",
+     "age": null,
+     "rating": 74,
+     "sub": false
+    },
+    {
+     "id": "Andil",
+     "name": "Mun Gwan-bin",
+     "role": "SUP",
+     "nat": "KR",
+     "age": null,
+     "rating": 72,
+     "sub": false
+    }
+   ]
+  }
+ ]
+}

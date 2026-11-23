@@ -8,7 +8,7 @@ COLOUR 主站纸白 #f4f2ee / 墨黑 #111 / 信号红 #e8213a；
  --hex-blue:#0ac8b9;--hex-blue2:#1e78ff;--hex-red:#e84057;--hex-red2:#9e182d;
  --num:"Barlow Condensed","DIN Condensed","Arial Narrow",sans-serif;--sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);min-height:100vh;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);min-height:100vh;overflow-x:clip;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);-webkit-tap-highlight-color:transparent}
 a{color:var(--ink);cursor:pointer;text-decoration:underline;text-decoration-color:var(--ac);text-underline-offset:3px}
 small{color:var(--mu)}h1,h2,h3,h4{font-weight:900;letter-spacing:.5px}
 /* 顶栏 */
@@ -101,6 +101,27 @@ details>summary{cursor:pointer;color:var(--mu);margin:8px 0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid var(--ink);padding:3px 10px;font-size:13px}
 .gd{border-top:2px solid var(--ink);padding:10px 0;margin:10px 0}.gp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;font-size:13px}
 .evlog-sm{list-style:none;padding:6px 10px;margin:8px 0 0;background:var(--bg);font-size:12px;border-left:3px solid var(--ln2)}.evlog-sm li{padding:2px 0}.evlog-sm b{font-family:var(--num);margin-right:6px;color:var(--ink)}
+/* 账号与云同步 */
+.cloud-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;font:600 12px var(--sans);cursor:pointer;white-space:nowrap}
+.cloud-pill:hover{border-color:var(--hex-gold);background:rgba(200,155,60,.22)}
+.cloud-pill b{font-size:13px;font-family:var(--sans)}.cloud-pill small{color:#b7b4ad;font-size:11px}
+.cloud-pill.synced{border-color:#26a868;background:rgba(20,131,59,.25)}.cloud-pill.syncing{border-color:var(--hex-gold)}.cloud-pill.offline{border-color:#d97706}
+.start-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.start-acct .cloud-pill{background:var(--ink);color:#fff;border-color:var(--ink)}
+.acct-box h3{margin-top:0}.acct-user{padding:12px 14px;background:var(--bg);border-left:4px solid var(--gr);margin:10px 0}
+.acct-form .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:10px 0}
+.acct-form input,.cfg-body input{width:100%}
+.cloud-cfg{margin-top:14px;border:1px solid var(--ln2);padding:10px 14px;background:#faf9f6}
+.cloud-cfg summary{font-weight:700;color:var(--ink);cursor:pointer;margin:0}
+.cfg-body{margin-top:10px}.cfg-body label{display:block;margin:8px 0;font-size:13px;font-weight:600}
+.cfg-body code{background:#eae6de;padding:1px 5px;font-size:12px}
+hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
+.conflict-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.cf-card{border:1px solid var(--ln2);padding:14px;background:#faf9f6;display:flex;flex-direction:column;gap:6px}
+.cf-card.cloud{border-color:var(--ac);background:#fff8f9}
+.cf-hd{font-weight:900;font-size:15px;border-bottom:1px solid var(--ln);padding-bottom:6px;margin-bottom:4px}
+.cf-card .btn{margin-top:8px;justify-content:center}
+@media(max-width:640px){.conflict-grid{grid-template-columns:1fr}}
 
 /* =====================================================================
    比赛 / BP 界面：英雄联盟海克斯科技客户端 + 职业赛事顶栏

@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#010a13">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>峡谷经理人</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>/*
@@ -12,7 +14,7 @@ COLOUR 主站纸白 #f4f2ee / 墨黑 #111 / 信号红 #e8213a；
  --hex-blue:#0ac8b9;--hex-blue2:#1e78ff;--hex-red:#e84057;--hex-red2:#9e182d;
  --num:"Barlow Condensed","DIN Condensed","Arial Narrow",sans-serif;--sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);min-height:100vh;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);min-height:100vh;overflow-x:clip;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);-webkit-tap-highlight-color:transparent}
 a{color:var(--ink);cursor:pointer;text-decoration:underline;text-decoration-color:var(--ac);text-underline-offset:3px}
 small{color:var(--mu)}h1,h2,h3,h4{font-weight:900;letter-spacing:.5px}
 /* 顶栏 */
@@ -105,6 +107,27 @@ details>summary{cursor:pointer;color:var(--mu);margin:8px 0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid var(--ink);padding:3px 10px;font-size:13px}
 .gd{border-top:2px solid var(--ink);padding:10px 0;margin:10px 0}.gp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;font-size:13px}
 .evlog-sm{list-style:none;padding:6px 10px;margin:8px 0 0;background:var(--bg);font-size:12px;border-left:3px solid var(--ln2)}.evlog-sm li{padding:2px 0}.evlog-sm b{font-family:var(--num);margin-right:6px;color:var(--ink)}
+/* 账号与云同步 */
+.cloud-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;font:600 12px var(--sans);cursor:pointer;white-space:nowrap}
+.cloud-pill:hover{border-color:var(--hex-gold);background:rgba(200,155,60,.22)}
+.cloud-pill b{font-size:13px;font-family:var(--sans)}.cloud-pill small{color:#b7b4ad;font-size:11px}
+.cloud-pill.synced{border-color:#26a868;background:rgba(20,131,59,.25)}.cloud-pill.syncing{border-color:var(--hex-gold)}.cloud-pill.offline{border-color:#d97706}
+.start-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.start-acct .cloud-pill{background:var(--ink);color:#fff;border-color:var(--ink)}
+.acct-box h3{margin-top:0}.acct-user{padding:12px 14px;background:var(--bg);border-left:4px solid var(--gr);margin:10px 0}
+.acct-form .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:10px 0}
+.acct-form input,.cfg-body input{width:100%}
+.cloud-cfg{margin-top:14px;border:1px solid var(--ln2);padding:10px 14px;background:#faf9f6}
+.cloud-cfg summary{font-weight:700;color:var(--ink);cursor:pointer;margin:0}
+.cfg-body{margin-top:10px}.cfg-body label{display:block;margin:8px 0;font-size:13px;font-weight:600}
+.cfg-body code{background:#eae6de;padding:1px 5px;font-size:12px}
+hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
+.conflict-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.cf-card{border:1px solid var(--ln2);padding:14px;background:#faf9f6;display:flex;flex-direction:column;gap:6px}
+.cf-card.cloud{border-color:var(--ac);background:#fff8f9}
+.cf-hd{font-weight:900;font-size:15px;border-bottom:1px solid var(--ln);padding-bottom:6px;margin-bottom:4px}
+.cf-card .btn{margin-top:8px;justify-content:center}
+@media(max-width:640px){.conflict-grid{grid-template-columns:1fr}}
 
 /* =====================================================================
    比赛 / BP 界面：英雄联盟海克斯科技客户端 + 职业赛事顶栏
@@ -2049,14 +2072,435 @@ function finishOffseason(){
 }
 function renewPlayer(pid){ const p=P(pid); const s=Math.round(fairSalary(p)*1.1); p.salary=s; p.contract=S.year+2; p.renewed=true; addNews(`✍️ ${teamName(S.user)} 与 ${playerTag(p)} 续约两年，年薪 ${fmtMoney(s)}。`); return s; }
 </script>
+<script>// ================= 跨平台存储抽象层（StorageBridge）与 Supabase 云同步 =================
+// 架构说明：
+// - Tauri v2（Windows / macOS / iOS / Android）：通过原生 Rust 命令读写系统 AppData 目录下的独立 JSON 文件
+// - 浏览器单文件模式：平滑降级为 localStorage
+// - 云端同步：使用零依赖标准 fetch 对接 Supabase Auth + PostgREST（支持多端账号进度互联）
+
+const CLOUD_DEFAULT_CFG = {
+  // 如需打包发行自带固定云服务，可直接在此填入你的 Supabase Project URL 与 anon public key
+  url: '',
+  anonKey: ''
+};
+
+const CLOUD_CFG_KEY = 'lolm_cloud_cfg_v1';
+const CLOUD_AUTH_KEY = 'lolm_cloud_auth_v1';
+
+function isTauriApp(){
+  return typeof window !== 'undefined' && !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
+}
+async function tauriInvoke(cmd, args){
+  if(window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke){
+    return window.__TAURI__.core.invoke(cmd, args || {});
+  }
+  if(window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === 'function'){
+    return window.__TAURI_INTERNALS__.invoke(cmd, args || {});
+  }
+  throw new Error('Tauri runtime unavailable');
+}
+function detectPlatformLabel(){
+  const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+  const prefix = isTauriApp() ? '客户端' : '网页版';
+  if(/Windows/i.test(ua)) return `${prefix} · Windows`;
+  if(/Macintosh|Mac OS/i.test(ua)) return `${prefix} · macOS`;
+  if(/Android/i.test(ua)) return `${prefix} · Android`;
+  if(/iPhone|iPad|iPod/i.test(ua)) return `${prefix} · iOS`;
+  return prefix;
+}
+
+const StorageBridge = {
+  mode: isTauriApp() ? 'tauri-file' : 'browser-local',
+  savePath: '',
+  async init(){
+    if(isTauriApp()){
+      try{
+        this.savePath = await tauriInvoke('get_save_path');
+      }catch(e){ console.warn('get_save_path failed:', e); }
+    }
+  },
+  async readSaveText(){
+    if(isTauriApp()){
+      try{
+        const txt = await tauriInvoke('load_local_save');
+        if(txt) return txt;
+      }catch(e){ console.warn('load_local_save failed:', e); }
+    }
+    try{ return localStorage.getItem(SAVE_KEY); }catch(e){ return null; }
+  },
+  async writeSaveText(text){
+    try{ localStorage.setItem(SAVE_KEY, text); }catch(e){}
+    if(isTauriApp()){
+      try{ await tauriInvoke('write_local_save', { content: text }); }catch(e){ console.warn('write_local_save failed:', e); }
+    }
+  },
+  async deleteSave(){
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+    if(isTauriApp()){
+      try{ await tauriInvoke('delete_local_save'); }catch(e){}
+    }
+  },
+  async readMeta(key){
+    if(isTauriApp()){
+      try{
+        const txt = await tauriInvoke('load_meta_file', { name: key });
+        if(txt) return JSON.parse(txt);
+      }catch(e){}
+    }
+    try{ const s = localStorage.getItem(key); return s ? JSON.parse(s) : null; }catch(e){ return null; }
+  },
+  async writeMeta(key, obj){
+    const text = obj ? JSON.stringify(obj) : '';
+    try{
+      if(obj) localStorage.setItem(key, text);
+      else localStorage.removeItem(key);
+    }catch(e){}
+    if(isTauriApp()){
+      try{ await tauriInvoke('write_meta_file', { name: key, content: text }); }catch(e){}
+    }
+  }
+};
+
+function makeSaveSummary(saveObj){
+  if(!saveObj) return null;
+  const ev = saveObj.events && saveObj.events[saveObj.evIdx];
+  const evName = ev && typeof EVENT_INFO !== 'undefined' && EVENT_INFO[ev.type] ? EVENT_INFO[ev.type].name : '';
+  const team = saveObj.teams && saveObj.teams[saveObj.user] ? saveObj.teams[saveObj.user].short : (saveObj.user || '—');
+  return {
+    team,
+    year: saveObj.year || 2026,
+    event: evName,
+    updatedAt: (saveObj._sync && saveObj._sync.updatedAt) || Date.now(),
+    device: (saveObj._sync && saveObj._sync.device) || detectPlatformLabel()
+  };
+}
+
+function fmtTime(ts){
+  if(!ts) return '未知时间';
+  const d = new Date(ts);
+  if(isNaN(d.getTime())) return String(ts);
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+const CloudSync = {
+  cfg: { url: CLOUD_DEFAULT_CFG.url, anonKey: CLOUD_DEFAULT_CFG.anonKey },
+  auth: null, // { access_token, refresh_token, expires_at, user:{id, email} }
+  status: 'guest', // guest | syncing | synced | offline | unconfigured | error
+  statusText: '本地游客模式',
+  lastSyncAt: null,
+  conflict: null, // { localSave, localSummary, cloudSave, cloudSummary }
+  _pushTimer: null,
+
+  isConfigured(){
+    return !!(this.cfg && this.cfg.url && this.cfg.anonKey);
+  },
+  isLoggedIn(){
+    return !!(this.auth && this.auth.access_token && this.auth.user && this.auth.user.id);
+  },
+  baseUrl(){
+    return String(this.cfg.url || '').trim().replace(/\/+$/, '');
+  },
+  headers(withAuth){
+    const h = {
+      'apikey': this.cfg.anonKey.trim(),
+      'Content-Type': 'application/json'
+    };
+    if(withAuth && this.auth && this.auth.access_token){
+      h['Authorization'] = 'Bearer ' + this.auth.access_token;
+    }
+    return h;
+  },
+
+  async init(){
+    const savedCfg = await StorageBridge.readMeta(CLOUD_CFG_KEY);
+    if(savedCfg && (savedCfg.url || savedCfg.anonKey)){
+      this.cfg = { url: savedCfg.url || '', anonKey: savedCfg.anonKey || '' };
+    }
+    const savedAuth = await StorageBridge.readMeta(CLOUD_AUTH_KEY);
+    if(savedAuth && savedAuth.access_token && savedAuth.user){
+      this.auth = savedAuth;
+    }
+    if(!this.isConfigured()){
+      this.status = 'unconfigured';
+      this.statusText = '未配置云服务（本地模式）';
+      return;
+    }
+    if(!this.isLoggedIn()){
+      this.status = 'guest';
+      this.statusText = '游客模式（未登录）';
+      return;
+    }
+    await this.ensureValidToken();
+    if(this.isLoggedIn()){
+      await this.syncOnLaunch(false);
+    }
+  },
+
+  async saveConfig(url, anonKey){
+    this.cfg = { url: String(url||'').trim().replace(/\/+$/,''), anonKey: String(anonKey||'').trim() };
+    await StorageBridge.writeMeta(CLOUD_CFG_KEY, this.cfg);
+    if(!this.isConfigured()){
+      this.status = 'unconfigured';
+      this.statusText = '未配置云服务（本地模式）';
+    } else if(!this.isLoggedIn()){
+      this.status = 'guest';
+      this.statusText = '云服务已就绪（请登录）';
+    }
+    if(typeof render === 'function') render();
+  },
+
+  async ensureValidToken(){
+    if(!this.isLoggedIn() || !this.isConfigured()) return false;
+    const now = Math.floor(Date.now() / 1000);
+    if(this.auth.expires_at && this.auth.expires_at - now > 90) return true;
+    if(!this.auth.refresh_token) return true;
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ refresh_token: this.auth.refresh_token })
+      });
+      if(!r.ok) throw new Error('refresh failed');
+      const d = await r.json();
+      this.auth = {
+        access_token: d.access_token,
+        refresh_token: d.refresh_token || this.auth.refresh_token,
+        expires_at: Math.floor(Date.now()/1000) + (d.expires_in || 3600),
+        user: d.user || this.auth.user
+      };
+      await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
+      return true;
+    }catch(e){
+      this.status = 'offline';
+      this.statusText = '离线（令牌待刷新）';
+      return false;
+    }
+  },
+
+  async signUp(email, password){
+    if(!this.isConfigured()) return { ok:false, msg:'请先填写 Supabase URL 和 Anon Key' };
+    if(!email || !password || password.length < 6) return { ok:false, msg:'请输入有效邮箱和至少 6 位密码' };
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/signup`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ email: email.trim(), password })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) return { ok:false, msg: d.msg || d.error_description || d.message || `注册失败 (${r.status})` };
+      if(d.access_token && d.user){
+        this.auth = {
+          access_token: d.access_token,
+          refresh_token: d.refresh_token,
+          expires_at: Math.floor(Date.now()/1000) + (d.expires_in || 3600),
+          user: { id: d.user.id, email: d.user.email }
+        };
+        await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
+        await this.syncOnLaunch(true);
+        return { ok:true, msg:'注册并登录成功！' };
+      }
+      return { ok:true, needConfirm:true, msg:'注册成功！请前往邮箱点击验证链接后再登录（或在 Supabase 关闭 Email Confirm）。' };
+    }catch(e){
+      return { ok:false, msg:'无法连接云端，请检查网络与 Supabase URL' };
+    }
+  },
+
+  async signIn(email, password){
+    if(!this.isConfigured()) return { ok:false, msg:'请先填写 Supabase URL 和 Anon Key' };
+    if(!email || !password) return { ok:false, msg:'请输入邮箱和密码' };
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ email: email.trim(), password })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) return { ok:false, msg: d.error_description || d.msg || d.message || `登录失败 (${r.status})` };
+      this.auth = {
+        access_token: d.access_token,
+        refresh_token: d.refresh_token,
+        expires_at: Math.floor(Date.now()/1000) + (d.expires_in || 3600),
+        user: { id: d.user.id, email: d.user.email }
+      };
+      await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
+      const res = await this.syncOnLaunch(true);
+      return { ok:true, msg: res && res.msg ? res.msg : `欢迎回来，${this.auth.user.email}！` };
+    }catch(e){
+      return { ok:false, msg:'网络连接失败，当前仍可离线游玩' };
+    }
+  },
+
+  async signOut(){
+    if(this.isConfigured() && this.isLoggedIn()){
+      try{
+        await fetch(`${this.baseUrl()}/auth/v1/logout`, { method:'POST', headers: this.headers(true) });
+      }catch(e){}
+    }
+    this.auth = null;
+    this.conflict = null;
+    this.status = this.isConfigured() ? 'guest' : 'unconfigured';
+    this.statusText = '已退出（本地游客模式）';
+    await StorageBridge.writeMeta(CLOUD_AUTH_KEY, null);
+    if(typeof render === 'function') render();
+  },
+
+  async fetchCloudSave(){
+    if(!this.isConfigured() || !this.isLoggedIn()) return null;
+    await this.ensureValidToken();
+    const uid = encodeURIComponent(this.auth.user.id);
+    const r = await fetch(`${this.baseUrl()}/rest/v1/user_saves?user_id=eq.${uid}&select=save_data,summary,updated_at`, {
+      method: 'GET',
+      headers: this.headers(true)
+    });
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const rows = await r.json();
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
+  },
+
+  async pushSave(saveObj){
+    if(!saveObj || !this.isConfigured() || !this.isLoggedIn()) return false;
+    this.status = 'syncing';
+    this.statusText = '正在同步云端…';
+    if(typeof render === 'function') render();
+    try{
+      await this.ensureValidToken();
+      const summary = makeSaveSummary(saveObj);
+      const body = {
+        user_id: this.auth.user.id,
+        save_data: saveObj,
+        summary,
+        updated_at: new Date(summary.updatedAt).toISOString()
+      };
+      const r = await fetch(`${this.baseUrl()}/rest/v1/user_saves?on_conflict=user_id`, {
+        method: 'POST',
+        headers: Object.assign({}, this.headers(true), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify(body)
+      });
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      this.status = 'synced';
+      this.lastSyncAt = Date.now();
+      this.statusText = '云端已同步';
+      if(typeof render === 'function') render();
+      return true;
+    }catch(e){
+      console.warn('Cloud push failed:', e);
+      this.status = 'offline';
+      this.statusText = '离线（已存本地）';
+      if(typeof render === 'function') render();
+      return false;
+    }
+  },
+
+  schedulePush(saveObj){
+    if(!saveObj || !this.isConfigured() || !this.isLoggedIn()) return;
+    clearTimeout(this._pushTimer);
+    this._pushTimer = setTimeout(()=>{ this.pushSave(saveObj); }, 1400);
+  },
+
+  async syncOnLaunch(interactive){
+    if(!this.isConfigured() || !this.isLoggedIn()) return { ok:false };
+    this.status = 'syncing';
+    this.statusText = '检查云端进度…';
+    if(typeof render === 'function') render();
+    try{
+      const row = await this.fetchCloudSave();
+      const hasLocal = !!S;
+      const hasCloud = !!(row && row.save_data);
+
+      if(!hasLocal && hasCloud){
+        S = migrateSave(row.save_data);
+        await StorageBridge.writeSaveText(JSON.stringify(S));
+        this.status = 'synced';
+        this.lastSyncAt = Date.now();
+        this.statusText = '已从云端恢复';
+        if(typeof render === 'function') render();
+        return { ok:true, msg:'已自动加载云端存档！' };
+      }
+      if(hasLocal && !hasCloud){
+        await this.pushSave(S);
+        return { ok:true, msg:'已将当前本地进度绑定并上传至云端！' };
+      }
+      if(hasLocal && hasCloud){
+        const localTs = (S._sync && S._sync.updatedAt) || 0;
+        const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
+        const sameProgress = Math.abs(localTs - cloudTs) <= 5000 && S.user === row.save_data.user && S.year === row.save_data.year && S.evIdx === row.save_data.evIdx;
+        if(sameProgress){
+          this.status = 'synced';
+          this.lastSyncAt = Date.now();
+          this.statusText = '云端已同步';
+          if(typeof render === 'function') render();
+          return { ok:true, msg:'本地与云端进度一致！' };
+        }
+        // 两端存在实质差异：弹出冲突对比框，绝不悄悄覆盖！
+        this.conflict = {
+          localSave: S,
+          localSummary: makeSaveSummary(S),
+          cloudSave: migrateSave(row.save_data),
+          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
+        };
+        this.status = 'synced';
+        this.statusText = '检测到多端进度差异';
+        if(typeof openConflictModal === 'function') openConflictModal();
+        else if(typeof render === 'function') render();
+        return { ok:true, msg:'检测到云端与本地存档不同，请选择保留哪一份' };
+      }
+      this.status = 'synced';
+      this.statusText = '云端已连接';
+      if(typeof render === 'function') render();
+      return { ok:true };
+    }catch(e){
+      console.warn('syncOnLaunch failed:', e);
+      this.status = 'offline';
+      this.statusText = '离线模式（本地可用）';
+      if(typeof render === 'function') render();
+      return { ok:false, msg:'暂无法连接云端，已使用本地存档' };
+    }
+  },
+
+  async resolveConflict(choice){
+    if(!this.conflict) return;
+    if(choice === 'cloud'){
+      S = migrateSave(this.conflict.cloudSave);
+      await StorageBridge.writeSaveText(JSON.stringify(S));
+      this.status = 'synced';
+      this.lastSyncAt = Date.now();
+      this.statusText = '已加载云端进度';
+    } else if(choice === 'local'){
+      S = this.conflict.localSave;
+      S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
+      await StorageBridge.writeSaveText(JSON.stringify(S));
+      await this.pushSave(S);
+    }
+    this.conflict = null;
+    if(typeof UI !== 'undefined'){ UI.modal = null; }
+    if(typeof render === 'function') render();
+  }
+};
+</script>
 <script>// ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, authBusy:false };
 const SAVE_KEY='lolm_save_v1';
 const $app = () => document.getElementById('app');
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){ console.warn(e); } }
-function load(){ try{ const s=localStorage.getItem(SAVE_KEY); if(s){ S=migrateSave(JSON.parse(s)); return true; } }catch(e){} return false; }
-function toast(t){ UI.toast=t; render(); setTimeout(()=>{ if(UI.toast===t){UI.toast=null; render();} },2800); }
+function save(){
+  if(!S) return;
+  try{
+    S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
+    const txt = JSON.stringify(S);
+    UI.hasSave = true;
+    StorageBridge.writeSaveText(txt);
+    CloudSync.schedulePush(S);
+  }catch(e){ console.warn(e); }
+}
+async function load(){
+  try{
+    const txt = await StorageBridge.readSaveText();
+    if(txt){ S = migrateSave(JSON.parse(txt)); UI.hasSave = true; return true; }
+  }catch(e){ console.warn(e); }
+  return false;
+}
+function toast(t){ UI.toast=t; render(); setTimeout(()=>{ if(UI.toast===t){UI.toast=null; render();} },3000); }
 const teamTag = (k,cls='') => { const t=T(k); if(!t) return '—'; return `<span class="tt ${cls} ${k===S.user?'me':''}" title="${esc(t.name)}"><b>${esc(t.short)}</b><i>${t.region}</i></span>`; };
 const champName = c => c? (CH[c]?CH[c].cn:c) : '';
 const ovrBadge = v => `<b class="ovr ${v>=88?'s':v>=80?'a':v>=72?'b':'c'}">${Math.round(v)}</b>`;
@@ -2114,8 +2558,43 @@ function resetBpClock(){
 }
 function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } }
 
+function cloudPillHtml(){
+  const st = CloudSync.status;
+  if(CloudSync.isLoggedIn()){
+    const label = st==='syncing' ? '同步中…' : st==='offline' ? '离线(已存本地)' : '已同步';
+    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">☁️ <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small>${label}</small></button>`;
+  }
+  return `<button class="cloud-pill guest" data-a="openAccount" title="登录账号以开启多平台进度云同步">👤 <b>游客模式</b><small>云同步</small></button>`;
+}
+
+function openConflictModal(){
+  if(!CloudSync.conflict) return;
+  const { localSummary: L, cloudSummary: C } = CloudSync.conflict;
+  UI.modal = () => `<h3>☁️ 检测到多端存档进度差异</h3>
+    <p class="muted">账号 <b>${esc(CloudSync.auth&&CloudSync.auth.user?CloudSync.auth.user.email:'')}</b> 的本地存档与云端存档不一致，请选择要保留的一份（不会自动误覆盖）：</p>
+    <div class="conflict-grid">
+      <div class="cf-card">
+        <div class="cf-hd">💻 当前设备本地存档</div>
+        <div>战队：<b>${esc(L.team)}</b> · <b>${L.year}</b> 赛季</div>
+        <div>进度：${esc(L.event||'进行中')}</div>
+        <div><small>设备：${esc(L.device||'当前设备')}</small></div>
+        <div><small>时间：${esc(fmtTime(L.updatedAt))}</small></div>
+        <button class="btn" data-a="resolveConflict" data-c="local">使用本地并覆盖云端</button>
+      </div>
+      <div class="cf-card cloud">
+        <div class="cf-hd">☁️ 云端最新存档</div>
+        <div>战队：<b>${esc(C.team)}</b> · <b>${C.year}</b> 赛季</div>
+        <div>进度：${esc(C.event||'进行中')}</div>
+        <div><small>设备：${esc(C.device||'其他设备')}</small></div>
+        <div><small>时间：${esc(fmtTime(C.updatedAt))}</small></div>
+        <button class="btn big" data-a="resolveConflict" data-c="cloud">加载云端存档</button>
+      </div>
+    </div>`;
+  render();
+}
+
 function render(){
-  if(!S){ stopBpClock(); $app().innerHTML = startScreen(); return; }
+  if(!S){ stopBpClock(); $app().innerHTML = startScreen() + (UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:'') + toastHtml(); return; }
   if(UI.match){ $app().innerHTML = matchScreen() + toastHtml(); return; }
   stopBpClock();
   const me=T(S.user);
@@ -2123,9 +2602,9 @@ function render(){
   $app().innerHTML = `
   <header class="top">
     <div class="brand">峡谷经理人</div>
-    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div><div><small>战力</small>${ovrBadge(teamOvr(S.user))}</div></div>
+    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div><div><small>战力</small>${ovrBadge(teamOvr(S.user))}</div>${cloudPillHtml()}</div>
   </header>
-  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['news','资讯'],['rules','规则'],['sys','存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
+  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['news','资讯'],['rules','规则'],['sys','账号与存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
   <main>${VIEWS[UI.view]()}</main>
   ${UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:''}
   ${toastHtml()}`;
@@ -2134,12 +2613,18 @@ const toastHtml = () => UI.toast?`<div class="toast">${esc(UI.toast)}</div>`:'';
 
 // ---------- 开始界面 ----------
 function startScreen(){
-  const has=!!localStorage.getItem(SAVE_KEY);
+  const has = UI.hasSave || !!localStorage.getItem(SAVE_KEY);
   const lpl=ROSTER.LPL.teams;
   const ovr = t => { const best={}; t.players.forEach(p=>{ if(!best[p.role]||best[p.role]<p.rating) best[p.role]=p.rating; }); return ROLES.reduce((s,r)=>s+(best[r]||45),0)/5; };
   return `<div class="start">
-    <h1>峡谷经理人</h1><p class="sub">英雄联盟电竞经理 · 2026 赛季</p>
-    ${has?`<button class="btn big" data-a="continue">继续存档</button>`:''}
+    <div class="start-top">
+      <div><h1>峡谷经理人</h1><p class="sub">英雄联盟电竞经理 · 2026 赛季 · ${esc(detectPlatformLabel())}</p></div>
+      <div class="start-acct">${cloudPillHtml()}</div>
+    </div>
+    <div class="btns">
+      ${has?`<button class="btn big" data-a="continue">继续存档 ▶</button>`:''}
+      <button class="btn ghost" data-a="openAccount">${CloudSync.isLoggedIn()?`☁️ 已登录：${esc(CloudSync.auth.user.email)}`:'☁️ 账号登录 / 多端同步'}</button>
+    </div>
     <h3>选择你要执掌的 LPL 战队</h3>
     <div class="tgrid">${lpl.map(t=>`<div class="tcard" data-a="newgame" data-k="${t.short}">
       <div class="tn">${esc(t.short)}</div><div class="tf">${esc(t.cn||t.name)}</div>
@@ -2329,8 +2814,52 @@ VIEWS.rules = () => `<section class="card"><h2>赛制说明（2026）</h2><p>✅
   ${['lpl_s1','fst','lpl_s2','msi','ewc','lpl_s3','lpl_rf','worlds'].map(k=>`<h3>${EVENT_INFO[k].name} <small>${EVENT_INFO[k].date} · ${EVENT_INFO[k].loc}</small></h3><p class="fmt">${esc(EVENT_INFO[k].fmt)}</p>`).join('')}
   <h3>BP规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 2026新规“先手选择权”：拥有选择权的一方选择蓝/红方或BP先后手，另一方获得剩余选项；系列赛中输掉上一局的一方获得下一局选择权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前点击己方槽位进行摇摆位互换。</p>
   <h3>其他说明</h3><p class="fmt">✅ LPL首发外援上限2人（赛前强制校验，AI 战队同样遵守）。✅ EWC卫冕冠军：Gen.G（EWC 2025冠军），之后赛季为上届冠军。⚠️ 其他赛区不进行逐场模拟，按战力+随机生成各赛段排名。⚠️ 选手能力值、潜力、身价均为游戏估算。</p></section>`;
-VIEWS.sys = () => `<section class="card"><h2>存档</h2><p>游戏会在每场比赛后自动保存在浏览器本地。</p>
-  <div class="btns"><button class="btn" data-a="export">导出存档</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除存档并重新开始</button></div></section>`;
+function accountPanelHtml(){
+  const cfgOk = CloudSync.isConfigured();
+  const logged = CloudSync.isLoggedIn();
+  return `<div class="acct-box">
+    <h3>☁️ 跨平台账号与云同步（Windows / macOS / 手机互通）</h3>
+    <p class="muted">当前状态：<b>${esc(CloudSync.statusText)}</b>${CloudSync.lastSyncAt?` · 上次同步 ${esc(fmtTime(CloudSync.lastSyncAt))}`:''}</p>
+    ${logged ? `
+      <div class="acct-user">
+        <div>已登录账号：<b>${esc(CloudSync.auth.user.email)}</b> <small>（${esc(detectPlatformLabel())}）</small></div>
+        <div class="btns">
+          <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>立即同步云端</button>
+          ${S?`<button class="btn ghost" data-a="cloudPushNow" ${UI.authBusy?'disabled':''}>上传本地进度到云端</button>`:''}
+          <button class="btn ghost" data-a="cloudSignOut" ${UI.authBusy?'disabled':''}>退出登录</button>
+        </div>
+      </div>`
+    : `<div class="acct-form">
+        <p class="muted">使用同一账号登录，即可在 Windows、Mac 与手机间自动同步游戏进度；不登录也能以游客模式完全离线游玩。</p>
+        <div class="form-row">
+          <input id="auth-email" type="email" placeholder="邮箱（例如 player@example.com）">
+          <input id="auth-pass" type="password" placeholder="密码（至少 6 位）">
+        </div>
+        <div class="btns">
+          <button class="btn big" data-a="cloudSignIn" ${!cfgOk||UI.authBusy?'disabled':''}>登录账号</button>
+          <button class="btn" data-a="cloudSignUp" ${!cfgOk||UI.authBusy?'disabled':''}>注册新账号</button>
+        </div>
+        ${!cfgOk?'<p class="warn">⚠️ 尚未配置 Supabase 云服务地址，请在下方填写 Project URL 与 Anon Key（免费额度即可用）。</p>':''}
+      </div>`}
+    <details class="cloud-cfg" ${!cfgOk?'open':''}>
+      <summary>⚙️ Supabase 云服务配置（${cfgOk?'已配置':'待配置'}）</summary>
+      <div class="cfg-body">
+        <p class="muted">3 步开启永久免费多端云同步：① 在 <b>supabase.com</b> 免费新建项目 → ② 在 SQL Editor 运行仓库内的 <code>supabase/schema.sql</code> → ③ 将 Settings → API 中的 Project URL 与 anon public key 填入下方并保存。</p>
+        <label>Project URL：<input id="cfg-url" type="url" placeholder="https://xxxx.supabase.co" value="${esc(CloudSync.cfg.url)}"></label>
+        <label>Anon Public Key：<input id="cfg-key" type="text" placeholder="eyJhbGciOi..." value="${esc(CloudSync.cfg.anonKey)}"></label>
+        <div class="btns"><button class="btn sm" data-a="saveCloudCfg">保存云服务配置</button></div>
+      </div>
+    </details>
+  </div>`;
+}
+
+VIEWS.sys = () => `<section class="card">
+  ${accountPanelHtml()}
+  <hr class="sep">
+  <h3>💾 本地存档管理</h3>
+  <p>存储方式：<b>${StorageBridge.mode==='tauri-file'?'独立软件本地文件存档（不随浏览器缓存清理丢失）':'浏览器本地存储'}</b>${StorageBridge.savePath?`<br><small>路径：${esc(StorageBridge.savePath)}</small>`:''}</p>
+  <div class="btns"><button class="btn" data-a="export">导出存档 JSON</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除本地存档并重新开始</button></div>
+</section>`;
 
 // ================= 比赛（LoL 海克斯风格 BP）界面 =================
 function beginUserMatch(item){
@@ -2878,7 +3407,54 @@ function endUserGame(g){
 const ACT = {
   view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
   newgame:d=>{ newGame(d.k); save(); UI.view='home'; render(); },
-  continue:()=>{ load(); render(); },
+  continue:async()=>{ if(await load()){ render(); if(CloudSync.isLoggedIn()) CloudSync.syncOnLaunch(false); } else toast('未找到本地存档'); },
+  openAccount:()=>{ if(S){ UI.view='sys'; UI.modal=null; render(); } else { UI.modal=()=>`${accountPanelHtml()}<div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); } },
+  saveCloudCfg:async()=>{
+    const url = (document.getElementById('cfg-url')||{}).value || '';
+    const key = (document.getElementById('cfg-key')||{}).value || '';
+    await CloudSync.saveConfig(url, key);
+    toast(CloudSync.isConfigured()?'云服务配置已保存，现在可以登录/注册账号':'已清空云服务配置');
+  },
+  cloudSignIn:async()=>{
+    const email = (document.getElementById('auth-email')||{}).value || '';
+    const pass = (document.getElementById('auth-pass')||{}).value || '';
+    UI.authBusy = true; render();
+    const res = await CloudSync.signIn(email, pass);
+    UI.authBusy = false;
+    if(res.ok && !CloudSync.conflict && !S){ UI.modal = null; }
+    toast(res.msg); render();
+  },
+  cloudSignUp:async()=>{
+    const email = (document.getElementById('auth-email')||{}).value || '';
+    const pass = (document.getElementById('auth-pass')||{}).value || '';
+    UI.authBusy = true; render();
+    const res = await CloudSync.signUp(email, pass);
+    UI.authBusy = false;
+    toast(res.msg); render();
+  },
+  cloudSignOut:async()=>{
+    UI.authBusy = true; render();
+    await CloudSync.signOut();
+    UI.authBusy = false;
+    toast('已退出登录，切换回本地游客模式'); render();
+  },
+  cloudSyncNow:async()=>{
+    UI.authBusy = true; render();
+    const res = await CloudSync.syncOnLaunch(true);
+    UI.authBusy = false;
+    toast(res.msg || '同步完成'); render();
+  },
+  cloudPushNow:async()=>{
+    if(!S) return;
+    UI.authBusy = true; render();
+    const ok = await CloudSync.pushSave(S);
+    UI.authBusy = false;
+    toast(ok?'本地存档已上传至云端':'上传失败，请检查网络'); render();
+  },
+  resolveConflict:async d=>{
+    await CloudSync.resolveConflict(d.c);
+    toast(d.c==='cloud'?'已加载云端存档':'已用本地存档更新云端');
+  },
   closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerGive=null; render(); },
   endWindow:()=>{ curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
   nextEvent:()=>{ advanceEvent(); save(); render(); },
@@ -2916,7 +3492,7 @@ const ACT = {
   copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
   dlExp:()=>{ try{ const b=new Blob([JSON.stringify(S)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`lol-manager-${S.year}.json`; a.click(); }catch(e){ toast('当前环境不支持下载，请用复制'); } },
   reset:()=>{ UI.modal=()=>`<h3>确定删除存档并重新开始？</h3><div class="btns"><button class="btn" data-a="doReset">确定删除</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
-  doReset:()=>{ localStorage.removeItem(SAVE_KEY); S=null; UI.modal=null; render(); },
+  doReset:async()=>{ await StorageBridge.deleteSave(); UI.hasSave=false; S=null; UI.modal=null; render(); },
   // ---- 比赛 / BP 交互 ----
   toggleLocked:()=>{ if(UI.match){ UI.match.showLocked=!UI.match.showLocked; render(); } },
   choose:d=>{
@@ -3006,6 +3582,14 @@ document.addEventListener('input', e=>{
   if(el.dataset.d==='q' && UI.match){ UI.match.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-d=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },220); }
   if(el.dataset.o==='cash'){ UI.offerCash=Math.max(0,+el.value||0); clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-o=cash]'); if(i){ i.focus(); } },500); }
 });
-window.addEventListener('load', render);
+async function bootApp(){
+  await StorageBridge.init();
+  const raw = await StorageBridge.readSaveText();
+  UI.hasSave = !!raw;
+  render();
+  await CloudSync.init();
+  render();
+}
+window.addEventListener('load', bootApp);
 </script>
 </body></html>

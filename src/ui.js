@@ -1,11 +1,26 @@
 // ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, authBusy:false };
 const SAVE_KEY='lolm_save_v1';
 const $app = () => document.getElementById('app');
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){ console.warn(e); } }
-function load(){ try{ const s=localStorage.getItem(SAVE_KEY); if(s){ S=migrateSave(JSON.parse(s)); return true; } }catch(e){} return false; }
-function toast(t){ UI.toast=t; render(); setTimeout(()=>{ if(UI.toast===t){UI.toast=null; render();} },2800); }
+function save(){
+  if(!S) return;
+  try{
+    S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
+    const txt = JSON.stringify(S);
+    UI.hasSave = true;
+    StorageBridge.writeSaveText(txt);
+    CloudSync.schedulePush(S);
+  }catch(e){ console.warn(e); }
+}
+async function load(){
+  try{
+    const txt = await StorageBridge.readSaveText();
+    if(txt){ S = migrateSave(JSON.parse(txt)); UI.hasSave = true; return true; }
+  }catch(e){ console.warn(e); }
+  return false;
+}
+function toast(t){ UI.toast=t; render(); setTimeout(()=>{ if(UI.toast===t){UI.toast=null; render();} },3000); }
 const teamTag = (k,cls='') => { const t=T(k); if(!t) return '—'; return `<span class="tt ${cls} ${k===S.user?'me':''}" title="${esc(t.name)}"><b>${esc(t.short)}</b><i>${t.region}</i></span>`; };
 const champName = c => c? (CH[c]?CH[c].cn:c) : '';
 const ovrBadge = v => `<b class="ovr ${v>=88?'s':v>=80?'a':v>=72?'b':'c'}">${Math.round(v)}</b>`;
@@ -63,8 +78,43 @@ function resetBpClock(){
 }
 function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } }
 
+function cloudPillHtml(){
+  const st = CloudSync.status;
+  if(CloudSync.isLoggedIn()){
+    const label = st==='syncing' ? '同步中…' : st==='offline' ? '离线(已存本地)' : '已同步';
+    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">☁️ <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small>${label}</small></button>`;
+  }
+  return `<button class="cloud-pill guest" data-a="openAccount" title="登录账号以开启多平台进度云同步">👤 <b>游客模式</b><small>云同步</small></button>`;
+}
+
+function openConflictModal(){
+  if(!CloudSync.conflict) return;
+  const { localSummary: L, cloudSummary: C } = CloudSync.conflict;
+  UI.modal = () => `<h3>☁️ 检测到多端存档进度差异</h3>
+    <p class="muted">账号 <b>${esc(CloudSync.auth&&CloudSync.auth.user?CloudSync.auth.user.email:'')}</b> 的本地存档与云端存档不一致，请选择要保留的一份（不会自动误覆盖）：</p>
+    <div class="conflict-grid">
+      <div class="cf-card">
+        <div class="cf-hd">💻 当前设备本地存档</div>
+        <div>战队：<b>${esc(L.team)}</b> · <b>${L.year}</b> 赛季</div>
+        <div>进度：${esc(L.event||'进行中')}</div>
+        <div><small>设备：${esc(L.device||'当前设备')}</small></div>
+        <div><small>时间：${esc(fmtTime(L.updatedAt))}</small></div>
+        <button class="btn" data-a="resolveConflict" data-c="local">使用本地并覆盖云端</button>
+      </div>
+      <div class="cf-card cloud">
+        <div class="cf-hd">☁️ 云端最新存档</div>
+        <div>战队：<b>${esc(C.team)}</b> · <b>${C.year}</b> 赛季</div>
+        <div>进度：${esc(C.event||'进行中')}</div>
+        <div><small>设备：${esc(C.device||'其他设备')}</small></div>
+        <div><small>时间：${esc(fmtTime(C.updatedAt))}</small></div>
+        <button class="btn big" data-a="resolveConflict" data-c="cloud">加载云端存档</button>
+      </div>
+    </div>`;
+  render();
+}
+
 function render(){
-  if(!S){ stopBpClock(); $app().innerHTML = startScreen(); return; }
+  if(!S){ stopBpClock(); $app().innerHTML = startScreen() + (UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:'') + toastHtml(); return; }
   if(UI.match){ $app().innerHTML = matchScreen() + toastHtml(); return; }
   stopBpClock();
   const me=T(S.user);
@@ -72,9 +122,9 @@ function render(){
   $app().innerHTML = `
   <header class="top">
     <div class="brand">峡谷经理人</div>
-    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div><div><small>战力</small>${ovrBadge(teamOvr(S.user))}</div></div>
+    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div><div><small>战力</small>${ovrBadge(teamOvr(S.user))}</div>${cloudPillHtml()}</div>
   </header>
-  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['news','资讯'],['rules','规则'],['sys','存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
+  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['news','资讯'],['rules','规则'],['sys','账号与存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
   <main>${VIEWS[UI.view]()}</main>
   ${UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:''}
   ${toastHtml()}`;
@@ -83,12 +133,18 @@ const toastHtml = () => UI.toast?`<div class="toast">${esc(UI.toast)}</div>`:'';
 
 // ---------- 开始界面 ----------
 function startScreen(){
-  const has=!!localStorage.getItem(SAVE_KEY);
+  const has = UI.hasSave || !!localStorage.getItem(SAVE_KEY);
   const lpl=ROSTER.LPL.teams;
   const ovr = t => { const best={}; t.players.forEach(p=>{ if(!best[p.role]||best[p.role]<p.rating) best[p.role]=p.rating; }); return ROLES.reduce((s,r)=>s+(best[r]||45),0)/5; };
   return `<div class="start">
-    <h1>峡谷经理人</h1><p class="sub">英雄联盟电竞经理 · 2026 赛季</p>
-    ${has?`<button class="btn big" data-a="continue">继续存档</button>`:''}
+    <div class="start-top">
+      <div><h1>峡谷经理人</h1><p class="sub">英雄联盟电竞经理 · 2026 赛季 · ${esc(detectPlatformLabel())}</p></div>
+      <div class="start-acct">${cloudPillHtml()}</div>
+    </div>
+    <div class="btns">
+      ${has?`<button class="btn big" data-a="continue">继续存档 ▶</button>`:''}
+      <button class="btn ghost" data-a="openAccount">${CloudSync.isLoggedIn()?`☁️ 已登录：${esc(CloudSync.auth.user.email)}`:'☁️ 账号登录 / 多端同步'}</button>
+    </div>
     <h3>选择你要执掌的 LPL 战队</h3>
     <div class="tgrid">${lpl.map(t=>`<div class="tcard" data-a="newgame" data-k="${t.short}">
       <div class="tn">${esc(t.short)}</div><div class="tf">${esc(t.cn||t.name)}</div>
@@ -278,8 +334,52 @@ VIEWS.rules = () => `<section class="card"><h2>赛制说明（2026）</h2><p>✅
   ${['lpl_s1','fst','lpl_s2','msi','ewc','lpl_s3','lpl_rf','worlds'].map(k=>`<h3>${EVENT_INFO[k].name} <small>${EVENT_INFO[k].date} · ${EVENT_INFO[k].loc}</small></h3><p class="fmt">${esc(EVENT_INFO[k].fmt)}</p>`).join('')}
   <h3>BP规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 2026新规“先手选择权”：拥有选择权的一方选择蓝/红方或BP先后手，另一方获得剩余选项；系列赛中输掉上一局的一方获得下一局选择权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前点击己方槽位进行摇摆位互换。</p>
   <h3>其他说明</h3><p class="fmt">✅ LPL首发外援上限2人（赛前强制校验，AI 战队同样遵守）。✅ EWC卫冕冠军：Gen.G（EWC 2025冠军），之后赛季为上届冠军。⚠️ 其他赛区不进行逐场模拟，按战力+随机生成各赛段排名。⚠️ 选手能力值、潜力、身价均为游戏估算。</p></section>`;
-VIEWS.sys = () => `<section class="card"><h2>存档</h2><p>游戏会在每场比赛后自动保存在浏览器本地。</p>
-  <div class="btns"><button class="btn" data-a="export">导出存档</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除存档并重新开始</button></div></section>`;
+function accountPanelHtml(){
+  const cfgOk = CloudSync.isConfigured();
+  const logged = CloudSync.isLoggedIn();
+  return `<div class="acct-box">
+    <h3>☁️ 跨平台账号与云同步（Windows / macOS / 手机互通）</h3>
+    <p class="muted">当前状态：<b>${esc(CloudSync.statusText)}</b>${CloudSync.lastSyncAt?` · 上次同步 ${esc(fmtTime(CloudSync.lastSyncAt))}`:''}</p>
+    ${logged ? `
+      <div class="acct-user">
+        <div>已登录账号：<b>${esc(CloudSync.auth.user.email)}</b> <small>（${esc(detectPlatformLabel())}）</small></div>
+        <div class="btns">
+          <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>立即同步云端</button>
+          ${S?`<button class="btn ghost" data-a="cloudPushNow" ${UI.authBusy?'disabled':''}>上传本地进度到云端</button>`:''}
+          <button class="btn ghost" data-a="cloudSignOut" ${UI.authBusy?'disabled':''}>退出登录</button>
+        </div>
+      </div>`
+    : `<div class="acct-form">
+        <p class="muted">使用同一账号登录，即可在 Windows、Mac 与手机间自动同步游戏进度；不登录也能以游客模式完全离线游玩。</p>
+        <div class="form-row">
+          <input id="auth-email" type="email" placeholder="邮箱（例如 player@example.com）">
+          <input id="auth-pass" type="password" placeholder="密码（至少 6 位）">
+        </div>
+        <div class="btns">
+          <button class="btn big" data-a="cloudSignIn" ${!cfgOk||UI.authBusy?'disabled':''}>登录账号</button>
+          <button class="btn" data-a="cloudSignUp" ${!cfgOk||UI.authBusy?'disabled':''}>注册新账号</button>
+        </div>
+        ${!cfgOk?'<p class="warn">⚠️ 尚未配置 Supabase 云服务地址，请在下方填写 Project URL 与 Anon Key（免费额度即可用）。</p>':''}
+      </div>`}
+    <details class="cloud-cfg" ${!cfgOk?'open':''}>
+      <summary>⚙️ Supabase 云服务配置（${cfgOk?'已配置':'待配置'}）</summary>
+      <div class="cfg-body">
+        <p class="muted">3 步开启永久免费多端云同步：① 在 <b>supabase.com</b> 免费新建项目 → ② 在 SQL Editor 运行仓库内的 <code>supabase/schema.sql</code> → ③ 将 Settings → API 中的 Project URL 与 anon public key 填入下方并保存。</p>
+        <label>Project URL：<input id="cfg-url" type="url" placeholder="https://xxxx.supabase.co" value="${esc(CloudSync.cfg.url)}"></label>
+        <label>Anon Public Key：<input id="cfg-key" type="text" placeholder="eyJhbGciOi..." value="${esc(CloudSync.cfg.anonKey)}"></label>
+        <div class="btns"><button class="btn sm" data-a="saveCloudCfg">保存云服务配置</button></div>
+      </div>
+    </details>
+  </div>`;
+}
+
+VIEWS.sys = () => `<section class="card">
+  ${accountPanelHtml()}
+  <hr class="sep">
+  <h3>💾 本地存档管理</h3>
+  <p>存储方式：<b>${StorageBridge.mode==='tauri-file'?'独立软件本地文件存档（不随浏览器缓存清理丢失）':'浏览器本地存储'}</b>${StorageBridge.savePath?`<br><small>路径：${esc(StorageBridge.savePath)}</small>`:''}</p>
+  <div class="btns"><button class="btn" data-a="export">导出存档 JSON</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除本地存档并重新开始</button></div>
+</section>`;
 
 // ================= 比赛（LoL 海克斯风格 BP）界面 =================
 function beginUserMatch(item){
@@ -827,7 +927,54 @@ function endUserGame(g){
 const ACT = {
   view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
   newgame:d=>{ newGame(d.k); save(); UI.view='home'; render(); },
-  continue:()=>{ load(); render(); },
+  continue:async()=>{ if(await load()){ render(); if(CloudSync.isLoggedIn()) CloudSync.syncOnLaunch(false); } else toast('未找到本地存档'); },
+  openAccount:()=>{ if(S){ UI.view='sys'; UI.modal=null; render(); } else { UI.modal=()=>`${accountPanelHtml()}<div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); } },
+  saveCloudCfg:async()=>{
+    const url = (document.getElementById('cfg-url')||{}).value || '';
+    const key = (document.getElementById('cfg-key')||{}).value || '';
+    await CloudSync.saveConfig(url, key);
+    toast(CloudSync.isConfigured()?'云服务配置已保存，现在可以登录/注册账号':'已清空云服务配置');
+  },
+  cloudSignIn:async()=>{
+    const email = (document.getElementById('auth-email')||{}).value || '';
+    const pass = (document.getElementById('auth-pass')||{}).value || '';
+    UI.authBusy = true; render();
+    const res = await CloudSync.signIn(email, pass);
+    UI.authBusy = false;
+    if(res.ok && !CloudSync.conflict && !S){ UI.modal = null; }
+    toast(res.msg); render();
+  },
+  cloudSignUp:async()=>{
+    const email = (document.getElementById('auth-email')||{}).value || '';
+    const pass = (document.getElementById('auth-pass')||{}).value || '';
+    UI.authBusy = true; render();
+    const res = await CloudSync.signUp(email, pass);
+    UI.authBusy = false;
+    toast(res.msg); render();
+  },
+  cloudSignOut:async()=>{
+    UI.authBusy = true; render();
+    await CloudSync.signOut();
+    UI.authBusy = false;
+    toast('已退出登录，切换回本地游客模式'); render();
+  },
+  cloudSyncNow:async()=>{
+    UI.authBusy = true; render();
+    const res = await CloudSync.syncOnLaunch(true);
+    UI.authBusy = false;
+    toast(res.msg || '同步完成'); render();
+  },
+  cloudPushNow:async()=>{
+    if(!S) return;
+    UI.authBusy = true; render();
+    const ok = await CloudSync.pushSave(S);
+    UI.authBusy = false;
+    toast(ok?'本地存档已上传至云端':'上传失败，请检查网络'); render();
+  },
+  resolveConflict:async d=>{
+    await CloudSync.resolveConflict(d.c);
+    toast(d.c==='cloud'?'已加载云端存档':'已用本地存档更新云端');
+  },
   closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerGive=null; render(); },
   endWindow:()=>{ curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
   nextEvent:()=>{ advanceEvent(); save(); render(); },
@@ -865,7 +1012,7 @@ const ACT = {
   copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
   dlExp:()=>{ try{ const b=new Blob([JSON.stringify(S)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`lol-manager-${S.year}.json`; a.click(); }catch(e){ toast('当前环境不支持下载，请用复制'); } },
   reset:()=>{ UI.modal=()=>`<h3>确定删除存档并重新开始？</h3><div class="btns"><button class="btn" data-a="doReset">确定删除</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
-  doReset:()=>{ localStorage.removeItem(SAVE_KEY); S=null; UI.modal=null; render(); },
+  doReset:async()=>{ await StorageBridge.deleteSave(); UI.hasSave=false; S=null; UI.modal=null; render(); },
   // ---- 比赛 / BP 交互 ----
   toggleLocked:()=>{ if(UI.match){ UI.match.showLocked=!UI.match.showLocked; render(); } },
   choose:d=>{
@@ -955,4 +1102,12 @@ document.addEventListener('input', e=>{
   if(el.dataset.d==='q' && UI.match){ UI.match.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-d=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },220); }
   if(el.dataset.o==='cash'){ UI.offerCash=Math.max(0,+el.value||0); clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-o=cash]'); if(i){ i.focus(); } },500); }
 });
-window.addEventListener('load', render);
+async function bootApp(){
+  await StorageBridge.init();
+  const raw = await StorageBridge.readSaveText();
+  UI.hasSave = !!raw;
+  render();
+  await CloudSync.init();
+  render();
+}
+window.addEventListener('load', bootApp);

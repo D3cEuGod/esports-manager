@@ -1,3 +1,8 @@
 src/data.js
 node_modules/
+src-tauri/target/
+src-tauri/gen/
+release/
+*.lnk
+峡谷经理人.html
 .DS_Store

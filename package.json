@@ -1,0 +1,15 @@
+{
+  "name": "rift-manager",
+  "version": "2.0.0",
+  "description": "峡谷经理人 · 英雄联盟电竞经理（跨平台 Tauri v2 客户端 + 网页单文件版）",
+  "private": true,
+  "scripts": {
+    "build:web": "python build_web.py",
+    "tauri": "tauri",
+    "dev": "npm run build:web && tauri dev",
+    "build:desktop": "npm run build:web && tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.0"
+  }
+}

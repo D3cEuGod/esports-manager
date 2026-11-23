@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "峡谷经理人",
+  "version": "2.0.0",
+  "identifier": "com.d3ceugod.riftmanager",
+  "build": {
+    "beforeBuildCommand": "python build_web.py",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "峡谷经理人 · 英雄联盟电竞经理",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 420,
+        "minHeight": 640,
+        "center": true,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ]
+  }
+}

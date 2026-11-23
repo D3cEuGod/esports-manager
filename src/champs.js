@@ -24,6 +24,10 @@ window.CHAMPS = [
  ["Malphite","石头人",["TOP","SUP"],["engage"],"AP"],
  ["Poppy","波比",["TOP","JUG","SUP"],["protect","pick"],"AD"],
  ["Rengar","狮子狗",["TOP","JUG"],["pick","early"],"AD"],
+ ["Udyr","乌迪尔",["TOP","JUG"],["early","protect"],"AP"],
+ ["Volibear","狗熊",["TOP","JUG"],["early","engage"],"MIX"],
+ ["Olaf","奥拉夫",["TOP","JUG"],["early","split"],"AD"],
+ ["Cho'Gath","大虫子",["TOP","MID"],["protect","scale"],"AP"],
  // ---- 打野 ----
  ["Lee Sin","盲僧",["JUG"],["early","pick"],"AD"],
  ["Xin Zhao","赵信",["JUG"],["early","engage"],"AD"],
@@ -44,6 +48,14 @@ window.CHAMPS = [
  ["Ivern","艾翁",["JUG"],["protect"],"AP"],
  ["Brand","火男",["JUG","SUP"],["poke"],"AP"],
  ["Zyra","婕拉",["JUG","SUP"],["poke"],"AP"],
+ ["Lillia","莉莉娅",["JUG"],["scale","engage"],"AP"],
+ ["Graves","男枪",["JUG"],["early","scale"],"AD"],
+ ["Zac","扎克",["JUG","TOP","SUP"],["engage","protect"],"AP"],
+ ["Karthus","死歌",["JUG"],["scale","poke"],"AP"],
+ ["Diana","皎月",["JUG","MID"],["engage","early"],"AP"],
+ ["Hecarim","人马",["JUG"],["engage","early"],"AD"],
+ ["Bel'Veth","卑尔维斯",["JUG"],["early","scale"],"AD"],
+ ["Kha'Zix","螳螂",["JUG"],["pick","early"],"AD"],
  // ---- 中单 ----
  ["Azir","沙皇",["MID"],["scale","protect"],"AP"],
  ["Orianna","发条",["MID"],["scale","engage"],"AP"],
@@ -69,6 +81,8 @@ window.CHAMPS = [
  ["Tristana","小炮",["MID","ADC"],["early","scale"],"AD"],
  ["Lissandra","冰女",["MID"],["engage"],"AP"],
  ["Naafiri","纳亚菲利",["MID"],["pick","early"],"AD"],
+ ["Swain","乌鸦",["MID","SUP"],["engage","scale"],"AP"],
+ ["Malzahar","玛尔扎哈",["MID"],["pick","protect"],"AP"],
  // ---- ADC ----
  ["Kai'Sa","卡莎",["ADC"],["scale","pick"],"MIX"],
  ["Varus","韦鲁斯",["ADC"],["poke","pick"],"AD"],
@@ -90,6 +104,10 @@ window.CHAMPS = [
  ["Miss Fortune","厄运小姐",["ADC"],["engage","early"],"AD"],
  ["Yunara","芸阿娜",["ADC"],["scale"],"AD"],
  ["Senna","赛娜",["ADC","SUP"],["poke","protect"],"AD"],
+ ["Samira","莎弥拉",["ADC"],["engage","early"],"AD"],
+ ["Vayne","薇恩",["ADC","TOP"],["scale","pick"],"AD"],
+ ["Twitch","老鼠",["ADC"],["scale","pick"],"AD"],
+ ["Nilah","尼菈",["ADC"],["engage","scale"],"AD"],
  // ---- 辅助 ----
  ["Rakan","洛",["SUP"],["engage","protect"],"AP"],
  ["Alistar","牛头",["SUP"],["engage","protect"],"AP"],
@@ -111,4 +129,21 @@ window.CHAMPS = [
  ["Seraphine","萨勒芬妮",["SUP","ADC"],["poke","protect"],"AP"],
  ["Janna","风女",["SUP"],["protect"],"AP"],
  ["Morgana","莫甘娜",["SUP"],["pick","protect"],"AP"],
+ ["Tahm Kench","塔姆",["SUP","TOP"],["protect","engage"],"AP"],
+ ["Soraka","星妈",["SUP"],["protect","scale"],"AP"],
+ ["Yuumi","悠米",["SUP"],["protect","scale"],"AP"],
+ ["Sona","琴女",["SUP"],["scale","protect"],"AP"],
+ ["Amumu","阿木木",["SUP","JUG"],["engage"],"AP"]
 ];
+
+// Riot Data Dragon 特殊英雄文件名映射
+window.DDRAGON_VER = '16.2.1';
+window.DDRAGON_MAP = {
+ "K'Sante":"KSante", "Lee Sin":"LeeSin", "Xin Zhao":"XinZhao", "Jarvan IV":"JarvanIV",
+ "Rek'Sai":"RekSai", "Twisted Fate":"TwistedFate", "Kai'Sa":"Kaisa", "Kog'Maw":"KogMaw",
+ "Miss Fortune":"MissFortune", "Renata Glasc":"Renata", "Wukong":"MonkeyKing",
+ "LeBlanc":"Leblanc", "Cho'Gath":"Chogath", "Kha'Zix":"Khazix", "Bel'Veth":"Belveth",
+ "Tahm Kench":"TahmKench"
+};
+window.champDDId = k => window.DDRAGON_MAP[k] || String(k||'').replace(/[^A-Za-z0-9]/g,'');
+window.champIconUrl = k => `https://ddragon.leagueoflegends.com/cdn/${window.DDRAGON_VER}/img/champion/${window.champDDId(k)}.png`;

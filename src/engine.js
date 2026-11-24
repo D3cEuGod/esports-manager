@@ -80,7 +80,7 @@ function newGame(userTeam){
         const r = srand(hash(pid));
         const age = AGE_FIX[baseId] || p.age || (18 + Math.floor(r()*9));
         const pl = { pid, tag:baseId, name:p.name||baseId, role:p.role, nat:p.nat||(reg==='LPL'?'CN':reg==='LCK'?'KR':'--'),
-          age, rating:p.rating||70, team:key, form:0, mental:0, champs:[], sub:!!p.sub };
+          age, rating:p.rating||70, team:key, form:initialForm(baseId), mental:0, champs:[], sub:!!p.sub };
         pl.pot = Math.round(clamp(pl.rating + Math.max(0,23-age)*1.6 + r()*4, pl.rating, 97));
         pl.salary = fairSalary(pl);
         pl.contract = 2026 + Math.floor(r()*3);
@@ -139,6 +139,11 @@ const formTier = p => p ? tierOf(p.form) : 0;
 const mentalTier = p => p ? tierOf(p.mental) : 0;
 const TIER_LO = {'-2':-5, '-1':-2.9, '0':-0.9, '1':1, '2':3};
 const TIER_HI = {'-2':-3, '-1':-1, '0':0.99, '1':2.99, '2':5};
+// 开档状态：取选手近期（最近 20 局）相对生涯的表现基线
+function initialForm(tag){
+  const T0 = (typeof TRAITS!=='undefined' && TRAITS) ? TRAITS[tag] : null;
+  return T0 && T0.base ? Math.round(T0.base*100)/100 : 0;
+}
 // 把数值变化限制在“最多跨一档”
 function stepTier(oldV, newV){
   const ot = tierOf(oldV); let nv = clamp(newV, -5, 5);
@@ -173,8 +178,8 @@ function traitTags(tr){
   const out = [];
   if(tr.big >= 1.2) out.push({t:'大赛爆发', c:'up'}); else if(tr.big <= -1.2) out.push({t:'大赛软脚', c:'down'});
   if(tr.ko >= 1.2) out.push({t:'大心脏', c:'up'}); else if(tr.ko <= -1.2) out.push({t:'关键局手软', c:'down'});
-  if(tr.stab <= 0.82) out.push({t:'稳定输出', c:'up'}); else if(tr.stab >= 1.22) out.push({t:'起伏较大', c:'down'});
-  if(tr.res >= 1.2) out.push({t:'抗压强', c:'up'}); else if(tr.res <= 0.82) out.push({t:'容易上头', c:'down'});
+  if(tr.stab <= 0.8) out.push({t:'稳定输出', c:'up'}); else if(tr.stab >= 1.22) out.push({t:'起伏较大', c:'down'});
+  if(tr.res >= 1.22) out.push({t:'抗压强', c:'up'}); else if(tr.res <= 0.8) out.push({t:'容易上头', c:'down'});
   return out;
 }
 // 比赛场合：intl 国际赛、ko 淘汰赛、decider 决胜局
@@ -195,9 +200,10 @@ function matchRating(p, role, ctx){
   if(!p) return 45;
   const tr = playerTraits(p);
   const pr = pressureOf(ctx);
-  let v = effRating(p, role) + mentalTier(p)*2.5*pr;
-  if(ctx && ctx.intl) v += tr.big;
-  if(ctx && ctx.ko) v += tr.ko;
+  // 特质与心态按半权计入：全量计入时最强阵容的国际赛优势被放大，冠军过于集中
+  let v = effRating(p, role) + mentalTier(p)*2.0*pr;
+  if(ctx && ctx.intl) v += tr.big*0.5;
+  if(ctx && ctx.ko) v += tr.ko*0.5;
   return v;
 }
 

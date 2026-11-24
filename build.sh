@@ -8,7 +8,8 @@ mkdir -p dist
 import json,os
 tp='data/traits/traits.json'
 t=json.load(open(tp,encoding='utf-8')) if os.path.exists(tp) else {}
-open('src/traits.js','w',encoding='utf-8').write('window.TRAITS='+json.dumps(t.get('players',t),ensure_ascii=False)+';\n')
+P={k:{f:v[f] for f in ('big','ko','stab','res','base','n') if f in v} for k,v in t.get('players',t).items()}
+open('src/traits.js','w',encoding='utf-8').write('window.TRAITS='+json.dumps(P,ensure_ascii=False,separators=(',',':'))+';\n')
 PY
 "$PY" -I - <<'PY'
 t=open('src/index.tpl.html',encoding='utf-8').read()

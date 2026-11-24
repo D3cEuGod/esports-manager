@@ -11,6 +11,12 @@ grill-me 的位置：
 
 来源：github.com/mattpocock/skills（grilling / grill-me，MIT）。
 
+## 分工
+
+- **Codex 负责比赛内核**：`src/sim.js`、`src/engine.js`、`data/traits/`、`tests/`。
+- **Claude 负责界面与前端**：`src/ui.js`、`src/watch.js`、`src/style.css`、`src/index.tpl.html`、打包脚本（`build_web.py` / `build.sh`）与桌面端（`src-tauri/`、`scripts/`）。
+- 跨边界的改动（回放数据格式、`playGame` / `simSolo1v1` 返回字段、`watch.js` 读取的状态字段）要在 PR 描述里写明“接口变更”。接口清单见 `docs/CODEX_KERNEL_REVIEW.md`。
+
 ## 项目背景
 
 - 单文件 HTML 的英雄联盟（LoL）电竞经理游戏，浏览器直接打开 `dist/index.html` 就能玩。

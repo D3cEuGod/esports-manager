@@ -16,7 +16,9 @@ open(os.path.join('src', 'data.js'), 'w', encoding='utf-8').write(
 tp = os.path.join('data', 'traits', 'traits.json')
 traits = json.load(open(tp, encoding='utf-8')) if os.path.exists(tp) else {}
 open(os.path.join('src', 'traits.js'), 'w', encoding='utf-8').write(
-    'window.TRAITS=' + json.dumps(traits.get('players', traits), ensure_ascii=False) + ';\n'
+    'window.TRAITS=' + json.dumps({k: {f: v[f] for f in ('big', 'ko', 'stab', 'res', 'base', 'n') if f in v}
+                                   for k, v in traits.get('players', traits).items()},
+                                  ensure_ascii=False, separators=(',', ':')) + ';\n'
 )
 
 # 2. Bundle single-file dist/index.html

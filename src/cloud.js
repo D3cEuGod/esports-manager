@@ -223,7 +223,7 @@ const CloudSync = {
   async verifySignupOtp(email, token){
     const code = String(token || '').replace(/\s+/g, '');
     if(!email) return { ok:false, msg:'缺少待验证的邮箱地址' };
-    if(!/^\d{6,8}$/.test(code)) return { ok:false, msg:'请输入邮箱收到的 6 位数字验证码' };
+    if(!/^\d{6,8}$/.test(code)) return { ok:false, msg:'请输入邮箱收到的数字验证码' };
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/verify`, {
         method: 'POST',

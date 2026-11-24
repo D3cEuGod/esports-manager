@@ -280,8 +280,8 @@ function styleEdge(a,b){
   return 0;
 }
 
-// 2026 先手选择权 AI 决策
-function aiFirstDecision(meKey, oppKey, locked){
+// 经典职业选边 AI 决策（蓝色方 = 固定 BP 先手；红色方 = 固定 BP 后手拿五楼康特位）
+function aiChooseSide(meKey, oppKey, locked){
   const un = new Set(locked||[]);
   const t0Left = CHAMP_KEYS.filter(c=>!un.has(c) && (S.meta[c]||0)>=2);
   const lu = lineupMap(meKey);
@@ -289,19 +289,139 @@ function aiFirstDecision(meKey, oppKey, locked){
   for(const c of t0Left){
     for(const r of ROLES){ if(CH[c].roles.includes(r) && champFit(lu[r],c,r)>=4.5){ t0Fit++; break; } }
   }
-  // 剩余 T0 且我方绝活多 -> 更偏向抢 BP 先手；否则有一定概率直接抢蓝色方
-  const pFirst = clamp(0.42 + t0Fit*0.09, 0.35, 0.78);
-  return rnd() < pFirst ? {kind:'first', value:'first'} : {kind:'side', value:'blue'};
+  // 版本强势多或常规情况下绝大多数选蓝色方先手，少数情况选红色方抢五楼康特
+  const pBlue = clamp(0.68 + t0Fit*0.06, 0.62, 0.88);
+  return rnd() < pBlue ? 'blue' : 'red';
 }
-function aiSecondDecision(meKey, oppKey, oppKind, locked){
-  // 对手选了蓝/红方 -> 我选 BP 先手或后手
-  if(oppKind==='side'){
-    const un = new Set(locked||[]);
-    const t0Left = CHAMP_KEYS.filter(c=>!un.has(c) && (S.meta[c]||0)>=2).length;
-    return rnd() < (t0Left>=3 ? 0.8 : 0.65) ? 'first' : 'second';
+
+// 赛前峡谷 1v1 SOLO 选边赛：默认推选本队最佳 SOLO 选手与英雄
+function defaultSoloPick(teamKey){
+  const lu = lineupMap(teamKey);
+  // 优先中上/ADC 等操作位 + 能力最高者
+  const roleBias = {MID:1.8, TOP:1.5, ADC:1.0, JUG:0.6, SUP:-3.0};
+  let bestR = 'MID', bestScore = -1e9;
+  for(const r of ROLES){
+    const p = lu[r]; if(!p) continue;
+    const sc = effRating(p, r) + (roleBias[r]||0);
+    if(sc > bestScore){ bestScore = sc; bestR = r; }
   }
-  // 对手选了 BP 先后手 -> 我选蓝/红方（蓝色方有小幅胜率优势，85% 选蓝）
-  return rnd() < 0.85 ? 'blue' : 'red';
+  const p = lu[bestR];
+  const sig = p && p.champs && p.champs.length ? p.champs.slice().sort((a,b)=>b.p-a.p)[0].c : CHAMP_KEYS.find(k=>CH[k].roles.includes(bestR)) || CHAMP_KEYS[0];
+  return { role: bestR, pid: p ? p.pid : null, champ: sig };
+}
+
+// 赛前峡谷 1v1 SOLO 选边模拟引擎（输出逐拍时间轴 frames，供前端 1x/2x/4x 观战回放）
+// 规则：先拿一血（击杀）、或率先 100 补刀、或推掉中路一塔者获胜，所在战队获得选边权
+function simSolo1v1(teamA, teamB, pickA, pickB){
+  const luA = lineupMap(teamA), luB = lineupMap(teamB);
+  const pa = pickA || defaultSoloPick(teamA);
+  const pb = pickB || defaultSoloPick(teamB);
+  const plA = (pa.pid && P(pa.pid)) || luA[pa.role] || Object.values(luA)[0];
+  const plB = (pb.pid && P(pb.pid)) || luB[pb.role] || Object.values(luB)[0];
+  const cA = pa.champ && CH[pa.champ] ? pa.champ : defaultSoloPick(teamA).champ;
+  const cB = pb.champ && CH[pb.champ] ? pb.champ : defaultSoloPick(teamB).champ;
+  const nameA = `${playerTag(plA)}（${CH[cA].cn}）`, nameB = `${playerTag(plB)}（${CH[cB].cn}）`;
+
+  const soloPow = (p, c) => {
+    const base = p ? p.rating + (p.form||0) : 70;
+    const fit = champFit(p, c, p ? p.role : null);
+    const ch = CH[c];
+    const duelBonus = (ch.tags.includes('early')?2.0:0) + (ch.tags.includes('pick')?1.4:0) + (ch.tags.includes('poke')?1.2:0) + (ch.tags.includes('split')?1.0:0);
+    return base + fit*0.8 + duelBonus;
+  };
+  const powA = soloPow(plA, cA), powB = soloPow(plB, cB);
+  const edge = (powA - powB) / 14; // 正数利 A
+
+  let hpA = 100, hpB = 100, csA = 0, csB = 0, turA = 100, turB = 100, sec = 90;
+  const frames = [{
+    t: '01:30', hpA:100, hpB:100, csA:0, csB:0, turA:100, turB:100, side:null, tag:'对线开始',
+    text: `双方中路碰面！${teamName(teamA)} ${nameA} 对阵 ${teamName(teamB)} ${nameB}，谁能拿下首局选边权？`
+  }];
+
+  let winner = null, winReason = '';
+  const maxSteps = 14;
+  for(let step=1; step<=maxSteps && !winner; step++){
+    sec += 18 + Math.floor(rnd()*16);
+    const tStr = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+    const rollA = rnd() < sigmoid(edge + randn()*0.55);
+    const atkSide = rollA ? 'A' : 'B';
+    const atkName = rollA ? nameA : nameB;
+    const defName = rollA ? nameB : nameA;
+
+    // 推进补刀
+    csA += 5 + Math.floor(rnd()*5) + (rollA ? 2 : 0);
+    csB += 5 + Math.floor(rnd()*5) + (!rollA ? 2 : 0);
+
+    // 事件分支：消耗换血 / 压塔吃镀层 / 回城补给 / 终极单杀
+    const kind = rnd();
+    let tag = '对拼换血', text = '';
+    if(step >= 4 && ((rollA && hpB <= 42) || (!rollA && hpA <= 42) || (step >= 7 && rnd() < 0.45))){
+      // 决胜单杀
+      if(rollA){ hpB = 0; hpA = clamp(hpA - (10 + Math.floor(rnd()*22)), 6, 100); }
+      else { hpA = 0; hpB = clamp(hpB - (10 + Math.floor(rnd()*22)), 6, 100); }
+      winner = atkSide; winReason = '一血单杀';
+      tag = 'SOLO KILL';
+      text = `💥 ${atkName} 闪现先手打满爆发，极限操作完成单杀！击倒 ${defName} 拿下一血！`;
+    } else if((hpA <= 30 || hpB <= 30) && kind < 0.35){
+      // 残血回城补给，对方磨塔
+      if(hpA <= 30){
+        hpA = 95; turA = Math.max(0, turA - (24 + Math.floor(rnd()*18)));
+        tag = '回城磨塔';
+        text = `${nameA} 血量见底被迫回城补给，${nameB} 趁机推线猛点防御塔（残余 ${turA}%）！`;
+        if(turA <= 0){ winner = 'B'; winReason = '推平一塔'; text += ` 防御塔轰然倒塌，${nameB} 赢下选边权！`; }
+      } else {
+        hpB = 95; turB = Math.max(0, turB - (24 + Math.floor(rnd()*18)));
+        tag = '回城磨塔';
+        text = `${nameB} 残血交技能后撤回城，${nameA} 顺势压进防御塔狂吃镀层（残余 ${turB}%）！`;
+        if(turB <= 0){ winner = 'A'; winReason = '推平一塔'; text += ` 防御塔轰然倒塌，${nameA} 赢下选边权！`; }
+      }
+    } else if(kind < 0.65){
+      // 激烈换血
+      const dmg = 18 + Math.floor(rnd()*22);
+      const chip = 6 + Math.floor(rnd()*12);
+      if(rollA){ hpB = Math.max(8, hpB - dmg); hpA = Math.max(12, hpA - chip); }
+      else { hpA = Math.max(8, hpA - dmg); hpB = Math.max(12, hpB - chip); }
+      tag = '拉扯换血';
+      text = `${atkName} 抢到技能空档主动发难，精准连招打掉 ${defName} 大截血量！`;
+    } else {
+      // 控线压刀 & 磨塔
+      const tdmg = 10 + Math.floor(rnd()*16);
+      if(rollA){ turB = Math.max(0, turB - tdmg); hpB = Math.max(15, hpB - 10); }
+      else { turA = Math.max(0, turA - tdmg); hpA = Math.max(15, hpA - 10); }
+      tag = '线权压制';
+      text = `${atkName} 细节卡兵线建立补刀领先，顺势点塔施压！`;
+      if(turA <= 0){ winner = 'B'; winReason = '推平一塔'; text = `🏰 ${nameB} 持续压制点破中路一塔，赢下 1v1 选边赛！`; }
+      else if(turB <= 0){ winner = 'A'; winReason = '推平一塔'; text = `🏰 ${nameA} 持续压制点破中路一塔，赢下 1v1 选边赛！`; }
+    }
+
+    if(!winner && (csA >= 100 || csB >= 100)){
+      winner = csA >= csB ? 'A' : 'B';
+      winReason = '率先百刀';
+      tag = '100 补刀胜';
+      text = `🌾 ${winner==='A'?nameA:nameB} 率先达成 100 补刀，稳健运营拿下 1v1 选边赛胜利！`;
+    }
+
+    frames.push({ t: tStr, hpA, hpB, csA: Math.min(100, csA), csB: Math.min(100, csB), turA, turB, side: atkSide, tag, text });
+  }
+
+  if(!winner){
+    sec += 15;
+    const tStr = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+    winner = (hpA + csA*0.6 + (rnd()-0.5)*10) >= (hpB + csB*0.6) ? 'A' : 'B';
+    winReason = '决死缩圈击杀';
+    if(winner==='A') hpB = 0; else hpA = 0;
+    frames.push({
+      t: tStr, hpA, hpB, csA, csB, turA, turB, side: winner, tag:'缩圈决胜',
+      text: `🔥 火圈收缩终极一战！${winner==='A'?nameA:nameB} 顶住压力完成终结，为 ${teamName(winner==='A'?teamA:teamB)} 赢下选边权！`
+    });
+  }
+
+  return {
+    teamA, teamB,
+    A: { pid: plA?plA.pid:null, tag: playerTag(plA), role: pa.role, champ: cA },
+    B: { pid: plB?plB.pid:null, tag: playerTag(plB), role: pb.role, champ: cB },
+    winner, winReason, frames
+  };
 }
 
 // draft: {A,B (team keys), first:'A'|'B', blue:'A'|'B', locked:[], bans:{A:[],B:[]}, picks:{A:{role:champ},B:{}}, pickOrder:{A:[],B:[]}, step}
@@ -310,8 +430,9 @@ const DRAFT_SEQ = [ // F=先选方 S=后选方
   ['pick','F'],['pick','S'],['pick','S'],['pick','F'],['pick','F'],['pick','S'],
   ['ban','S'],['ban','F'],['ban','S'],['ban','F'],
   ['pick','S'],['pick','F'],['pick','F'],['pick','S']];
-function newDraft(A,B,first,blue,locked){
-  return {A,B,first,blue,locked:(locked||[]).slice(),bans:{A:[],B:[]},picks:{A:{},B:{}},pickOrder:{A:[],B:[]},step:0};
+function newDraft(A,B,blue,locked){
+  // 经典职业规则：蓝色方固定为 BP 先手（first === blue）
+  return {A,B,first:blue,blue,locked:(locked||[]).slice(),bans:{A:[],B:[]},picks:{A:{},B:{}},pickOrder:{A:[],B:[]},step:0};
 }
 function draftSide(d){ if(!d || d.step>=DRAFT_SEQ.length) return null; const [kind,w]=DRAFT_SEQ[d.step]; const side = w==='F'? d.first : (d.first==='A'?'B':'A'); return {kind,side}; }
 function unavailable(d){ const u=new Set(d.locked); ['A','B'].forEach(s=>{ d.bans[s].forEach(c=>u.add(c)); Object.values(d.picks[s]).forEach(c=>u.add(c)); }); return u; }
@@ -799,27 +920,20 @@ function applyGameImpact(g, teamA, teamB){
 // 系列赛（AI 自动）
 function simSeries(m, keepGames){
   const need=Math.ceil(m.bo/2); let wa=0,wb=0; const games=[]; let locked=[];
-  let chooser = rnd()<0.5?'A':'B';
-  if(m.hiSeed) chooser = m.hiSeed;
+  // 首局通过 1v1 决定选边权
+  let chooser = simSolo1v1(m.a, m.b).winner;
   while(wa<need && wb<need){
+    // BO5 决胜局（2:2）再打一场 1v1 决定选边权
+    if(m.bo===5 && wa===2 && wb===2){ chooser = simSolo1v1(m.a, m.b).winner; }
     const other = chooser==='A'?'B':'A';
-    const dec = aiFirstDecision(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked);
-    let first, blue;
-    if(dec.kind==='first'){
-      first = chooser;
-      const othSide = aiSecondDecision(m[other==='A'?'a':'b'], m[chooser==='A'?'a':'b'], 'first', locked);
-      blue = othSide==='blue' ? other : chooser;
-    } else {
-      blue = chooser;
-      const othOrd = aiSecondDecision(m[other==='A'?'a':'b'], m[chooser==='A'?'a':'b'], 'side', locked);
-      first = othOrd==='first' ? other : chooser;
-    }
-    const d=newDraft(m.a,m.b,first,blue,locked);
+    const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked);
+    const blue = sidePick==='blue' ? chooser : other;
+    const d=newDraft(m.a,m.b,blue,locked);
     autoDraftRest(d);
     const g=playGame(d); games.push(g);
     if(g.w==='A')wa++; else wb++;
     locked = locked.concat(Object.values(g.picks.A), Object.values(g.picks.B)).filter(Boolean); // 无畏征召
-    chooser = g.w==='A'?'B':'A'; // 败者获得先手选择权
+    chooser = g.w==='A'?'B':'A'; // 经典规则：上一局败者获得下一局选边权
   }
   return finishSeries(m, wa, wb, games, keepGames);
 }

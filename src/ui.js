@@ -126,16 +126,33 @@ function openConflictModal(){
   render();
 }
 
+// 1v1 SOLO 观战定时器
+let _soloTimer = null;
+function stopSoloTimer(){ if(_soloTimer){ clearTimeout(_soloTimer); _soloTimer=null; } }
+function scheduleSoloTick(){
+  stopSoloTimer();
+  const M = UI.match;
+  if(!M || M.phase!=='solo_watch' || !M.solo) return;
+  if(M.soloStep >= M.solo.frames.length - 1) return;
+  const delay = M.soloSpeed===4 ? 260 : M.soloSpeed===2 ? 560 : 1150;
+  _soloTimer = setTimeout(()=>{
+    if(!UI.match || UI.match!==M || M.phase!=='solo_watch') return;
+    M.soloStep++;
+    render();
+    scheduleSoloTick();
+  }, delay);
+}
+
 function render(){
-  if(!S){ stopBpClock(); $app().innerHTML = startScreen() + (UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:'') + toastHtml(); return; }
+  if(!S){ stopBpClock(); stopSoloTimer(); $app().innerHTML = startScreen() + (UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:'') + toastHtml(); return; }
   if(UI.match){ $app().innerHTML = matchScreen() + toastHtml(); return; }
-  stopBpClock();
+  stopBpClock(); stopSoloTimer();
   const me=T(S.user);
   const ev=curEvent();
   $app().innerHTML = `
   <header class="top">
     <div class="brand">峡谷经理人</div>
-    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div><div><small>战力</small>${ovrBadge(teamOvr(S.user))}</div>${cloudPillHtml()}</div>
+    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div>${cloudPillHtml()}</div>
   </header>
   <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['news','资讯'],['rules','规则'],['sys','账号与存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
   <main>${VIEWS[UI.view]()}</main>
@@ -169,9 +186,9 @@ function startScreen(){
         : UI.verifyEmail ? `
           <div class="gate-otp">
             <div class="otp-badge">📧 邮箱验证</div>
-            <p class="gate-hint" style="margin-bottom:12px">验证码已发送至 <b>${esc(UI.verifyEmail)}</b><br>请在客户端直接输入收到的 6 位数字验证码（无需跳转网页）</p>
+            <p class="gate-hint" style="margin-bottom:12px">验证码已发送至 <b>${esc(UI.verifyEmail)}</b><br>请直接在下方输入邮件中的数字验证码（无需跳转网页）</p>
             <div class="gate-form">
-              <input id="auth-otp" class="otp-input" type="text" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="输入 6 位验证码">
+              <input id="auth-otp" class="otp-input" type="text" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="输入邮箱验证码">
               <button class="gate-primary" data-a="cloudVerifyOtp" ${UI.authBusy?'disabled':''}>${UI.authBusy?'验证中…':'验证并登录 ▶'}</button>
             </div>
             <div class="otp-actions">
@@ -239,58 +256,69 @@ function startScreen(){
   </div>`;
 }
 
-// ---------- 主页 / 赛程 ----------
+// ---------- 主页 / 赛程（精简去冗杂版） ----------
 const VIEWS = {};
 VIEWS.home = () => {
   const ev=curEvent(), info=EVENT_INFO[ev.type];
   let body='';
   if(ev.type==='window'){
-    body=`<p>转会窗口开启中。你可以前往 <a data-a="view" data-v="market">转会市场</a> 买入/交换选手，或在 <a data-a="view" data-v="roster">阵容</a> 中出售选手。</p>
-      <button class="btn big" data-a="endWindow">结束转会窗口，继续赛程 ▶</button>`;
+    body=`<p>转会窗口开启中，可前往 <a data-a="view" data-v="market">转会市场</a> 引援，或在 <a data-a="view" data-v="roster">阵容</a> 调整首发。</p>
+      <div class="btns"><button class="btn big" data-a="endWindow">结束转会窗口，继续赛程 ▶</button></div>`;
   } else if(ev.type==='off'){
     const exp=T(S.user).roster.map(P).filter(p=>p&&p.contract<=S.year);
-    body=`<p>${S.year} 赛季结束。处理合同、转会后开始新赛季。</p>
-      ${exp.length?`<h4>合同到期选手（不续约将离队）</h4><table class="tbl">${exp.map(p=>`<tr><td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b></td><td>${ovrBadge(p.rating)}</td><td>${p.age}岁</td><td>${p.renewed?'✅ 已续约':`<button class="btn sm" data-a="renew" data-p="${esc(p.pid)}">续约2年（年薪约 ${fmtMoney(fairSalary(p)*1.1)}）</button>`}</td></tr>`).join('')}</table>`:'<p>没有合同到期的选手。</p>'}
-      <button class="btn big" data-a="newSeason">开始 ${S.year+1} 赛季 ▶</button>`;
+    body=`<p>${S.year} 赛季结束，处理到期合同后开启新赛季。</p>
+      ${exp.length?`<h4>合同到期选手（不续约将离队）</h4><table class="tbl">${exp.map(p=>`<tr><td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b></td><td>${p.age}岁</td><td>${p.renewed?'✅ 已续约':`<button class="btn sm" data-a="renew" data-p="${esc(p.pid)}">续约2年（约 ${fmtMoney(fairSalary(p)*1.1)}）</button>`}</td></tr>`).join('')}</table>`:'<p class="muted">没有合同到期的选手。</p>'}
+      <div class="btns"><button class="btn big" data-a="newSeason">开始 ${S.year+1} 赛季 ▶</button></div>`;
   } else if(!ev.started){
-    body = `<p>赛事即将开始。${ev.type==='lpl_s1'?'开赛前转会窗口仍然开放，可以先去调整阵容和转会。':''}</p>${probs()}
-      <div class="btns"><button class="btn big" data-a="startEv">开始赛事 ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事（含我的比赛）</button></div>`;
+    body = `<p class="muted">${ev.type==='lpl_s1'?'开赛前转会窗口开放中，确认首发后即可开赛。':'准备就绪，点击下方开启本项赛事。'}</p>${probs()}
+      <div class="btns"><button class="btn big" data-a="startEv">开始赛事 ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
   } else {
     const nxt = nextReadyMatch();
     const myNext = findMyNext();
     if(ev.done){
-      body = `<div class="done">✅ 赛事已结束 ${ev.res.champ?`· 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
-        <button class="btn big" data-a="nextEvent">进入下一项赛事 ▶</button>`;
+      body = `<div class="done">✅ 本阶段已结束 ${ev.res.champ?`· 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
+        <div class="btns"><button class="btn big" data-a="nextEvent">进入下一项赛事 ▶</button></div>`;
     } else {
       const inEvent = eventHasUser(ev);
       body = `<div class="stage">当前阶段：<b>${esc(ev.stages[ev.si]?ev.stages[ev.si].name:'')}</b></div>
-       ${myNext?`<div class="nextm"><div class="lbl">下一场 · ${esc(myNext.m.label)} · BO${myNext.m.bo}</div>
-          <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}<span>战力 ${Math.round(teamOvr(myNext.m.a))}</span></div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}<span>战力 ${Math.round(teamOvr(myNext.m.b))}</span></div></div></div>`:
-         `<p class="muted">${inEvent?'等待其他比赛结果…':'你的战队没有参加本项赛事（或已被淘汰），可以直接模拟观看结果。'}</p>`}
+       ${myNext?`<div class="nextm"><div class="lbl">${esc(myNext.m.label)} · BO${myNext.m.bo}</div>
+          <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}</div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}</div></div></div>`:
+         `<p class="muted">${inEvent?'等待其他对局完成…':'本队未参与当前阶段，可直接模拟推进。'}</p>`}
        <div class="btns">
-         ${myNext?`<button class="btn big" data-a="toMyMatch">${nxt&&userInvolved(nxt.m)?'进入比赛（BP）':'模拟至我的比赛'} ▶</button>`:''}
+         ${myNext?`<button class="btn big" data-a="toMyMatch">${nxt&&userInvolved(nxt.m)?'进入比赛（1v1 / BP）':'模拟至我的比赛'} ▶</button>`:''}
          <button class="btn" data-a="simStage">模拟本阶段</button>
-         <button class="btn ghost" data-a="simEvent">快速模拟整项赛事（含我的比赛）</button>
+         <button class="btn ghost" data-a="simEvent">模拟整项赛事</button>
        </div>
        ${probs()}`;
     }
   }
-  return `<section class="card evcard"><div class="evh"><h2>${info.name}</h2><span>${info.date} ${info.loc?'· '+info.loc:''}</span></div>
-    <details class="fmtd"><summary>赛制</summary><p class="fmt">${esc(info.fmt)}</p></details>${body}</section>
-    <div class="cols"><section class="card">${seasonTimeline()}</section><section class="card"><h3>LPL 积分榜（世界赛资格）</h3>${pointsTable()}</section></div>
-    <section class="card"><h3>最新动态</h3><ul class="news">${S.news.slice(0,8).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`;
+  const strip = `<div class="season-strip">${S.events.map((e,i)=>{
+    const cls = i<S.evIdx||e.done?'past':i===S.evIdx?'now':'';
+    return `<span class="ss-item ${cls}">${EVENT_INFO[e.type].name.replace(/LPL |全球总决赛 |MSI |电竞世界杯 /g,'')}</span>`;
+  }).join('')}</div>`;
+  return `
+    <section class="card evcard">
+      ${strip}
+      <div class="evh"><h2>${info.name}</h2><span>${info.date}${info.loc?' · '+info.loc:''}</span></div>
+      ${body}
+      <details class="fmtd"><summary>赛制与全年赛程详情</summary><p class="fmt">${esc(info.fmt)}</p>${seasonTimeline()}</details>
+    </section>
+    <div class="cols home-grid">
+      <section class="card"><h3>LPL 全年积分榜</h3>${pointsTable()}</section>
+      <section class="card"><h3>最新动态</h3><ul class="news">${S.news.slice(0,5).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>
+    </div>`;
 };
 function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">⚠️ ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
 function findMyNext(){ const ev=curEvent(); if(!ev.started||ev.done) return null; for(const st of ev.stages){ if(st.kind==='br') resolveBR(st); const m=st.matches.find(m=>!m.w&&userInvolved(m)&&m.a&&m.b); if(m) return {m,st}; } return null; }
 function seasonTimeline(){
-  return `<h3>${S.year} 赛季日程</h3><ol class="tl">${S.events.map((e,i)=>{ const inf=EVENT_INFO[e.type];
+  return `<ol class="tl">${S.events.map((e,i)=>{ const inf=EVENT_INFO[e.type];
     const st = i<S.evIdx||e.done?'past':i===S.evIdx?'now':'';
     return `<li class="${st}"><b>${inf.name}</b> <small>${inf.date}</small> ${e.res&&e.res.champ?`· 冠军 ${teamTag(e.res.champ)}`:''}</li>`; }).join('')}</ol>`;
 }
 function pointsTable(){
   const rows=S.lplOrder.slice().sort((a,b)=>(S.points[b]||0)-(S.points[a]||0));
-  return `<table class="tbl"><tr><th>#</th><th>战队</th><th>积分</th><th>战力</th></tr>${rows.map((k,i)=>`<tr class="${k===S.user?'me':''}"><td>${i+1}</td><td>${teamTag(k)}</td><td>${S.points[k]||0}</td><td>${ovrBadge(teamOvr(k))}</td></tr>`).join('')}</table>`;
+  return `<table class="tbl"><tr><th>#</th><th>战队</th><th>积分</th></tr>${rows.map((k,i)=>`<tr class="${k===S.user?'me':''}"><td>${i+1}</td><td>${teamTag(k)}</td><td><b>${S.points[k]||0}</b></td></tr>`).join('')}</table>`;
 }
 function eventSummary(ev){
   const r=ev.res; let h='';
@@ -417,7 +445,7 @@ VIEWS.news = () => `<section class="card"><h2>新闻</h2><ul class="news">${S.ne
   <h3>历届冠军</h3><table class="tbl"><tr><th>年份</th><th>LPL S1/S2/S3</th><th>先锋赛</th><th>MSI</th><th>EWC</th><th>世界赛</th></tr>${(S.history||[]).map(h=>`<tr><td>${h.year}</td><td>${h.lpl.map(teamTag).join(' ')}</td><td>${teamTag(h.fst)}</td><td>${teamTag(h.msi)}</td><td>${teamTag(h.ewc)}</td><td>${teamTag(h.worlds)}</td></tr>`).join('')}</table></section>`;
 VIEWS.rules = () => `<section class="card"><h2>赛制说明（2026）</h2><p>✅ = 已从拳头官方/主流媒体核实；⚠️ = 未查到官方细则，游戏内为推测或简化。</p>
   ${['lpl_s1','fst','lpl_s2','msi','ewc','lpl_s3','lpl_rf','worlds'].map(k=>`<h3>${EVENT_INFO[k].name} <small>${EVENT_INFO[k].date} · ${EVENT_INFO[k].loc}</small></h3><p class="fmt">${esc(EVENT_INFO[k].fmt)}</p>`).join('')}
-  <h3>BP规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 2026新规“先手选择权”：拥有选择权的一方选择蓝/红方或BP先后手，另一方获得剩余选项；系列赛中输掉上一局的一方获得下一局选择权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前点击己方槽位进行摇摆位互换。</p>
+  <h3>BP与选边规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 经典蓝先红后制：蓝色方永远为 BP 先手（一楼先抢），红色方永远为 BP 后手（拥有五楼康特位）。✅ 峡谷 1v1 选边赛：系列赛首局及 BO5 第五局决胜局开赛前进行 1v1 SOLO 赛（一血 / 百刀 / 一塔定胜负），胜者战队获得选边权；其余小局由上一局败者获得选边权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前点击己方槽位进行摇摆位互换。</p>
   <h3>其他说明</h3><p class="fmt">✅ LPL首发外援上限2人（赛前强制校验，AI 战队同样遵守）。✅ EWC卫冕冠军：Gen.G（EWC 2025冠军），之后赛季为上届冠军。⚠️ 其他赛区不进行逐场模拟，按战力+随机生成各赛段排名。⚠️ 选手能力值、潜力、身价均为游戏估算。</p></section>`;
 function accountPanelHtml(){
   const logged = CloudSync.isLoggedIn();
@@ -435,9 +463,9 @@ function accountPanelHtml(){
         </div>
       </div>`
     : UI.verifyEmail ? `<div class="acct-form">
-        <p>验证码已发送至 <b>${esc(UI.verifyEmail)}</b>，请输入邮件中的 6 位数字验证码完成绑定：</p>
+        <p>验证码已发送至 <b>${esc(UI.verifyEmail)}</b>，请输入邮件中的数字验证码完成绑定：</p>
         <div class="form-row">
-          <input id="auth-otp" class="otp-input light" type="text" inputmode="numeric" maxlength="8" placeholder="输入 6 位验证码">
+          <input id="auth-otp" class="otp-input light" type="text" inputmode="numeric" maxlength="8" placeholder="输入邮箱验证码">
         </div>
         <div class="btns">
           <button class="btn big" data-a="cloudVerifyOtp" ${UI.authBusy?'disabled':''}>${UI.authBusy?'验证中…':'验证并绑定当前进度'}</button>
@@ -471,30 +499,81 @@ VIEWS.sys = () => `<section class="card">
   <div class="btns"><button class="btn" data-a="export">导出存档 JSON</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除本地存档并重新开始</button></div>
 </section>`;
 
-// ================= 比赛（LoL 海克斯风格 BP）界面 =================
+// ================= 比赛（1v1 选边赛 + LoL 海克斯风格 BP）界面 =================
+function needsSolo1v1(M){
+  // 首局开赛前，以及 BO5 第 5 局决胜局（2:2）赛前打 1v1 选边赛
+  return M.games.length === 0 || (M.item.m.bo === 5 && M.wa === 2 && M.wb === 2);
+}
+function enterNextGamePhase(M){
+  const m = M.item.m, me = M.me, op = me==='A'?'B':'A';
+  M.draft = null; M.sel = null; M.roleSel = null; M.swapFrom = null;
+  M.solo = null; M.soloStep = 0; M.soloAiBlue = null;
+  if(needsSolo1v1(M)){
+    const myTeamKey = m[me==='A'?'a':'b'];
+    const def = defaultSoloPick(myTeamKey);
+    M.soloMyRole = def.role;
+    M.soloMyChamp = def.champ;
+    M.phase = 'solo_pick';
+    return;
+  }
+  // 非 1v1 局：由上一局败者直接选边（蓝色方固定 BP 先手，红色方固定 BP 后手）
+  if(M.chooser === me){
+    M.phase = 'choose';
+  } else {
+    const opSide = aiChooseSide(m[op==='A'?'a':'b'], m[me==='A'?'a':'b'], M.locked);
+    const blue = opSide === 'blue' ? op : me;
+    setupDraft(blue);
+    toast(`对手拥有选边权，选择了${opSide==='blue'?'蓝色方（BP先手）':'红色方（BP后手）'}，本局你位于${blue===me?'蓝色方（BP先手）':'红色方（BP后手）'}`);
+  }
+}
 function beginUserMatch(item){
   const m=item.m; const me = m.a===S.user?'A':'B';
   UI.match = {
     item, me, wa:0, wb:0, games:[], locked:[],
-    chooser: m.hiSeed? m.hiSeed : (rnd()<0.5?'A':'B'),
-    phase:'choose', aiDec:null, draft:null,
+    chooser: null,
+    phase:'solo_pick', draft:null,
+    solo:null, soloStep:0, soloSpeed:1, soloMyRole:null, soloMyChamp:null, soloAiBlue:null,
     sel:null, roleSel:null, swapFrom:null,
     filter:'ALL', q:'', onlyAvail:false, showLocked:false, clock:30
   };
-  if(UI.match.chooser!==me) aiFirstChoice();
+  enterNextGamePhase(UI.match);
   render();
 }
-function aiFirstChoice(){
-  const M=UI.match, m=M.item.m, opp=M.me==='A'?'B':'A';
-  M.aiDec = aiFirstDecision(m[opp==='A'?'a':'b'], m[M.me==='A'?'a':'b'], M.locked);
-  M.phase='choose';
-}
-function setupDraft(first, blue){
+function setupDraft(blue){
   const M=UI.match;
-  M.draft = newDraft(M.item.m.a, M.item.m.b, first, blue, M.locked);
+  stopSoloTimer();
+  M.draft = newDraft(M.item.m.a, M.item.m.b, blue, M.locked);
   M.phase = 'draft'; M.sel = null; M.roleSel = null; M.swapFrom = null;
   resetBpClock();
   queueAI();
+}
+
+// 英雄角标含义解析（用于桌面端悬停浮层 & 手机端点击详情，不带括号数字）
+const TAG_CN = {engage:'开团',poke:'消耗',pick:'抓单',scale:'后期',protect:'保护',split:'分推',early:'前期'};
+const DMG_CN = {AD:'物理伤害',AP:'法术伤害',MIX:'混合伤害'};
+function champBadgeInfo(d, M, k){
+  const ch = CH[k]; if(!ch) return { badges:[], metaText:'' };
+  const opp = M.me==='A'?'B':'A';
+  const myLu = lineupMap(d[M.me]), oppLu = lineupMap(d[opp]);
+  const badges = [];
+  if((S.meta[k]||0) >= 2) badges.push({ icon:'🔥', cls:'t0', text:'版本 T0 强势英雄，当前版本强度极高' });
+  else if((S.meta[k]||0) === 1) badges.push({ icon:'↑', cls:'t1', text:'版本 T1 热门英雄，版本契合度良好' });
+  for(const r of ROLES){
+    if(d.picks[M.me][r]) continue;
+    const p = myLu[r];
+    if(p && p.champs.some(x=>x.c===k && x.p>=4)){
+      badges.push({ icon:'👑', cls:'mine', text:`我方 ${ROLE_CN[r]} ${playerTag(p)} 的招牌绝活` });
+    }
+  }
+  for(const r of ROLES){
+    if(d.picks[opp][r]) continue;
+    const p = oppLu[r];
+    if(p && p.champs.some(x=>x.c===k && x.p>=5)){
+      badges.push({ icon:'⚠', cls:'opp', text:`对手 ${ROLE_CN[r]} ${playerTag(p)} 的招牌英雄，建议针对` });
+    }
+  }
+  const metaText = `${ch.roles.map(r=>ROLE_CN[r]).join(' / ')} · ${DMG_CN[ch.dmg]||ch.dmg} · ${ch.tags.map(t=>TAG_CN[t]||t).join(' / ')}`;
+  return { badges, metaText };
 }
 function queueAI(){
   const M=UI.match; if(!M||M.phase!=='draft') return;
@@ -680,46 +759,147 @@ function matchScreen(){
     <div class="fl-chips">${M.locked.map(c=>`<span class="fl-chip">${champAvatar(c,'xs')}<span>${esc(champName(c))}</span></span>`).join('')}</div>
   </div>` : ''}`;
 
-  // -------- 阶段 1：2026 先手选择权 --------
+  // -------- 阶段 0A：赛前峡谷 1v1 SOLO 选边出战配置 --------
+  if(M.phase==='solo_pick'){
+    const myKey = m[M.me==='A'?'a':'b'], oppKey = m[opp==='A'?'a':'b'];
+    const myLu = lineupMap(myKey);
+    const curPl = myLu[M.soloMyRole] || Object.values(myLu)[0];
+    // 推荐列表：当前选手招牌英雄 + 该位置常见 SOLO 英雄
+    const sigs = (curPl && curPl.champs ? curPl.champs.slice().sort((a,b)=>b.p-a.p).map(x=>x.c) : []);
+    const roleChamps = CHAMP_KEYS.filter(k=>CH[k].roles.includes(M.soloMyRole) && !sigs.includes(k)).slice(0, 12);
+    const soloChamps = [...sigs, ...roleChamps];
+
+    return `<div class="match hex mode-choose">${head}
+      <div class="hex-panel solo-panel">
+        <div class="hex-eyebrow">${M.games.length===0?'系列赛首局选边战':'BO5 决胜局选边战'} · 峡谷 1v1 SOLO</div>
+        <h2>派出你的单挑王争夺选边权</h2>
+        <p class="hex-sub">规则：中路 1v1 单挑，率先拿到 <b>一血</b>、<b>100 补刀</b> 或 <b>推掉一塔</b> 的选手获胜，所在战队获得本局蓝/红方选边权（蓝色方永远为 BP 先手）。</p>
+        <div class="solo-setup">
+          <div class="solo-box">
+            <h4>1. 选择出战选手（${teamName(myKey)}）</h4>
+            <div class="solo-players">${ROLES.map(r=>{
+              const p = myLu[r]; if(!p) return '';
+              const on = M.soloMyRole===r;
+              return `<button class="sp-btn ${on?'on':''}" data-a="soloRole" data-r="${r}">
+                <span class="sp-r">${ROLE_SVG[r]}${ROLE_CN[r]}</span>
+                <b>${esc(playerTag(p))}</b>
+              </button>`;
+            }).join('')}</div>
+          </div>
+          <div class="solo-box">
+            <h4>2. 选择出战英雄（已自动推荐招牌）</h4>
+            <div class="solo-champs">${soloChamps.map(c=>{
+              const isSig = sigs.includes(c);
+              const on = M.soloMyChamp===c;
+              return `<button class="sc-btn ${on?'on':''}" data-a="soloChamp" data-c="${esc(c)}">
+                ${champAvatar(c,'xs')}
+                <span>${esc(champName(c))}${isSig?' 👑':''}</span>
+              </button>`;
+            }).join('')}</div>
+          </div>
+        </div>
+        <div class="solo-go-row">
+          <button class="lock-btn is-pick big-go" data-a="startSolo">⚔ 开始峡谷 1v1 选边赛</button>
+          <button class="hex-btn ghost" data-a="autoSeries">跳过，自动模拟剩余系列赛</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // -------- 阶段 0B：峡谷 1v1 SOLO 观战演出（支持 1x/2x/4x 倍速与跳过） --------
+  if(M.phase==='solo_watch' && M.solo){
+    const s = M.solo;
+    const step = Math.min(M.soloStep, s.frames.length - 1);
+    const curF = s.frames[step];
+    const done = step >= s.frames.length - 1;
+    const shownLogs = s.frames.slice(0, step + 1).reverse();
+    const myWon = done && s.winner === M.me;
+    const hpColor = v => v>55 ? 'hi' : v>28 ? 'mid' : 'lo';
+    const fighterCard = (side, isLeft) => {
+      const f = s[side];
+      const hp = side==='A' ? curF.hpA : curF.hpB;
+      const cs = side==='A' ? curF.csA : curF.csB;
+      const tur = side==='A' ? curF.turA : curF.turB;
+      const tKey = side==='A' ? s.teamA : s.teamB;
+      const isWin = done && s.winner===side;
+      return `<div class="solo-fighter ${isLeft?'left':'right'} ${isWin?'winner':''} ${done&&!isWin?'loser':''}">
+        <div class="sf-top">
+          ${champAvatar(f.champ,'md')}
+          <div class="sf-id">
+            <div class="sf-team">${teamTag(tKey)} ${side===M.me?'<em class="me-pill">我方</em>':''}</div>
+            <div class="sf-name"><b>${esc(f.tag)}</b> · ${esc(champName(f.champ))}</div>
+            <div class="sf-role">${ROLE_CN[f.role]}</div>
+          </div>
+        </div>
+        <div class="sf-stat">
+          <div class="sf-bar-lbl"><span>生命值</span><b>${hp}%</b></div>
+          <div class="sf-bar"><i class="hp ${hpColor(hp)}" style="width:${hp}%"></i></div>
+        </div>
+        <div class="sf-substats">
+          <span>🌾 补刀 <b>${cs}</b> / 100</span>
+          <span>🏰 一塔 <b>${tur}%</b></span>
+        </div>
+      </div>`;
+    };
+
+    return `<div class="match hex ${done?(myWon?'mode-pick':'mode-ban'):'mode-choose'}">${head}
+      <div class="hex-panel solo-watch-panel">
+        <div class="solo-watch-hd">
+          <span class="hex-eyebrow">⚔ 峡谷 1v1 SOLO 选边赛 · 观战直播</span>
+          <div class="speed-bar">
+            ${!done ? `
+              <span class="sp-lbl">倍速：</span>
+              ${[1,2,4].map(v=>`<button class="spd-btn ${M.soloSpeed===v?'on':''}" data-a="soloSpeed" data-v="${v}">${v}x</button>`).join('')}
+              <button class="spd-btn skip" data-a="soloSkip">跳过直看结果 ⏭</button>`
+            : `<span class="solo-done-tag">已完赛 · ${esc(s.winReason)}</span>`}
+          </div>
+        </div>
+
+        <div class="solo-arena">
+          ${fighterCard('A', true)}
+          <div class="solo-clock-box">
+            <div class="solo-time">${esc(curF.t)}</div>
+            <div class="solo-vs">1 v 1</div>
+            <div class="solo-event-pill">${esc(curF.tag)}</div>
+          </div>
+          ${fighterCard('B', false)}
+        </div>
+
+        <div class="solo-feed">
+          ${shownLogs.map((f,idx)=>`<div class="solo-line ${idx===0?'latest':''} ${f.side==='A'?'sa':f.side==='B'?'sb':''}">
+            <span class="sl-t">${esc(f.t)}</span>
+            <span class="sl-tag">${esc(f.tag)}</span>
+            <span class="sl-txt">${esc(f.text)}</span>
+          </div>`).join('')}
+        </div>
+
+        ${done ? `<div class="solo-result-bar">
+          <h3>🏆 ${esc(s[s.winner].tag)}（${esc(champName(s[s.winner].champ))}）通过「${esc(s.winReason)}」获胜！${teamTag(s.winner==='A'?s.teamA:s.teamB)} 赢得本局选边权</h3>
+          ${myWon ? `
+            <p class="hex-sub">请你选择本局阵营（蓝色方永远为 BP 先手，红色方永远为 BP 后手）：</p>
+            <div class="choose-cards single">
+              <button class="hex-choice blue" data-a="chooseSideOnly" data-c="blue"><b>选择 蓝色方</b><small>BP 先手 · 一楼优先抢版本强势英雄</small></button>
+              <button class="hex-choice red" data-a="chooseSideOnly" data-c="red"><b>选择 红色方</b><small>BP 后手 · 掌控五楼康特 Counter 位</small></button>
+            </div>`
+          : `
+            <p class="hex-sub">对手已选择 <b>${M.soloAiBlue===opp?'蓝色方（BP 先手）':'红色方（BP 后手）'}</b>，本局你将位于 <b>${M.soloAiBlue===M.me?'蓝色方（BP 先手）':'红色方（BP 后手）'}</b>。</p>
+            <button class="lock-btn is-pick" data-a="soloEnterDraft">进入 BP 阶段 ▶</button>`}
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // -------- 阶段 1：经典蓝先红后选边（仅在第 2–4 局我方为上一局败者时显示） --------
   if(M.phase==='choose'){
-    const mine = M.chooser===M.me;
-    const dec = M.aiDec || {kind:'first', value:'first'};
     return `<div class="match hex ${modeCls}">${head}
       <div class="hex-panel choose-panel">
-        <div class="hex-eyebrow">2026 职业赛事新规 · 先手选择权</div>
-        ${mine ? `
-          <h2>你拥有本局先手选择权</h2>
-          <p class="hex-sub">你可以优先选择 <b>地图阵营</b> 或 <b>BP 顺位</b> 其中一项，对手将自动获得另一项的选择权。</p>
-          <div class="choose-grid">
-            <div class="choose-group">
-              <h4>选择阵营（对手选 BP 先后手）</h4>
-              <div class="choose-cards">
-                <button class="hex-choice blue" data-a="choose" data-c="blue"><b>蓝色方</b><small>地图地形与视野略占优</small></button>
-                <button class="hex-choice red" data-a="choose" data-c="red"><b>红色方</b><small>将 BP 顺位交由对手决定</small></button>
-              </div>
-            </div>
-            <div class="choose-group">
-              <h4>选择 BP 顺位（对手选蓝/红方）</h4>
-              <div class="choose-cards">
-                <button class="hex-choice gold" data-a="choose" data-c="first"><b>BP 先手</b><small>一楼抢版本 T0 核心英雄</small></button>
-                <button class="hex-choice dark" data-a="choose" data-c="second"><b>BP 后手</b><small>拥有五楼康特 Counter 位</small></button>
-              </div>
-            </div>
-          </div>`
-        : dec.kind==='first' ? `
-          <h2>对手拥有先手选择权，已抢占「BP 先手」</h2>
-          <p class="hex-sub">请你选择本局的地图阵营：</p>
-          <div class="choose-cards single">
-            <button class="hex-choice blue" data-a="chooseSide" data-c="blue"><b>选择 蓝色方</b><small>拥有地图先手地形优势（推荐）</small></button>
-            <button class="hex-choice red" data-a="chooseSide" data-c="red"><b>选择 红色方</b><small>在红方迎战对手一楼先抢</small></button>
-          </div>`
-        : `
-          <h2>对手拥有先手选择权，已抢占「蓝色方」</h2>
-          <p class="hex-sub">请你选择本局的 BP 顺位：</p>
-          <div class="choose-cards single">
-            <button class="hex-choice gold" data-a="chooseOrder" data-c="first"><b>选择 BP 先手</b><small>在红色方一楼抢下版本 T0</small></button>
-            <button class="hex-choice dark" data-a="chooseOrder" data-c="second"><b>选择 BP 后手</b><small>拿到双选节奏与五楼康特位</small></button>
-          </div>`}
+        <div class="hex-eyebrow">经典职业选边规则 · 败者选边</div>
+        <h2>你拥有本局选边权</h2>
+        <p class="hex-sub">请选择本局地图阵营：<b>蓝色方固定为 BP 先手</b>，<b>红色方固定为 BP 后手（五楼康特位）</b>。</p>
+        <div class="choose-cards single">
+          <button class="hex-choice blue" data-a="chooseSideOnly" data-c="blue"><b>选择 蓝色方</b><small>BP 先手 · 一楼先抢核心英雄</small></button>
+          <button class="hex-choice red" data-a="chooseSideOnly" data-c="red"><b>选择 红色方</b><small>BP 后手 · 握有五楼康特位</small></button>
+        </div>
         <div class="choose-foot">
           <button class="hex-btn ghost" data-a="autoSeries">跳过，自动模拟剩余系列赛</button>
         </div>
@@ -790,27 +970,29 @@ function matchScreen(){
       return (S.meta[b]||0) - (S.meta[a]||0);
     });
 
-    // 选中英雄详情与锁定台
-    let selInfoHtml = `<div class="dock-empty">${myTurn ? (isBan?'请在上方英雄池点击一名英雄以禁用':'请在上方英雄池点击一名英雄以选择') : '等待对手完成本步操作…'}</div>`;
+    // 选中英雄详情与锁定台（手机/触控轻点英雄即展示全部角标原因，再点右侧独立确认按键锁定）
+    let selInfoHtml = `<div class="dock-empty">${myTurn ? (isBan?'轻点上方英雄查看详情，再点右侧「确认禁用」':'轻点上方英雄查看详情，再点右侧「确认选择」') : '等待对手完成本步操作…'}</div>`;
     if(myTurn && M.sel && CH[M.sel]){
       const ch = CH[M.sel];
+      const info = champBadgeInfo(d, M, M.sel);
       const rolePickHtml = !isBan ? roleChooser(d, M.me, M.sel) : '';
       let fitLine = '';
       if(isBan){
         const oppMatches = openRolesFor(d, opp).filter(r=>ch.roles.includes(r));
         const threat = oppMatches.map(r=>({r, p:oppLu[r], f:champFit(oppLu[r],M.sel,r)})).sort((a,b)=>b.f-a.f)[0];
-        fitLine = threat ? `敌方威胁：${ROLE_CN[threat.r]} ${esc(playerTag(threat.p))}（${threat.f>=4.5?'招牌':threat.f>=1.5?'熟练':'一般'}）` : '对手该位置已锁定或非常规选位';
+        fitLine = threat ? `敌方威胁：${ROLE_CN[threat.r]} ${esc(playerTag(threat.p))} · ${threat.f>=4.5?'招牌绝活':threat.f>=1.5?'熟练':'一般'}` : '对手该位置已锁定或非常规选位';
       } else {
         const chk = canPickChamp(d, M.me, M.sel);
         const r = (M.roleSel && chk.openRoles.includes(M.roleSel)) ? M.roleSel : bestRoleFor(d, M.me, M.sel, chk.offrole);
         const f = r ? champFit(myLu[r], M.sel, r) : -4;
-        fitLine = r ? `分配给 ${ROLE_CN[r]} ${esc(playerTag(myLu[r]))} · ${!ch.roles.includes(r)?'⚠️ 跨位强选':f>=4.5?'★ 招牌英雄':f>=1.5?'熟练度良好':'较生疏'}` : '';
+        fitLine = r ? `分配给 ${ROLE_CN[r]} ${esc(playerTag(myLu[r]))} · ${!ch.roles.includes(r)?'⚠️ 跨位强选':f>=4.5?'👑 招牌英雄':f>=1.5?'熟练度良好':'较生疏'}` : '';
       }
       selInfoHtml = `<div class="dock-sel">
         ${champAvatar(M.sel,'sm')}
         <div class="dock-meta">
-          <div class="dock-name"><b>${esc(ch.cn)}</b> <small>${esc(ch.k)} · ${ch.dmg} · ${ch.roles.map(r=>ROLE_CN[r]).join('/')}</small></div>
+          <div class="dock-name"><b>${esc(ch.cn)}</b> <small>${esc(info.metaText)}</small></div>
           <div class="dock-fit">${fitLine}</div>
+          ${info.badges.length?`<div class="dock-badges">${info.badges.map(b=>`<span class="dbadge ${b.cls}">${b.icon} ${esc(b.text)}</span>`).join('')}</div>`:''}
           ${rolePickHtml}
         </div>
       </div>`;
@@ -847,12 +1029,12 @@ function matchScreen(){
         const stamp = isLocked ? `<span class="c-stamp fl">无畏锁</span>`
                     : isBanned ? `<span class="c-stamp bn">已禁</span>`
                     : isPicked ? `<span class="c-stamp pk">已选</span>` : '';
-        return `<div class="ch-card ${dis?'dis':''} ${sel?(isBan?'sel-ban':'sel-pick'):''}" ${dis||!myTurn?'':`data-a="dSel" data-c="${esc(k)}"`} title="${esc(CH[k].cn)} (${esc(k)}) · ${CH[k].roles.map(r=>ROLE_CN[r]).join('/')}">
+        return `<div class="ch-card ${dis?'dis':''} ${sel?(isBan?'sel-ban':'sel-pick'):''}" data-ch="${esc(k)}" ${dis||!myTurn?'':`data-a="dSel" data-c="${esc(k)}"`}>
           <div class="ch-thumb">
             ${champAvatar(k,'grid')}
-            ${S.meta[k]>=2?'<span class="meta-dot t0" title="版本T0">🔥</span>':S.meta[k]>=1?'<span class="meta-dot t1" title="版本T1">↑</span>':''}
-            ${mineSig?`<span class="sig-dot mine" title="我方 ${esc(playerTag(myLu[mineSig]))} 招牌">★</span>`:''}
-            ${oppSig?`<span class="sig-dot opp" title="敌方 ${esc(playerTag(oppLu[oppSig]))} 招牌">⚠</span>`:''}
+            ${S.meta[k]>=2?'<span class="meta-dot t0">🔥</span>':S.meta[k]>=1?'<span class="meta-dot t1">↑</span>':''}
+            ${mineSig?`<span class="sig-dot mine">👑</span>`:''}
+            ${oppSig?`<span class="sig-dot opp">⚠</span>`:''}
             ${stamp}
             ${sel && isBan ? '<div class="sel-overlay ban"><span>BAN</span></div>' : ''}
             ${sel && !isBan ? '<div class="sel-overlay pick"><span>PICK</span></div>' : ''}
@@ -865,8 +1047,8 @@ function matchScreen(){
         ${selInfoHtml}
         <div class="dock-actions">
           ${myTurn ? `<button class="lock-btn ${isBan?'is-ban':'is-pick'}" data-a="dLock" ${M.sel?'':'disabled'}>
-            ${isBan ? (M.sel?`🚫 锁定禁用 · ${esc(champName(M.sel))}`:'请选择要禁用的英雄')
-                    : (M.sel?`✓ 锁定选择 · ${esc(champName(M.sel))}`:'请选择要锁定的英雄')}
+            ${isBan ? (M.sel?`🚫 确认禁用 · ${esc(champName(M.sel))}`:'确认禁用')
+                    : (M.sel?`✓ 确认选择 · ${esc(champName(M.sel))}`:'确认选择')}
           </button>` : `<div class="ai-wait-pill">对手思考中…</div>`}
           <div class="dock-sub-btns">
             <button class="hex-btn sm ghost" data-a="dAuto">自动完成本局BP</button>
@@ -994,6 +1176,7 @@ function matchScreen(){
       ${center}
       ${renderSideColumn(M, d, rightSide, cur, false)}
     </div>
+    <div id="ch-tip" class="ch-tip" style="display:none"></div>
   </div>`;
 }
 
@@ -1158,28 +1341,59 @@ const ACT = {
   dlExp:()=>{ try{ const b=new Blob([JSON.stringify(S)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`lol-manager-${S.year}.json`; a.click(); }catch(e){ toast('当前环境不支持下载，请用复制'); } },
   reset:()=>{ UI.modal=()=>`<h3>确定删除存档并重新开始？</h3><div class="btns"><button class="btn" data-a="doReset">确定删除</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
   doReset:async()=>{ await StorageBridge.deleteSave(); UI.hasSave=false; UI.savePreview=null; S=null; UI.modal=null; UI.entry='lobby'; UI.pickTeam=true; render(); },
-  // ---- 比赛 / BP 交互 ----
+  // ---- 比赛 / 1v1 / BP 交互 ----
   toggleLocked:()=>{ if(UI.match){ UI.match.showLocked=!UI.match.showLocked; render(); } },
-  choose:d=>{
-    const M=UI.match, m=M.item.m, me=M.me, op=me==='A'?'B':'A';
-    const opKey = m[op==='A'?'a':'b'], meKey = m[me==='A'?'a':'b'];
-    if(d.c==='blue'||d.c==='red'){
-      const blue = d.c==='blue'?me:op;
-      const aiOrd = aiSecondDecision(opKey, meKey, 'side', M.locked);
-      const first = aiOrd==='first' ? op : me;
-      toast(`对手选择了 ${aiOrd==='first'?'BP先手':'BP后手'}`);
-      setupDraft(first, blue);
-    } else {
-      const first = d.c==='first'?me:op;
-      const aiSide = aiSecondDecision(opKey, meKey, 'first', M.locked);
-      const blue = aiSide==='blue' ? op : me;
-      toast(`对手选择了 ${aiSide==='blue'?'蓝色方':'红色方'}`);
-      setupDraft(first, blue);
-    }
+  soloRole:d=>{
+    const M=UI.match; if(!M) return;
+    M.soloMyRole = d.r;
+    const myLu = lineupMap(M.item.m[M.me==='A'?'a':'b']);
+    const p = myLu[d.r];
+    M.soloMyChamp = (p && p.champs && p.champs.length) ? p.champs.slice().sort((a,b)=>b.p-a.p)[0].c : (CHAMP_KEYS.find(k=>CH[k].roles.includes(d.r)) || CHAMP_KEYS[0]);
     render();
   },
-  chooseSide:d=>{ const M=UI.match, me=M.me, op=me==='A'?'B':'A'; setupDraft(op, d.c==='blue'?me:op); render(); },
-  chooseOrder:d=>{ const M=UI.match, me=M.me, op=me==='A'?'B':'A'; setupDraft(d.c==='first'?me:op, op); render(); },
+  soloChamp:d=>{ if(UI.match){ UI.match.soloMyChamp = d.c; render(); } },
+  startSolo:()=>{
+    const M=UI.match, m=M.item.m, me=M.me, op=me==='A'?'B':'A';
+    const myTeamKey = m[me==='A'?'a':'b'], oppTeamKey = m[op==='A'?'a':'b'];
+    const myLu = lineupMap(myTeamKey);
+    const myPl = myLu[M.soloMyRole];
+    const myPick = { role: M.soloMyRole, pid: myPl?myPl.pid:null, champ: M.soloMyChamp };
+    const oppPick = defaultSoloPick(oppTeamKey);
+    M.solo = me==='A' ? simSolo1v1(m.a, m.b, myPick, oppPick) : simSolo1v1(m.a, m.b, oppPick, myPick);
+    M.chooser = M.solo.winner;
+    M.soloStep = 0;
+    if(M.chooser !== me){
+      const opSide = aiChooseSide(oppTeamKey, myTeamKey, M.locked);
+      M.soloAiBlue = opSide === 'blue' ? op : me;
+    }
+    M.phase = 'solo_watch';
+    render();
+    scheduleSoloTick();
+  },
+  soloSpeed:d=>{
+    if(!UI.match) return;
+    UI.match.soloSpeed = +d.v || 1;
+    render();
+    scheduleSoloTick();
+  },
+  soloSkip:()=>{
+    const M=UI.match; if(!M||!M.solo) return;
+    stopSoloTimer();
+    M.soloStep = M.solo.frames.length - 1;
+    render();
+  },
+  soloEnterDraft:()=>{
+    const M=UI.match; if(!M) return;
+    const blue = M.soloAiBlue || (M.me==='A'?'B':'A');
+    setupDraft(blue);
+    render();
+  },
+  chooseSideOnly:d=>{
+    const M=UI.match, me=M.me, op=me==='A'?'B':'A';
+    const blue = d.c==='blue' ? me : op;
+    setupDraft(blue);
+    render();
+  },
   dFilter:d=>{ UI.match.filter=d.r; render(); },
   dSel:d=>{ UI.match.sel=d.c; UI.match.roleSel=d.r||null; render(); },
   dRole:d=>{ UI.match.roleSel=d.r; render(); },
@@ -1211,23 +1425,23 @@ const ACT = {
   },
   dAuto:()=>{ const M=UI.match; stopBpClock(); autoDraftRest(M.draft); M.phase='ready'; M.sel=null; M.swapFrom=null; render(); },
   playGame:()=>{ const g=playGame(UI.match.draft); endUserGame(g); render(); },
-  nextGame:()=>{ const M=UI.match; M.phase='choose'; M.draft=null; M.sel=null; M.swapFrom=null; M.aiDec=null; if(M.chooser!==M.me) aiFirstChoice(); render(); },
+  nextGame:()=>{ const M=UI.match; enterNextGamePhase(M); render(); },
   autoSeries:()=>{
     const M=UI.match; const m=M.item.m; const need=Math.ceil(m.bo/2);
-    stopBpClock();
+    stopBpClock(); stopSoloTimer();
     if(M.phase==='draft'||M.phase==='ready'){ autoDraftRest(M.draft); endUserGame(playGame(M.draft)); }
     while(M.wa<need&&M.wb<need){
+      if(!M.chooser || (m.bo===5 && M.wa===2 && M.wb===2)){ M.chooser = simSolo1v1(m.a, m.b).winner; }
       const other = M.chooser==='A'?'B':'A';
-      const dec = aiFirstDecision(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked);
-      const first = dec.kind==='first' ? M.chooser : other;
-      const blue  = dec.kind==='side'  ? M.chooser : other;
-      const d=newDraft(m.a,m.b,first,blue,M.locked); autoDraftRest(d); endUserGame(playGame(d));
+      const sidePick = aiChooseSide(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked);
+      const blue = sidePick==='blue' ? M.chooser : other;
+      const d=newDraft(m.a,m.b,blue,M.locked); autoDraftRest(d); endUserGame(playGame(d));
     }
     ACT.finishSeries();
   },
   finishSeries:()=>{
     const M=UI.match; const m=M.item.m;
-    stopBpClock();
+    stopBpClock(); stopSoloTimer();
     finishSeries(m,M.wa,M.wb,M.games,true); afterMatch(M.item.st,m);
     const won=m.w===S.user; addNews(`${won?'✅':'❌'} ${teamName(m.a)} ${M.wa}:${M.wb} ${teamName(m.b)}（${m.label}）`);
     UI.match=null; save(); render(); toast(won?'系列赛获胜！':'系列赛失利');
@@ -1275,6 +1489,35 @@ document.addEventListener('keydown', e=>{
       e.preventDefault();
       (UI.authTab==='register' ? ACT.cloudSignUp : ACT.cloudSignIn)();
     }
+  }
+});
+// 桌面端鼠标悬停英雄卡片弹出海克斯情报浮层（解释 🔥 / ↑ / 👑 / ⚠，无括号数字）
+document.addEventListener('mouseover', e=>{
+  const card = e.target.closest('.ch-card[data-ch]');
+  const tip = document.getElementById('ch-tip');
+  if(!tip) return;
+  if(!card || !UI.match || !UI.match.draft){ tip.style.display='none'; return; }
+  const k = card.dataset.ch;
+  const ch = CH[k]; if(!ch){ tip.style.display='none'; return; }
+  const info = champBadgeInfo(UI.match.draft, UI.match, k);
+  tip.innerHTML = `<div class="ct-hd"><b>${esc(ch.cn)}</b><small>${esc(ch.k)}</small></div>
+    <div class="ct-meta">${esc(info.metaText)}</div>
+    ${info.badges.length ? `<ul class="ct-list">${info.badges.map(b=>`<li class="${b.cls}"><span>${b.icon}</span>${esc(b.text)}</li>`).join('')}</ul>`
+      : `<div class="ct-none">常规可用英雄，无特殊版本或招牌标记</div>`}`;
+  tip.style.display = 'block';
+  const r = card.getBoundingClientRect();
+  const tw = tip.offsetWidth || 240, th = tip.offsetHeight || 90;
+  let left = r.left + r.width/2 - tw/2;
+  left = Math.max(10, Math.min(window.innerWidth - tw - 10, left));
+  let top = r.top - th - 10;
+  if(top < 10) top = r.bottom + 10;
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+});
+document.addEventListener('mouseout', e=>{
+  if(e.target.closest('.ch-card[data-ch]') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.ch-card[data-ch]'))){
+    const tip = document.getElementById('ch-tip');
+    if(tip) tip.style.display='none';
   }
 });
 window.addEventListener('load', bootApp);

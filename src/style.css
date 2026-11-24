@@ -697,3 +697,176 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 }
 @media(max-width:600px){.hinfo{gap:12px}.vs{gap:8px}.card{padding:14px}.tbl{font-size:13px}.cgrid-lol{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== 实时观战：5v5 召唤师峡谷（海克斯蓝金转播风） ===== */
+.match.hex.mode-live{background:radial-gradient(ellipse at 50% 0%,#0d2238 0%,#050f1e 50%,#010a13 100%)}
+.watch5{position:relative;max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.w5-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:6px 12px;background:linear-gradient(180deg,rgba(9,20,40,.96),rgba(1,10,19,.96));border:1px solid var(--hex-gold-d);border-top:2px solid var(--hex-gold)}
+.w5-tm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.w5-tm.blue{justify-content:flex-start}.w5-tm.red{justify-content:flex-end}
+.w5-tn{font-size:15px;color:#fff;letter-spacing:.5px}
+.w5-tm.blue .w5-tn{border-left:3px solid var(--hex-blue);padding-left:7px}.w5-tm.red .w5-tn{border-right:3px solid var(--hex-red);padding-right:7px}
+.w5-k{font-family:var(--num);font-size:30px;font-weight:800;line-height:1;color:#fff;min-width:34px;text-align:center}
+.w5-tm.blue .w5-k{color:#8ff3ea}.w5-tm.red .w5-k{color:#ffb3bf}
+.w5-st{font-family:var(--num);font-size:16px;font-weight:700;color:var(--hex-gold-l);white-space:nowrap}.w5-st i{font-style:normal;font-size:12px;margin-right:2px}
+.w5-dk{display:inline-flex;gap:3px;align-items:center}
+.w5-dk .dk{width:11px;height:11px;transform:rotate(45deg);background:var(--c);border:1px solid rgba(0,0,0,.6);display:inline-block}
+.w5-dk .soul{font-size:11px;color:#ffd27a;margin-left:3px}
+.bf{font-size:11px;font-weight:800;padding:1px 6px;border:1px solid}.bf.bar{color:#c9a2ff;border-color:#7d4bd6;background:rgba(125,75,214,.2)}.bf.eld{color:#ffe7a3;border-color:#b89545;background:rgba(184,149,69,.2)}
+.w5-clock{font-family:var(--num);font-size:26px;font-weight:800;color:#fff;padding:2px 14px;background:#010a13;border:1px solid var(--hex-gold-d);letter-spacing:1px}
+.w5-mtabs{display:none}
+.w5-main{display:grid;grid-template-columns:minmax(0,min(64vh,640px)) minmax(260px,1fr);gap:8px;align-items:stretch}
+.w5-mapbox{position:relative;aspect-ratio:1/1;width:100%;background:#010a13;border:1px solid var(--hex-gold-d)}
+#w5-map{width:100%;height:100%;display:block;touch-action:manipulation}
+.w5-goldcv{position:absolute;left:8px;bottom:8px;width:44%;height:64px;border:1px solid rgba(200,155,60,.4);pointer-events:none}
+.w5-banner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle,rgba(1,10,19,.82),rgba(1,10,19,.45));animation:wban .45s ease}
+.w5-banner b{font-family:var(--num);font-size:46px;letter-spacing:6px;color:var(--hex-gold);text-shadow:0 0 22px rgba(200,155,60,.7)}
+.w5-banner span{font-size:16px;color:#fff}
+@keyframes wban{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}
+.w5-feed{background:rgba(1,10,19,.78);border:1px solid #20324a;padding:8px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:min(64vh,640px)}
+.w5-fl{display:grid;grid-template-columns:42px auto 1fr;gap:6px;align-items:baseline;font-size:13px;padding:5px 7px;border-left:3px solid #354c6b;background:rgba(255,255,255,.02);color:#c9c3b6}
+.w5-fl.b{border-left-color:var(--hex-blue)}.w5-fl.r{border-left-color:var(--hex-red)}
+.w5-fl.hl{background:rgba(200,155,60,.1);color:#f0e6d2}
+.w5-fl.new{animation:wfl .5s ease}
+.w5-fl .t{font-family:var(--num);color:var(--hex-mu)}
+.w5-fl .tg{font-size:11px;font-weight:800;padding:0 5px;color:#091428;background:var(--hex-gold);white-space:nowrap}
+.w5-fl.b .tg{background:var(--hex-blue)}.w5-fl.r .tg{background:var(--hex-red);color:#fff}
+@keyframes wfl{from{background:rgba(200,155,60,.35)}}
+.w5-players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.w5-pcol{background:rgba(1,10,19,.78);border:1px solid #20324a;padding:4px 6px}
+.w5-pcol.blue{border-top:2px solid var(--hex-blue)}.w5-pcol.red{border-top:2px solid var(--hex-red)}
+.w5-ph,.w5-p{display:grid;grid-template-columns:30px 1fr 64px 40px 46px;gap:6px;align-items:center}
+.w5-ph{font-size:11px;color:var(--hex-mu);padding:2px 0;border-bottom:1px solid #1b2b42}.w5-ph span:not(:first-child){text-align:center}.w5-ph span:first-child{grid-column:1/3}
+.w5-p{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.w5-ava{display:block;position:relative;width:28px;height:28px}
+.w5-ava .c-ava.xs{width:28px;height:28px}
+.w5-ava .lv{position:absolute;right:-3px;bottom:-3px;font:800 10px var(--num);background:#010a13;color:var(--hex-gold);border:1px solid var(--hex-gold-d);padding:0 2px;line-height:1.2}
+.w5-ava .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);color:#ff8090;font:800 14px var(--num)}
+.w5-p.dead .w5-nm{opacity:.5}
+.w5-nm{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.w5-nm b{color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.w5-nm small{font-size:10px}
+.w5-nm .hpb{display:block;height:3px;background:#1b2636;margin-top:2px}.w5-nm .hpb i{display:block;height:100%;background:#3ddc84}
+.w5-kda,.w5-cs,.w5-g{font-family:var(--num);font-size:15px;font-weight:700;text-align:center;color:var(--hex-gold-l)}
+.w-ctrl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 8px;background:rgba(1,10,19,.92);border:1px solid #2a405e}
+.w-ctrl .spd-btn{min-height:32px;min-width:42px}
+.w-seek{flex:1;min-width:140px;accent-color:var(--hex-gold)}
+.w5-tab{display:none;position:absolute;left:50%;top:56px;transform:translateX(-50%);width:min(860px,96%);z-index:6;background:rgba(1,10,19,.96);border:1px solid var(--hex-gold);box-shadow:0 18px 50px rgba(0,0,0,.7);padding:10px 12px}
+.w5-tab.on{display:block}
+.w5-tab-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;color:var(--hex-gold)}
+.w5-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.w5-tbl th{font-size:11px;color:var(--hex-mu);text-align:left;padding:3px 4px;border-bottom:1px solid #22354f}
+.w5-tbl td{padding:4px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--num);font-size:15px;color:var(--hex-gold-l)}
+.w5-tbl tr.b td:first-child{border-left:3px solid var(--hex-blue)}.w5-tbl tr.r td:first-child{border-left:3px solid var(--hex-red)}
+.w5-tbl tr.sep td{height:6px;border:0}
+.w5-tbl .tn{display:flex;align-items:center;gap:6px;font-family:var(--sans)}.w5-tbl .tn b{color:#fff;font-size:13px}
+.w5-tbl .items{display:flex;gap:3px;flex-wrap:nowrap}
+.w5-tbl .gd b{color:#ffd27a;margin-right:5px}.w5-tbl .gd small{font-size:11px}
+.it{position:relative;width:28px;height:28px;border:1px solid var(--hex-gold-d);background:#0a1524;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.it img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
+.it em{position:absolute;font-style:normal;font-size:9px;color:var(--hex-gold-l);font-family:var(--sans)}
+.it.empty{border-style:dashed;border-color:#26384f;background:transparent}
+.it.part{opacity:.55;border-style:dashed}
+
+/* ===== 实时观战：1v1 中路 ===== */
+.watch1{position:relative;display:flex;flex-direction:column;gap:10px}
+.w-rules{font-size:12px;color:var(--hex-mu)}
+.w1-cards{display:grid;grid-template-columns:1fr 130px 1fr;gap:10px;align-items:stretch}
+.w1-clock{text-align:center;padding:10px 6px;background:rgba(1,10,19,.75);border:1px solid var(--hex-gold-d);display:flex;flex-direction:column;justify-content:center}
+.w1-card{padding:10px 12px;background:rgba(1,10,19,.68);border:1px solid #263b57}
+.w1-card.left{border-left:3px solid var(--hex-blue)}.w1-card.right{border-right:3px solid var(--hex-red)}
+.w1-card.winner{border-color:var(--hex-gold);box-shadow:0 0 22px rgba(200,155,60,.35)}.w1-card.loser{opacity:.65}
+.w1-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.w1-top>div:nth-child(2){flex:1}
+.w1-nm{color:#fff;font-size:14px}.w1-nm b{font-family:var(--num);font-size:18px}
+.w1-sp{display:flex;gap:4px}
+.w1-sp .sp{position:relative;width:26px;height:26px;border:1px solid var(--hex-gold-d);background:#0a1524;display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+.w1-sp .sp img{width:100%;height:100%;position:relative;z-index:1}.w1-sp .sp em{position:absolute;font-style:normal;font-size:11px}
+.w1-sp .sp.cd img{filter:grayscale(1) brightness(.45)}
+.w1-sp .sp b{position:absolute;z-index:2;inset:0;display:flex;align-items:center;justify-content:center;font:800 12px var(--num);color:#fff}
+.w1-bars{display:flex;flex-direction:column;gap:3px}
+.sf-bar.mp{height:5px}.sf-bar.mp i{display:block;height:100%;background:linear-gradient(90deg,#1e78ff,#6ab0ff)}
+.sf-bar i.hp{display:block;height:100%}
+.w1-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:12px}.w1-stats b{font-family:var(--num);font-size:15px;color:#fff}
+.w1-stats .st{color:var(--hex-blue);font-weight:700}
+.w1-lanebox{position:relative;height:230px;border:1px solid var(--hex-gold-d);background:#010a13}
+#w1-lane{width:100%;height:100%;display:block}
+.w1-feed{max-height:200px;overflow-y:auto;background:rgba(1,10,19,.62);border:1px solid #20324a;padding:8px;display:flex;flex-direction:column;gap:5px}
+.solo-line.hl{border-left-color:var(--hex-gold)}
+.solo-log{margin-top:14px;text-align:left}.solo-log summary{cursor:pointer;color:var(--hex-mu);font-size:13px;margin-bottom:6px}
+
+/* ===== 赛前情报：状态 / 心态 / 特质 ===== */
+.tchip{display:inline-flex;align-items:center;gap:2px;font-size:11px;padding:0 5px;line-height:18px;border:1px solid;white-space:nowrap}
+.tchip b{font-weight:800}
+.tchip.t2{color:#ff9b54;border-color:#b85a1c;background:rgba(255,120,40,.14)}
+.tchip.t1{color:#7ee2a8;border-color:#2f8a57;background:rgba(60,200,120,.12)}
+.tchip.t0{color:var(--hex-mu);border-color:#3a4a60;background:rgba(255,255,255,.03)}
+.tchip.tn1{color:#9ab4d6;border-color:#3f5c85;background:rgba(80,120,200,.12)}
+.tchip.tn2{color:#ff8a9a;border-color:#8e2a3b;background:rgba(232,64,87,.14)}
+.tchip.m{border-radius:9px}
+.trchip{display:inline-block;font-size:10px;font-weight:800;padding:0 5px;line-height:17px;margin-left:2px;white-space:nowrap}
+.trchip.up{color:#091428;background:#c89b3c}.trchip.down{color:#fff;background:#6a2333}
+.pk-st{display:flex;gap:3px;flex-wrap:wrap;margin:1px 0 3px}
+.intel-panel{margin-top:18px;text-align:left;background:rgba(1,10,19,.6);border:1px solid #22354f;padding:12px}
+.intel-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.intel-title b{color:var(--hex-gold);font-size:14px}.intel-ctx{font-size:12px;font-weight:800;color:#fff;padding:1px 8px;border:1px solid var(--hex-gold-d);background:rgba(200,155,60,.16)}
+.intel-title small{font-size:11px}
+.intel-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.intel-col{border-top:2px solid #354d6e;padding-top:4px}.intel-col.me{border-top-color:var(--hex-gold)}
+.intel-hd{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.intel-row{display:grid;grid-template-columns:20px minmax(70px,1fr) auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.ir-role svg{width:16px;height:16px;opacity:.75}
+.ir-nm{color:#fff}.ir-chips{display:flex;gap:3px}
+.ir-tags{grid-column:2/4}.ir-tags:empty{display:none}
+/* 阵容页（亮色）里的芯片 */
+.tbl .tchip.t0{color:#76726b;border-color:#cfc9bf;background:#f4f2ee}
+.tbl .tchip.t1{color:#14833b;background:#e8f5ec}.tbl .tchip.t2{color:#b4520f;background:#fdf0e6}
+.tbl .tchip.tn1{color:#2f5b9a;background:#e9f0fb}.tbl .tchip.tn2{color:#b0142f;background:#fde9ec}
+.tbl .trchip.down{background:#b0142f}
+td.trs{max-width:160px}
+
+/* ===== 回放 ===== */
+.rp-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:1280px;margin:0 auto 10px;padding:8px 12px;background:rgba(9,20,40,.9);border:1px solid var(--hex-gold-d)}
+.rp-head h2{margin:2px 0 0;font-size:20px;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rp-head h2 small{font-size:12px;font-weight:500}
+.rp-btns{display:flex;gap:6px;flex-wrap:wrap}
+.replay-screen .hex-panel.solo-watch-panel{margin-top:0}
+.tbl.replays tr.kept td{background:#fff8e6}
+.tagoff{color:var(--rd);font-size:12px;font-weight:700}
+
+.watch5>.w-ctrl,.watch1>.w-ctrl{position:sticky;bottom:0;z-index:7;box-shadow:0 -6px 18px rgba(0,0,0,.45)}
+.w5-tbl .tn .c-ava,.w5-tbl .tn .c-ava.xs{width:24px;height:24px;flex:0 0 24px}
+.w5-ava .c-ava .c-fb,.w5-tbl .c-ava .c-fb{font-size:9px;letter-spacing:0}
+
+/* ===== 观战：手机与窄屏 ===== */
+@media(max-width:860px){
+  .w5-main{grid-template-columns:1fr}
+  .w5-mapbox{max-width:100%}
+  .w5-mtabs{display:flex;gap:4px}
+  .w5-mtabs button{flex:1;background:rgba(13,28,51,.9);border:1px solid #354d6e;color:var(--hex-gold-l);padding:7px;font:700 13px var(--sans)}
+  .w5-mtabs button.on{background:var(--hex-gold);color:#091428;border-color:var(--hex-gold)}
+  .watch5.pane-feed .w5-players{display:none}
+  .watch5.pane-data .w5-feed{display:none}
+  .w5-feed{max-height:38vh}
+  .w5-players{grid-template-columns:1fr}
+  .watch5,.watch1{padding-bottom:58px}
+  .watch5>.w-ctrl,.watch1>.w-ctrl,.w-ctrl{position:fixed;left:0;right:0;bottom:0;z-index:8;border-left:0;border-right:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));justify-content:center}
+  .w5-score{grid-template-columns:1fr auto 1fr;padding:4px 6px;gap:4px}
+  .w5-tm{gap:5px;font-size:11px}.w5-tn{font-size:12px}.w5-k{font-size:22px;min-width:22px}.w5-st{font-size:13px}
+  .w5-tm .w5-st:nth-of-type(3),.w5-tm .bf{display:none}
+  .w5-clock{font-size:18px;padding:1px 6px}
+  .w5-tab{top:44px;width:98%;padding:6px}
+  .w5-tbl th:nth-child(2),.w5-tbl td:nth-child(2){display:none}
+  .it{width:22px;height:22px}
+  .w1-cards{grid-template-columns:1fr 1fr}.w1-clock{grid-column:1/3;grid-row:1;flex-direction:row;gap:10px;align-items:center;justify-content:center;padding:4px}
+  .w1-clock .solo-time{font-size:22px}
+  .w1-lanebox{height:170px}
+  .intel-cols{grid-template-columns:1fr}
+  .hex-panel.solo-watch-panel{padding:12px;margin:10px auto}
+  .match.hex.mode-live>.mh-lol{display:none}
+  .match.hex.mode-live{padding-top:6px}
+  .w1-card{padding:8px}
+  .w1-top{flex-wrap:wrap;gap:6px}
+  .w1-top .c-ava.md{width:38px;height:38px}
+  .w1-top>div:nth-child(2){flex:1 1 90px}
+  .w1-nm{font-size:12px}.w1-nm b{font-size:15px;display:block}
+  .w1-stats{gap:8px}
+  .w-ctrl .spd-btn{min-width:38px;padding:4px 8px}
+}

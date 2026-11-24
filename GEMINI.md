@@ -11,10 +11,18 @@ grill-me 的位置：
 
 来源：github.com/mattpocock/skills（grilling / grill-me，MIT）。
 
+## 分工
+
+- **Codex 负责比赛内核**：`src/sim.js`、`src/engine.js`、`data/traits/`、`tests/`。
+- **Claude 负责界面与前端**：`src/ui.js`、`src/watch.js`、`src/style.css`、`src/index.tpl.html`、打包脚本（`build_web.py` / `build.sh`）与桌面端（`src-tauri/`、`scripts/`）。
+- 跨边界的改动（回放数据格式、`playGame` / `simSolo1v1` 返回字段、`watch.js` 读取的状态字段）要在 PR 描述里写明“接口变更”。接口清单见 `docs/CODEX_KERNEL_REVIEW.md`。
+
 ## 项目背景
 
 - 单文件 HTML 的英雄联盟（LoL）电竞经理游戏，浏览器直接打开 `dist/index.html` 就能玩。
-- `src/`：`engine.js` 规则与比赛模拟，`ui.js` 界面，`champs.js` 英雄池，`style.css` 样式。
+- `src/`：`engine.js` 赛事规则与状态心态，`sim.js` 1v1/5v5 逐秒比赛模拟，`watch.js` 实时观战与回放画面，`ui.js` 界面，`champs.js` 英雄池，`style.css` 样式。
+- `data/traits/traits.json`：选手历史特质（构建时生成 `src/traits.js`）。
+- 测试：`node tests/run.js`（先运行一次构建生成 `src/data.js`）。
 - `data/*.json`：各赛区选手名单。
-- `build.sh`（调用 `build_data.py`，需要 Python 3）把 `data/` 和 `src/` 合成单文件 `dist/index.html`。改完代码或数据后运行 `./build.sh` 重新生成。
+- `build.sh` / `python build_web.py`（需要 Python 3）把 `data/` 和 `src/` 合成单文件 `dist/index.html`。改完代码或数据后运行 `./build.sh` 重新生成。
 - 仓库：github.com/D3cEuGod/esports-manager（main 分支）。

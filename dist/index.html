@@ -172,7 +172,13 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 .gate-tip{font-size:12px;color:var(--hex-blue);margin:0 0 18px}
 .gate-btns{display:flex;flex-direction:column;gap:10px}
 .gate-secondary{width:100%;padding:10px;background:transparent;border:1px solid #354c6b;color:var(--hex-mu);font:600 13px var(--sans);cursor:pointer}
-.gate-secondary:hover{border-color:var(--hex-gold-l);color:#fff}
+.gate-secondary:hover:not(:disabled){border-color:var(--hex-gold-l);color:#fff}
+.gate-secondary:disabled{opacity:.45;cursor:not-allowed}
+.gate-otp{padding:6px 0}
+.otp-badge{display:inline-block;padding:3px 12px;margin-bottom:10px;border:1px solid var(--hex-gold);background:rgba(200,155,60,.18);color:var(--hex-gold-l);font-size:12px;font-weight:800;letter-spacing:1.2px}
+.otp-input{text-align:center;font-family:var(--num)!important;font-size:28px!important;font-weight:800;letter-spacing:10px}
+.otp-input.light{background:var(--pn);color:var(--ink);border:2px solid var(--ink);letter-spacing:8px;max-width:280px}
+.otp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 /* 第 2 屏：存档继续卡片 & 选队标题 */
 .resume-card{border-top:4px solid var(--ac);display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-top:20px}
 .resume-eyebrow{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--ac);text-transform:uppercase;margin-bottom:4px}
@@ -2314,8 +2320,9 @@ const CloudSync = {
   },
 
   async signUp(email, password){
-    if(!this.isConfigured()) return { ok:false, msg:'请先填写 Supabase URL 和 Anon Key' };
-    if(!email || !password || password.length < 6) return { ok:false, msg:'请输入有效邮箱和至少 6 位密码' };
+    if(!this.isConfigured()) return { ok:false, msg:'云服务尚未就绪，请先使用游客模式' };
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return { ok:false, msg:'请输入有效的邮箱地址' };
+    if(!password || password.length < 6) return { ok:false, msg:'密码长度至少需要 6 位' };
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/signup`, {
         method: 'POST',
@@ -2323,7 +2330,11 @@ const CloudSync = {
         body: JSON.stringify({ email: email.trim(), password })
       });
       const d = await r.json().catch(()=>({}));
-      if(!r.ok) return { ok:false, msg: d.msg || d.error_description || d.message || `注册失败 (${r.status})` };
+      if(!r.ok){
+        const raw = d.msg || d.error_description || d.message || '';
+        const cn = /already registered/i.test(raw) ? '该邮箱已注册，请直接切换至「账号登录」' : (raw || `注册失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
       if(d.access_token && d.user){
         this.auth = {
           access_token: d.access_token,
@@ -2335,14 +2346,67 @@ const CloudSync = {
         await this.syncOnLaunch(true);
         return { ok:true, msg:'注册并登录成功！' };
       }
-      return { ok:true, needConfirm:true, msg:'注册成功！请前往邮箱点击验证链接后再登录（或在 Supabase 关闭 Email Confirm）。' };
+      return { ok:true, needConfirm:true, email: email.trim(), msg:'验证码已发送至你的邮箱，请在下方输入验证码完成注册！' };
     }catch(e){
-      return { ok:false, msg:'无法连接云端，请检查网络与 Supabase URL' };
+      return { ok:false, msg:'无法连接云端，请检查网络状态' };
+    }
+  },
+
+  async verifySignupOtp(email, token){
+    const code = String(token || '').replace(/\s+/g, '');
+    if(!email) return { ok:false, msg:'缺少待验证的邮箱地址' };
+    if(!/^\d{6,8}$/.test(code)) return { ok:false, msg:'请输入邮箱收到的 6 位数字验证码' };
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/verify`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ type: 'signup', email: email.trim(), token: code })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok){
+        const raw = d.msg || d.error_description || d.message || '';
+        const cn = /expired|invalid/i.test(raw) ? '验证码错误或已过期，请核对后重试或点击重新发送' : (raw || `验证失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
+      if(d.access_token && d.user){
+        this.auth = {
+          access_token: d.access_token,
+          refresh_token: d.refresh_token,
+          expires_at: Math.floor(Date.now()/1000) + (d.expires_in || 3600),
+          user: { id: d.user.id, email: d.user.email }
+        };
+        await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
+        const res = await this.syncOnLaunch(true);
+        return { ok:true, msg: res && res.msg ? `邮箱验证成功！${res.msg}` : '邮箱验证成功，已自动登录！' };
+      }
+      return { ok:true, msg:'邮箱验证成功！请使用邮箱和密码登录。' };
+    }catch(e){
+      return { ok:false, msg:'网络连接失败，请稍后重试' };
+    }
+  },
+
+  async resendSignupOtp(email){
+    if(!email) return { ok:false, msg:'缺少邮箱地址' };
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/resend`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ type: 'signup', email: email.trim() })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok){
+        const raw = d.msg || d.error_description || d.message || '';
+        const cn = /rate limit|too many|seconds/i.test(raw) ? '发送过于频繁，请稍等片刻再试' : (raw || `重发失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
+      return { ok:true, msg:'新的验证码已发送至邮箱，请查收（注意垃圾箱）' };
+    }catch(e){
+      return { ok:false, msg:'网络连接失败，请稍后重试' };
     }
   },
 
   async signIn(email, password){
-    if(!this.isConfigured()) return { ok:false, msg:'请先填写 Supabase URL 和 Anon Key' };
+    if(!this.isConfigured()) return { ok:false, msg:'云服务尚未就绪，请先使用游客模式' };
     if(!email || !password) return { ok:false, msg:'请输入邮箱和密码' };
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/token?grant_type=password`, {
@@ -2351,7 +2415,14 @@ const CloudSync = {
         body: JSON.stringify({ email: email.trim(), password })
       });
       const d = await r.json().catch(()=>({}));
-      if(!r.ok) return { ok:false, msg: d.error_description || d.msg || d.message || `登录失败 (${r.status})` };
+      if(!r.ok){
+        const raw = d.error_description || d.msg || d.message || '';
+        if(/not confirmed/i.test(raw)){
+          return { ok:false, unconfirmed:true, email: email.trim(), msg:'该邮箱尚未完成验证，请输入验证码（或点击重新发送）' };
+        }
+        const cn = /invalid login credentials/i.test(raw) ? '邮箱或密码错误，请重新核对' : (raw || `登录失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
       this.auth = {
         access_token: d.access_token,
         refresh_token: d.refresh_token,
@@ -2514,7 +2585,19 @@ const CloudSync = {
 };
 </script>
 <script>// ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false, verifyEmail:null, resendCd:0 };
+let _resendTimer = null;
+function startResendCd(sec){
+  if(_resendTimer){ clearInterval(_resendTimer); _resendTimer=null; }
+  UI.resendCd = sec;
+  _resendTimer = setInterval(()=>{
+    if(UI.resendCd > 0){
+      UI.resendCd--;
+      const btn = document.getElementById('btn-resend-otp');
+      if(btn){ btn.textContent = UI.resendCd>0 ? `重新发送 (${UI.resendCd}s)` : '重新发送验证码'; btn.disabled = UI.resendCd>0 || UI.authBusy; }
+    } else { clearInterval(_resendTimer); _resendTimer=null; }
+  }, 1000);
+}
 const SAVE_KEY='lolm_save_v1';
 const $app = () => document.getElementById('app');
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -2669,6 +2752,19 @@ function startScreen(){
               <button class="gate-secondary" data-a="cloudSignOut">切换账号</button>
             </div>
           </div>`
+        : UI.verifyEmail ? `
+          <div class="gate-otp">
+            <div class="otp-badge">📧 邮箱验证</div>
+            <p class="gate-hint" style="margin-bottom:12px">验证码已发送至 <b>${esc(UI.verifyEmail)}</b><br>请在客户端直接输入收到的 6 位数字验证码（无需跳转网页）</p>
+            <div class="gate-form">
+              <input id="auth-otp" class="otp-input" type="text" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="输入 6 位验证码">
+              <button class="gate-primary" data-a="cloudVerifyOtp" ${UI.authBusy?'disabled':''}>${UI.authBusy?'验证中…':'验证并登录 ▶'}</button>
+            </div>
+            <div class="otp-actions">
+              <button id="btn-resend-otp" class="gate-secondary" data-a="cloudResendOtp" ${UI.authBusy||UI.resendCd>0?'disabled':''}>${UI.resendCd>0?`重新发送 (${UI.resendCd}s)`:'重新发送验证码'}</button>
+              <button class="gate-secondary" data-a="cancelOtp">← 返回修改邮箱</button>
+            </div>
+          </div>`
         : `
           <div class="gate-tabs">
             <button class="${!isReg?'on':''}" data-a="authTab" data-t="login">账号登录</button>
@@ -2677,7 +2773,8 @@ function startScreen(){
           <div class="gate-form">
             <input id="auth-email" type="email" autocomplete="username" placeholder="输入邮箱地址">
             <input id="auth-pass" type="password" autocomplete="${isReg?'new-password':'current-password'}" placeholder="${isReg?'设置密码（至少 6 位）':'输入密码'}">
-            <button class="gate-primary" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'注册并开启云同步':'登录并同步云端进度')}</button>
+            ${isReg?`<input id="auth-pass2" type="password" autocomplete="new-password" placeholder="再次输入密码以确认">`:''}
+            <button class="gate-primary" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'发送邮箱验证码并注册':'登录并同步云端进度')}</button>
             <p class="gate-hint">${isReg?'注册后可在 Windows、Mac 与手机端自动互通存档。':'同一账号在任意设备登录，进度自动无缝衔接。'}</p>
           </div>
           <div class="gate-div"><span>或</span></div>
@@ -2923,6 +3020,17 @@ function accountPanelHtml(){
           <button class="btn ghost" data-a="cloudSignOut" ${UI.authBusy?'disabled':''}>退出登录</button>
         </div>
       </div>`
+    : UI.verifyEmail ? `<div class="acct-form">
+        <p>验证码已发送至 <b>${esc(UI.verifyEmail)}</b>，请输入邮件中的 6 位数字验证码完成绑定：</p>
+        <div class="form-row">
+          <input id="auth-otp" class="otp-input light" type="text" inputmode="numeric" maxlength="8" placeholder="输入 6 位验证码">
+        </div>
+        <div class="btns">
+          <button class="btn big" data-a="cloudVerifyOtp" ${UI.authBusy?'disabled':''}>${UI.authBusy?'验证中…':'验证并绑定当前进度'}</button>
+          <button id="btn-resend-otp" class="btn ghost" data-a="cloudResendOtp" ${UI.authBusy||UI.resendCd>0?'disabled':''}>${UI.resendCd>0?`重新发送 (${UI.resendCd}s)`:'重新发送验证码'}</button>
+          <button class="btn ghost" data-a="cancelOtp">返回修改</button>
+        </div>
+      </div>`
     : `<div class="acct-form">
         <p class="muted">当前为游客模式（进度仅保存在本设备）。登录或注册账号后，当前进度将自动绑定云端，在 Windows、Mac 与手机间无缝同步。</p>
         <div class="acct-subtabs">
@@ -2932,9 +3040,10 @@ function accountPanelHtml(){
         <div class="form-row">
           <input id="auth-email" type="email" placeholder="邮箱地址">
           <input id="auth-pass" type="password" placeholder="${isReg?'设置密码（至少 6 位）':'密码'}">
+          ${isReg?`<input id="auth-pass2" type="password" placeholder="再次输入密码以确认">`:''}
         </div>
         <div class="btns">
-          <button class="btn big" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'注册并绑定当前进度':'登录并同步云端')}</button>
+          <button class="btn big" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'发送验证码并注册':'登录并同步云端')}</button>
         </div>
       </div>`}
   </div>`;
@@ -3493,8 +3602,9 @@ function endUserGame(g){
 // ================= 交互 =================
 const ACT = {
   view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
-  authTab:d=>{ UI.authTab=d.t; render(); },
-  enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; render(); },
+  authTab:d=>{ UI.authTab=d.t; UI.verifyEmail=null; render(); },
+  cancelOtp:()=>{ UI.verifyEmail=null; render(); },
+  enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; UI.verifyEmail=null; render(); },
   enterLobby:()=>{ UI.entry='lobby'; UI.pickTeam=false; render(); },
   backToGate:()=>{ UI.entry='gate'; UI.pickTeam=false; render(); },
   showNewTeam:()=>{ UI.pickTeam=true; render(); },
@@ -3512,7 +3622,11 @@ const ACT = {
     UI.authBusy = false;
     if(!res.ok){
       S = prevS;
+      if(res.unconfirmed && res.email){
+        UI.verifyEmail = res.email;
+      }
     } else {
+      UI.verifyEmail = null;
       if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
       else if(S){ UI.savePreview = makeSaveSummary(S); }
     }
@@ -3521,16 +3635,50 @@ const ACT = {
   cloudSignUp:async()=>{
     const email = (document.getElementById('auth-email')||{}).value || '';
     const pass = (document.getElementById('auth-pass')||{}).value || '';
+    const pass2 = (document.getElementById('auth-pass2')||{}).value || '';
+    if(!pass || pass.length < 6){ toast('密码长度至少需要 6 位'); return; }
+    if(pass !== pass2){ toast('两次输入的密码不一致，请重新核对'); return; }
     const prevS = S;
     UI.authBusy = true; render();
     if(!S && UI.hasSave) await load();
     const res = await CloudSync.signUp(email, pass);
     UI.authBusy = false;
-    if(!res.ok || res.needConfirm){
+    if(!res.ok){
       S = prevS;
-    } else if(!S && !CloudSync.conflict){
-      UI.entry = 'lobby'; UI.pickTeam = false;
+    } else if(res.needConfirm){
+      S = prevS;
+      UI.verifyEmail = res.email || email.trim();
+      startResendCd(60);
+    } else {
+      UI.verifyEmail = null;
+      if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
+      else if(S){ UI.savePreview = makeSaveSummary(S); }
     }
+    toast(res.msg); render();
+  },
+  cloudVerifyOtp:async()=>{
+    const token = (document.getElementById('auth-otp')||{}).value || '';
+    const email = UI.verifyEmail;
+    const prevS = S;
+    UI.authBusy = true; render();
+    if(!S && UI.hasSave) await load();
+    const res = await CloudSync.verifySignupOtp(email, token);
+    UI.authBusy = false;
+    if(!res.ok){
+      S = prevS;
+    } else {
+      UI.verifyEmail = null;
+      if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
+      else if(S){ UI.savePreview = makeSaveSummary(S); }
+    }
+    toast(res.msg); render();
+  },
+  cloudResendOtp:async()=>{
+    if(!UI.verifyEmail || UI.resendCd > 0) return;
+    UI.authBusy = true; render();
+    const res = await CloudSync.resendSignupOtp(UI.verifyEmail);
+    UI.authBusy = false;
+    if(res.ok) startResendCd(60);
     toast(res.msg); render();
   },
   cloudSignOut:async()=>{
@@ -3707,9 +3855,12 @@ async function bootApp(){
   render();
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && (e.target.id==='auth-email' || e.target.id==='auth-pass')){
-    e.preventDefault();
-    (UI.authTab==='register' ? ACT.cloudSignUp : ACT.cloudSignIn)();
+  if(e.key==='Enter'){
+    if(e.target.id==='auth-otp'){ e.preventDefault(); ACT.cloudVerifyOtp(); }
+    else if(e.target.id==='auth-email' || e.target.id==='auth-pass' || e.target.id==='auth-pass2'){
+      e.preventDefault();
+      (UI.authTab==='register' ? ACT.cloudSignUp : ACT.cloudSignIn)();
+    }
   }
 });
 window.addEventListener('load', bootApp);

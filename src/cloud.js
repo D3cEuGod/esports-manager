@@ -188,8 +188,9 @@ const CloudSync = {
   },
 
   async signUp(email, password){
-    if(!this.isConfigured()) return { ok:false, msg:'请先填写 Supabase URL 和 Anon Key' };
-    if(!email || !password || password.length < 6) return { ok:false, msg:'请输入有效邮箱和至少 6 位密码' };
+    if(!this.isConfigured()) return { ok:false, msg:'云服务尚未就绪，请先使用游客模式' };
+    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return { ok:false, msg:'请输入有效的邮箱地址' };
+    if(!password || password.length < 6) return { ok:false, msg:'密码长度至少需要 6 位' };
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/signup`, {
         method: 'POST',
@@ -197,7 +198,11 @@ const CloudSync = {
         body: JSON.stringify({ email: email.trim(), password })
       });
       const d = await r.json().catch(()=>({}));
-      if(!r.ok) return { ok:false, msg: d.msg || d.error_description || d.message || `注册失败 (${r.status})` };
+      if(!r.ok){
+        const raw = d.msg || d.error_description || d.message || '';
+        const cn = /already registered/i.test(raw) ? '该邮箱已注册，请直接切换至「账号登录」' : (raw || `注册失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
       if(d.access_token && d.user){
         this.auth = {
           access_token: d.access_token,
@@ -209,14 +214,67 @@ const CloudSync = {
         await this.syncOnLaunch(true);
         return { ok:true, msg:'注册并登录成功！' };
       }
-      return { ok:true, needConfirm:true, msg:'注册成功！请前往邮箱点击验证链接后再登录（或在 Supabase 关闭 Email Confirm）。' };
+      return { ok:true, needConfirm:true, email: email.trim(), msg:'验证码已发送至你的邮箱，请在下方输入验证码完成注册！' };
     }catch(e){
-      return { ok:false, msg:'无法连接云端，请检查网络与 Supabase URL' };
+      return { ok:false, msg:'无法连接云端，请检查网络状态' };
+    }
+  },
+
+  async verifySignupOtp(email, token){
+    const code = String(token || '').replace(/\s+/g, '');
+    if(!email) return { ok:false, msg:'缺少待验证的邮箱地址' };
+    if(!/^\d{6,8}$/.test(code)) return { ok:false, msg:'请输入邮箱收到的 6 位数字验证码' };
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/verify`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ type: 'signup', email: email.trim(), token: code })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok){
+        const raw = d.msg || d.error_description || d.message || '';
+        const cn = /expired|invalid/i.test(raw) ? '验证码错误或已过期，请核对后重试或点击重新发送' : (raw || `验证失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
+      if(d.access_token && d.user){
+        this.auth = {
+          access_token: d.access_token,
+          refresh_token: d.refresh_token,
+          expires_at: Math.floor(Date.now()/1000) + (d.expires_in || 3600),
+          user: { id: d.user.id, email: d.user.email }
+        };
+        await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
+        const res = await this.syncOnLaunch(true);
+        return { ok:true, msg: res && res.msg ? `邮箱验证成功！${res.msg}` : '邮箱验证成功，已自动登录！' };
+      }
+      return { ok:true, msg:'邮箱验证成功！请使用邮箱和密码登录。' };
+    }catch(e){
+      return { ok:false, msg:'网络连接失败，请稍后重试' };
+    }
+  },
+
+  async resendSignupOtp(email){
+    if(!email) return { ok:false, msg:'缺少邮箱地址' };
+    try{
+      const r = await fetch(`${this.baseUrl()}/auth/v1/resend`, {
+        method: 'POST',
+        headers: this.headers(false),
+        body: JSON.stringify({ type: 'signup', email: email.trim() })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok){
+        const raw = d.msg || d.error_description || d.message || '';
+        const cn = /rate limit|too many|seconds/i.test(raw) ? '发送过于频繁，请稍等片刻再试' : (raw || `重发失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
+      return { ok:true, msg:'新的验证码已发送至邮箱，请查收（注意垃圾箱）' };
+    }catch(e){
+      return { ok:false, msg:'网络连接失败，请稍后重试' };
     }
   },
 
   async signIn(email, password){
-    if(!this.isConfigured()) return { ok:false, msg:'请先填写 Supabase URL 和 Anon Key' };
+    if(!this.isConfigured()) return { ok:false, msg:'云服务尚未就绪，请先使用游客模式' };
     if(!email || !password) return { ok:false, msg:'请输入邮箱和密码' };
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/token?grant_type=password`, {
@@ -225,7 +283,14 @@ const CloudSync = {
         body: JSON.stringify({ email: email.trim(), password })
       });
       const d = await r.json().catch(()=>({}));
-      if(!r.ok) return { ok:false, msg: d.error_description || d.msg || d.message || `登录失败 (${r.status})` };
+      if(!r.ok){
+        const raw = d.error_description || d.msg || d.message || '';
+        if(/not confirmed/i.test(raw)){
+          return { ok:false, unconfirmed:true, email: email.trim(), msg:'该邮箱尚未完成验证，请输入验证码（或点击重新发送）' };
+        }
+        const cn = /invalid login credentials/i.test(raw) ? '邮箱或密码错误，请重新核对' : (raw || `登录失败 (${r.status})`);
+        return { ok:false, msg: cn };
+      }
       this.auth = {
         access_token: d.access_token,
         refresh_token: d.refresh_token,

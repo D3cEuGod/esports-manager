@@ -166,7 +166,13 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 .gate-tip{font-size:12px;color:var(--hex-blue);margin:0 0 18px}
 .gate-btns{display:flex;flex-direction:column;gap:10px}
 .gate-secondary{width:100%;padding:10px;background:transparent;border:1px solid #354c6b;color:var(--hex-mu);font:600 13px var(--sans);cursor:pointer}
-.gate-secondary:hover{border-color:var(--hex-gold-l);color:#fff}
+.gate-secondary:hover:not(:disabled){border-color:var(--hex-gold-l);color:#fff}
+.gate-secondary:disabled{opacity:.45;cursor:not-allowed}
+.gate-otp{padding:6px 0}
+.otp-badge{display:inline-block;padding:3px 12px;margin-bottom:10px;border:1px solid var(--hex-gold);background:rgba(200,155,60,.18);color:var(--hex-gold-l);font-size:12px;font-weight:800;letter-spacing:1.2px}
+.otp-input{text-align:center;font-family:var(--num)!important;font-size:28px!important;font-weight:800;letter-spacing:10px}
+.otp-input.light{background:var(--pn);color:var(--ink);border:2px solid var(--ink);letter-spacing:8px;max-width:280px}
+.otp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 /* 第 2 屏：存档继续卡片 & 选队标题 */
 .resume-card{border-top:4px solid var(--ac);display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;margin-top:20px}
 .resume-eyebrow{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--ac);text-transform:uppercase;margin-bottom:4px}

@@ -1,5 +1,17 @@
 // ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false, verifyEmail:null, resendCd:0 };
+let _resendTimer = null;
+function startResendCd(sec){
+  if(_resendTimer){ clearInterval(_resendTimer); _resendTimer=null; }
+  UI.resendCd = sec;
+  _resendTimer = setInterval(()=>{
+    if(UI.resendCd > 0){
+      UI.resendCd--;
+      const btn = document.getElementById('btn-resend-otp');
+      if(btn){ btn.textContent = UI.resendCd>0 ? `重新发送 (${UI.resendCd}s)` : '重新发送验证码'; btn.disabled = UI.resendCd>0 || UI.authBusy; }
+    } else { clearInterval(_resendTimer); _resendTimer=null; }
+  }, 1000);
+}
 const SAVE_KEY='lolm_save_v1';
 const $app = () => document.getElementById('app');
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -154,6 +166,19 @@ function startScreen(){
               <button class="gate-secondary" data-a="cloudSignOut">切换账号</button>
             </div>
           </div>`
+        : UI.verifyEmail ? `
+          <div class="gate-otp">
+            <div class="otp-badge">📧 邮箱验证</div>
+            <p class="gate-hint" style="margin-bottom:12px">验证码已发送至 <b>${esc(UI.verifyEmail)}</b><br>请在客户端直接输入收到的 6 位数字验证码（无需跳转网页）</p>
+            <div class="gate-form">
+              <input id="auth-otp" class="otp-input" type="text" inputmode="numeric" maxlength="8" autocomplete="one-time-code" placeholder="输入 6 位验证码">
+              <button class="gate-primary" data-a="cloudVerifyOtp" ${UI.authBusy?'disabled':''}>${UI.authBusy?'验证中…':'验证并登录 ▶'}</button>
+            </div>
+            <div class="otp-actions">
+              <button id="btn-resend-otp" class="gate-secondary" data-a="cloudResendOtp" ${UI.authBusy||UI.resendCd>0?'disabled':''}>${UI.resendCd>0?`重新发送 (${UI.resendCd}s)`:'重新发送验证码'}</button>
+              <button class="gate-secondary" data-a="cancelOtp">← 返回修改邮箱</button>
+            </div>
+          </div>`
         : `
           <div class="gate-tabs">
             <button class="${!isReg?'on':''}" data-a="authTab" data-t="login">账号登录</button>
@@ -162,7 +187,8 @@ function startScreen(){
           <div class="gate-form">
             <input id="auth-email" type="email" autocomplete="username" placeholder="输入邮箱地址">
             <input id="auth-pass" type="password" autocomplete="${isReg?'new-password':'current-password'}" placeholder="${isReg?'设置密码（至少 6 位）':'输入密码'}">
-            <button class="gate-primary" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'注册并开启云同步':'登录并同步云端进度')}</button>
+            ${isReg?`<input id="auth-pass2" type="password" autocomplete="new-password" placeholder="再次输入密码以确认">`:''}
+            <button class="gate-primary" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'发送邮箱验证码并注册':'登录并同步云端进度')}</button>
             <p class="gate-hint">${isReg?'注册后可在 Windows、Mac 与手机端自动互通存档。':'同一账号在任意设备登录，进度自动无缝衔接。'}</p>
           </div>
           <div class="gate-div"><span>或</span></div>
@@ -408,6 +434,17 @@ function accountPanelHtml(){
           <button class="btn ghost" data-a="cloudSignOut" ${UI.authBusy?'disabled':''}>退出登录</button>
         </div>
       </div>`
+    : UI.verifyEmail ? `<div class="acct-form">
+        <p>验证码已发送至 <b>${esc(UI.verifyEmail)}</b>，请输入邮件中的 6 位数字验证码完成绑定：</p>
+        <div class="form-row">
+          <input id="auth-otp" class="otp-input light" type="text" inputmode="numeric" maxlength="8" placeholder="输入 6 位验证码">
+        </div>
+        <div class="btns">
+          <button class="btn big" data-a="cloudVerifyOtp" ${UI.authBusy?'disabled':''}>${UI.authBusy?'验证中…':'验证并绑定当前进度'}</button>
+          <button id="btn-resend-otp" class="btn ghost" data-a="cloudResendOtp" ${UI.authBusy||UI.resendCd>0?'disabled':''}>${UI.resendCd>0?`重新发送 (${UI.resendCd}s)`:'重新发送验证码'}</button>
+          <button class="btn ghost" data-a="cancelOtp">返回修改</button>
+        </div>
+      </div>`
     : `<div class="acct-form">
         <p class="muted">当前为游客模式（进度仅保存在本设备）。登录或注册账号后，当前进度将自动绑定云端，在 Windows、Mac 与手机间无缝同步。</p>
         <div class="acct-subtabs">
@@ -417,9 +454,10 @@ function accountPanelHtml(){
         <div class="form-row">
           <input id="auth-email" type="email" placeholder="邮箱地址">
           <input id="auth-pass" type="password" placeholder="${isReg?'设置密码（至少 6 位）':'密码'}">
+          ${isReg?`<input id="auth-pass2" type="password" placeholder="再次输入密码以确认">`:''}
         </div>
         <div class="btns">
-          <button class="btn big" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'注册并绑定当前进度':'登录并同步云端')}</button>
+          <button class="btn big" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'发送验证码并注册':'登录并同步云端')}</button>
         </div>
       </div>`}
   </div>`;
@@ -978,8 +1016,9 @@ function endUserGame(g){
 // ================= 交互 =================
 const ACT = {
   view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
-  authTab:d=>{ UI.authTab=d.t; render(); },
-  enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; render(); },
+  authTab:d=>{ UI.authTab=d.t; UI.verifyEmail=null; render(); },
+  cancelOtp:()=>{ UI.verifyEmail=null; render(); },
+  enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; UI.verifyEmail=null; render(); },
   enterLobby:()=>{ UI.entry='lobby'; UI.pickTeam=false; render(); },
   backToGate:()=>{ UI.entry='gate'; UI.pickTeam=false; render(); },
   showNewTeam:()=>{ UI.pickTeam=true; render(); },
@@ -997,7 +1036,11 @@ const ACT = {
     UI.authBusy = false;
     if(!res.ok){
       S = prevS;
+      if(res.unconfirmed && res.email){
+        UI.verifyEmail = res.email;
+      }
     } else {
+      UI.verifyEmail = null;
       if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
       else if(S){ UI.savePreview = makeSaveSummary(S); }
     }
@@ -1006,16 +1049,50 @@ const ACT = {
   cloudSignUp:async()=>{
     const email = (document.getElementById('auth-email')||{}).value || '';
     const pass = (document.getElementById('auth-pass')||{}).value || '';
+    const pass2 = (document.getElementById('auth-pass2')||{}).value || '';
+    if(!pass || pass.length < 6){ toast('密码长度至少需要 6 位'); return; }
+    if(pass !== pass2){ toast('两次输入的密码不一致，请重新核对'); return; }
     const prevS = S;
     UI.authBusy = true; render();
     if(!S && UI.hasSave) await load();
     const res = await CloudSync.signUp(email, pass);
     UI.authBusy = false;
-    if(!res.ok || res.needConfirm){
+    if(!res.ok){
       S = prevS;
-    } else if(!S && !CloudSync.conflict){
-      UI.entry = 'lobby'; UI.pickTeam = false;
+    } else if(res.needConfirm){
+      S = prevS;
+      UI.verifyEmail = res.email || email.trim();
+      startResendCd(60);
+    } else {
+      UI.verifyEmail = null;
+      if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
+      else if(S){ UI.savePreview = makeSaveSummary(S); }
     }
+    toast(res.msg); render();
+  },
+  cloudVerifyOtp:async()=>{
+    const token = (document.getElementById('auth-otp')||{}).value || '';
+    const email = UI.verifyEmail;
+    const prevS = S;
+    UI.authBusy = true; render();
+    if(!S && UI.hasSave) await load();
+    const res = await CloudSync.verifySignupOtp(email, token);
+    UI.authBusy = false;
+    if(!res.ok){
+      S = prevS;
+    } else {
+      UI.verifyEmail = null;
+      if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
+      else if(S){ UI.savePreview = makeSaveSummary(S); }
+    }
+    toast(res.msg); render();
+  },
+  cloudResendOtp:async()=>{
+    if(!UI.verifyEmail || UI.resendCd > 0) return;
+    UI.authBusy = true; render();
+    const res = await CloudSync.resendSignupOtp(UI.verifyEmail);
+    UI.authBusy = false;
+    if(res.ok) startResendCd(60);
     toast(res.msg); render();
   },
   cloudSignOut:async()=>{
@@ -1192,9 +1269,12 @@ async function bootApp(){
   render();
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && (e.target.id==='auth-email' || e.target.id==='auth-pass')){
-    e.preventDefault();
-    (UI.authTab==='register' ? ACT.cloudSignUp : ACT.cloudSignIn)();
+  if(e.key==='Enter'){
+    if(e.target.id==='auth-otp'){ e.preventDefault(); ACT.cloudVerifyOtp(); }
+    else if(e.target.id==='auth-email' || e.target.id==='auth-pass' || e.target.id==='auth-pass2'){
+      e.preventDefault();
+      (UI.authTab==='register' ? ACT.cloudSignUp : ACT.cloudSignIn)();
+    }
   }
 });
 window.addEventListener('load', bootApp);

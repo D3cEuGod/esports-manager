@@ -1,5 +1,5 @@
 // ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, authBusy:false };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false };
 const SAVE_KEY='lolm_save_v1';
 const $app = () => document.getElementById('app');
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -9,6 +9,7 @@ function save(){
     S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
     const txt = JSON.stringify(S);
     UI.hasSave = true;
+    UI.savePreview = makeSaveSummary(S);
     StorageBridge.writeSaveText(txt);
     CloudSync.schedulePush(S);
   }catch(e){ console.warn(e); }
@@ -16,7 +17,7 @@ function save(){
 async function load(){
   try{
     const txt = await StorageBridge.readSaveText();
-    if(txt){ S = migrateSave(JSON.parse(txt)); UI.hasSave = true; return true; }
+    if(txt){ S = migrateSave(JSON.parse(txt)); UI.hasSave = true; UI.savePreview = makeSaveSummary(S); return true; }
   }catch(e){ console.warn(e); }
   return false;
 }
@@ -131,26 +132,84 @@ function render(){
 }
 const toastHtml = () => UI.toast?`<div class="toast">${esc(UI.toast)}</div>`:'';
 
-// ---------- 开始界面 ----------
+// ---------- 第 1 屏：登录 / 游客独立门户；第 2 屏：继续存档 / 选择战队 ----------
 function startScreen(){
-  const has = UI.hasSave || !!localStorage.getItem(SAVE_KEY);
-  const lpl=ROSTER.LPL.teams;
+  const has = UI.hasSave || !!UI.savePreview;
+  if(UI.entry === 'gate'){
+    const isReg = UI.authTab === 'register';
+    const logged = CloudSync.isLoggedIn();
+    return `<div class="gate-wrap">
+      <div class="gate-card">
+        <div class="gate-brand">
+          <span class="gate-eyebrow">2026 SEASON · ${esc(detectPlatformLabel())}</span>
+          <h1>峡谷经理人</h1>
+          <p class="gate-sub">英雄联盟职业电竞经理</p>
+        </div>
+        ${logged ? `
+          <div class="gate-logged">
+            <div class="gate-user-line">☁️ 已登录账号：<b>${esc(CloudSync.auth.user.email)}</b></div>
+            <p class="gate-tip">${esc(CloudSync.statusText)}</p>
+            <div class="gate-btns">
+              <button class="gate-primary" data-a="enterLobby">进入游戏 ▶</button>
+              <button class="gate-secondary" data-a="cloudSignOut">切换账号</button>
+            </div>
+          </div>`
+        : `
+          <div class="gate-tabs">
+            <button class="${!isReg?'on':''}" data-a="authTab" data-t="login">账号登录</button>
+            <button class="${isReg?'on':''}" data-a="authTab" data-t="register">注册新账号</button>
+          </div>
+          <div class="gate-form">
+            <input id="auth-email" type="email" autocomplete="username" placeholder="输入邮箱地址">
+            <input id="auth-pass" type="password" autocomplete="${isReg?'new-password':'current-password'}" placeholder="${isReg?'设置密码（至少 6 位）':'输入密码'}">
+            <button class="gate-primary" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'注册并开启云同步':'登录并同步云端进度')}</button>
+            <p class="gate-hint">${isReg?'注册后可在 Windows、Mac 与手机端自动互通存档。':'同一账号在任意设备登录，进度自动无缝衔接。'}</p>
+          </div>
+          <div class="gate-div"><span>或</span></div>
+          <button class="gate-guest" data-a="enterGuest">以游客模式游玩（仅存本地） ▶</button>
+          <p class="gate-foot">游客模式可完全离线游玩，进入游戏后随时可登录账号绑定进度。</p>`}
+      </div>
+    </div>`;
+  }
+
+  // 第 2 屏：存档入口 / 14 支 LPL 战队选择
+  const lpl = ROSTER.LPL.teams;
   const ovr = t => { const best={}; t.players.forEach(p=>{ if(!best[p.role]||best[p.role]<p.rating) best[p.role]=p.rating; }); return ROLES.reduce((s,r)=>s+(best[r]||45),0)/5; };
+  const pv = UI.savePreview;
+  const showTeamGrid = !has || UI.pickTeam;
+
   return `<div class="start">
     <div class="start-top">
-      <div><h1>峡谷经理人</h1><p class="sub">英雄联盟电竞经理 · 2026 赛季 · ${esc(detectPlatformLabel())}</p></div>
-      <div class="start-acct">${cloudPillHtml()}</div>
+      <div>
+        <h1>峡谷经理人</h1>
+        <p class="sub">${CloudSync.isLoggedIn()?`☁️ 账号：${esc(CloudSync.auth.user.email)}`:'👤 游客模式（本地存档）'} · ${esc(detectPlatformLabel())}</p>
+      </div>
+      <div class="btns" style="margin:0">
+        <button class="btn ghost sm" data-a="backToGate">← 返回登录页</button>
+      </div>
     </div>
-    <div class="btns">
-      ${has?`<button class="btn big" data-a="continue">继续存档 ▶</button>`:''}
-      <button class="btn ghost" data-a="openAccount">${CloudSync.isLoggedIn()?`☁️ 已登录：${esc(CloudSync.auth.user.email)}`:'☁️ 账号登录 / 多端同步'}</button>
-    </div>
-    <h3>选择你要执掌的 LPL 战队</h3>
-    <div class="tgrid">${lpl.map(t=>`<div class="tcard" data-a="newgame" data-k="${t.short}">
-      <div class="tn">${esc(t.short)}</div><div class="tf">${esc(t.cn||t.name)}</div>
-      <div class="tov">${Math.round(ovr(t))}<small>战力</small></div>
-      <div class="tp">${t.players.filter(p=>!p.sub).map(p=>esc(p.id)).join(' · ')}</div></div>`).join('')}</div>
-    <p class="note">选手名单整理自公开资料，部分队伍/能力值为估算，详见“赛制说明”。本游戏为粉丝向原创作品。</p>
+    ${has && !UI.pickTeam ? `
+      <section class="card resume-card">
+        <div class="resume-info">
+          <div class="resume-eyebrow">检测到已有进度</div>
+          <h2>${pv?`${esc(pv.team)} · ${pv.year} 赛季`:'已保存的经理档案'}</h2>
+          <p class="muted">${pv?`${esc(pv.event||'赛季进行中')} · 上次保存 ${esc(fmtTime(pv.updatedAt))}`:'点击下方按钮立即继续执教'}</p>
+        </div>
+        <div class="btns">
+          <button class="btn big" data-a="continue">继续当前存档 ▶</button>
+          <button class="btn ghost" data-a="showNewTeam">重新选择战队开新档</button>
+        </div>
+      </section>` : ''}
+    ${showTeamGrid ? `
+      <div class="pick-hd">
+        <h3>选择你要执掌的 LPL 战队</h3>
+        ${has?`<button class="btn sm ghost" data-a="cancelNewTeam">返回继续旧存档</button>`:''}
+      </div>
+      <div class="tgrid">${lpl.map(t=>`<div class="tcard" data-a="newgame" data-k="${t.short}">
+        <div class="tn">${esc(t.short)}</div><div class="tf">${esc(t.cn||t.name)}</div>
+        <div class="tov">${Math.round(ovr(t))}<small>战力</small></div>
+        <div class="tp">${t.players.filter(p=>!p.sub).map(p=>esc(p.id)).join(' · ')}</div></div>`).join('')}</div>
+      <p class="note">选手名单整理自公开资料，部分队伍/能力值为估算，详见“赛制说明”。本游戏为粉丝向原创作品。</p>` : ''}
   </div>`;
 }
 
@@ -335,14 +394,14 @@ VIEWS.rules = () => `<section class="card"><h2>赛制说明（2026）</h2><p>✅
   <h3>BP规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 2026新规“先手选择权”：拥有选择权的一方选择蓝/红方或BP先后手，另一方获得剩余选项；系列赛中输掉上一局的一方获得下一局选择权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前点击己方槽位进行摇摆位互换。</p>
   <h3>其他说明</h3><p class="fmt">✅ LPL首发外援上限2人（赛前强制校验，AI 战队同样遵守）。✅ EWC卫冕冠军：Gen.G（EWC 2025冠军），之后赛季为上届冠军。⚠️ 其他赛区不进行逐场模拟，按战力+随机生成各赛段排名。⚠️ 选手能力值、潜力、身价均为游戏估算。</p></section>`;
 function accountPanelHtml(){
-  const cfgOk = CloudSync.isConfigured();
   const logged = CloudSync.isLoggedIn();
+  const isReg = UI.authTab === 'register';
   return `<div class="acct-box">
-    <h3>☁️ 跨平台账号与云同步（Windows / macOS / 手机互通）</h3>
-    <p class="muted">当前状态：<b>${esc(CloudSync.statusText)}</b>${CloudSync.lastSyncAt?` · 上次同步 ${esc(fmtTime(CloudSync.lastSyncAt))}`:''}</p>
+    <h3>☁️ 账号与多平台云同步</h3>
+    <p class="muted">同步状态：<b>${esc(CloudSync.statusText)}</b>${CloudSync.lastSyncAt?` · 上次同步 ${esc(fmtTime(CloudSync.lastSyncAt))}`:''}</p>
     ${logged ? `
       <div class="acct-user">
-        <div>已登录账号：<b>${esc(CloudSync.auth.user.email)}</b> <small>（${esc(detectPlatformLabel())}）</small></div>
+        <div>当前账号：<b>${esc(CloudSync.auth.user.email)}</b> <small>（${esc(detectPlatformLabel())}）</small></div>
         <div class="btns">
           <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>立即同步云端</button>
           ${S?`<button class="btn ghost" data-a="cloudPushNow" ${UI.authBusy?'disabled':''}>上传本地进度到云端</button>`:''}
@@ -350,26 +409,19 @@ function accountPanelHtml(){
         </div>
       </div>`
     : `<div class="acct-form">
-        <p class="muted">使用同一账号登录，即可在 Windows、Mac 与手机间自动同步游戏进度；不登录也能以游客模式完全离线游玩。</p>
+        <p class="muted">当前为游客模式（进度仅保存在本设备）。登录或注册账号后，当前进度将自动绑定云端，在 Windows、Mac 与手机间无缝同步。</p>
+        <div class="acct-subtabs">
+          <a class="${!isReg?'on':''}" data-a="authTab" data-t="login">账号登录</a>
+          <a class="${isReg?'on':''}" data-a="authTab" data-t="register">注册新账号</a>
+        </div>
         <div class="form-row">
-          <input id="auth-email" type="email" placeholder="邮箱（例如 player@example.com）">
-          <input id="auth-pass" type="password" placeholder="密码（至少 6 位）">
+          <input id="auth-email" type="email" placeholder="邮箱地址">
+          <input id="auth-pass" type="password" placeholder="${isReg?'设置密码（至少 6 位）':'密码'}">
         </div>
         <div class="btns">
-          <button class="btn big" data-a="cloudSignIn" ${!cfgOk||UI.authBusy?'disabled':''}>登录账号</button>
-          <button class="btn" data-a="cloudSignUp" ${!cfgOk||UI.authBusy?'disabled':''}>注册新账号</button>
+          <button class="btn big" data-a="${isReg?'cloudSignUp':'cloudSignIn'}" ${UI.authBusy?'disabled':''}>${UI.authBusy?'请稍候…':(isReg?'注册并绑定当前进度':'登录并同步云端')}</button>
         </div>
-        ${!cfgOk?'<p class="warn">⚠️ 尚未配置 Supabase 云服务地址，请在下方填写 Project URL 与 Anon Key（免费额度即可用）。</p>':''}
       </div>`}
-    <details class="cloud-cfg" ${!cfgOk?'open':''}>
-      <summary>⚙️ Supabase 云服务配置（${cfgOk?'已配置':'待配置'}）</summary>
-      <div class="cfg-body">
-        <p class="muted">3 步开启永久免费多端云同步：① 在 <b>supabase.com</b> 免费新建项目 → ② 在 SQL Editor 运行仓库内的 <code>supabase/schema.sql</code> → ③ 将 Settings → API 中的 Project URL 与 anon public key 填入下方并保存。</p>
-        <label>Project URL：<input id="cfg-url" type="url" placeholder="https://xxxx.supabase.co" value="${esc(CloudSync.cfg.url)}"></label>
-        <label>Anon Public Key：<input id="cfg-key" type="text" placeholder="eyJhbGciOi..." value="${esc(CloudSync.cfg.anonKey)}"></label>
-        <div class="btns"><button class="btn sm" data-a="saveCloudCfg">保存云服务配置</button></div>
-      </div>
-    </details>
   </div>`;
 }
 
@@ -926,37 +978,52 @@ function endUserGame(g){
 // ================= 交互 =================
 const ACT = {
   view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
-  newgame:d=>{ newGame(d.k); save(); UI.view='home'; render(); },
+  authTab:d=>{ UI.authTab=d.t; render(); },
+  enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; render(); },
+  enterLobby:()=>{ UI.entry='lobby'; UI.pickTeam=false; render(); },
+  backToGate:()=>{ UI.entry='gate'; UI.pickTeam=false; render(); },
+  showNewTeam:()=>{ UI.pickTeam=true; render(); },
+  cancelNewTeam:()=>{ UI.pickTeam=false; render(); },
+  newgame:d=>{ newGame(d.k); save(); UI.view='home'; UI.pickTeam=false; render(); },
   continue:async()=>{ if(await load()){ render(); if(CloudSync.isLoggedIn()) CloudSync.syncOnLaunch(false); } else toast('未找到本地存档'); },
-  openAccount:()=>{ if(S){ UI.view='sys'; UI.modal=null; render(); } else { UI.modal=()=>`${accountPanelHtml()}<div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); } },
-  saveCloudCfg:async()=>{
-    const url = (document.getElementById('cfg-url')||{}).value || '';
-    const key = (document.getElementById('cfg-key')||{}).value || '';
-    await CloudSync.saveConfig(url, key);
-    toast(CloudSync.isConfigured()?'云服务配置已保存，现在可以登录/注册账号':'已清空云服务配置');
-  },
+  openAccount:()=>{ if(S){ UI.view='sys'; UI.modal=null; render(); } else { UI.entry='gate'; render(); } },
   cloudSignIn:async()=>{
     const email = (document.getElementById('auth-email')||{}).value || '';
     const pass = (document.getElementById('auth-pass')||{}).value || '';
+    const prevS = S;
     UI.authBusy = true; render();
+    if(!S && UI.hasSave) await load();
     const res = await CloudSync.signIn(email, pass);
     UI.authBusy = false;
-    if(res.ok && !CloudSync.conflict && !S){ UI.modal = null; }
+    if(!res.ok){
+      S = prevS;
+    } else {
+      if(!S && !CloudSync.conflict){ UI.entry = 'lobby'; UI.pickTeam = false; }
+      else if(S){ UI.savePreview = makeSaveSummary(S); }
+    }
     toast(res.msg); render();
   },
   cloudSignUp:async()=>{
     const email = (document.getElementById('auth-email')||{}).value || '';
     const pass = (document.getElementById('auth-pass')||{}).value || '';
+    const prevS = S;
     UI.authBusy = true; render();
+    if(!S && UI.hasSave) await load();
     const res = await CloudSync.signUp(email, pass);
     UI.authBusy = false;
+    if(!res.ok || res.needConfirm){
+      S = prevS;
+    } else if(!S && !CloudSync.conflict){
+      UI.entry = 'lobby'; UI.pickTeam = false;
+    }
     toast(res.msg); render();
   },
   cloudSignOut:async()=>{
     UI.authBusy = true; render();
     await CloudSync.signOut();
     UI.authBusy = false;
-    toast('已退出登录，切换回本地游客模式'); render();
+    if(!S){ UI.entry = 'gate'; }
+    toast('已退出登录，当前为游客模式'); render();
   },
   cloudSyncNow:async()=>{
     UI.authBusy = true; render();
@@ -973,6 +1040,7 @@ const ACT = {
   },
   resolveConflict:async d=>{
     await CloudSync.resolveConflict(d.c);
+    if(S) UI.savePreview = makeSaveSummary(S);
     toast(d.c==='cloud'?'已加载云端存档':'已用本地存档更新云端');
   },
   closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerGive=null; render(); },
@@ -1012,7 +1080,7 @@ const ACT = {
   copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
   dlExp:()=>{ try{ const b=new Blob([JSON.stringify(S)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`lol-manager-${S.year}.json`; a.click(); }catch(e){ toast('当前环境不支持下载，请用复制'); } },
   reset:()=>{ UI.modal=()=>`<h3>确定删除存档并重新开始？</h3><div class="btns"><button class="btn" data-a="doReset">确定删除</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
-  doReset:async()=>{ await StorageBridge.deleteSave(); UI.hasSave=false; S=null; UI.modal=null; render(); },
+  doReset:async()=>{ await StorageBridge.deleteSave(); UI.hasSave=false; UI.savePreview=null; S=null; UI.modal=null; UI.entry='lobby'; UI.pickTeam=true; render(); },
   // ---- 比赛 / BP 交互 ----
   toggleLocked:()=>{ if(UI.match){ UI.match.showLocked=!UI.match.showLocked; render(); } },
   choose:d=>{
@@ -1105,9 +1173,28 @@ document.addEventListener('input', e=>{
 async function bootApp(){
   await StorageBridge.init();
   const raw = await StorageBridge.readSaveText();
-  UI.hasSave = !!raw;
-  render();
+  if(raw){
+    try{
+      const parsed = migrateSave(JSON.parse(raw));
+      UI.hasSave = true;
+      UI.savePreview = makeSaveSummary(parsed);
+    }catch(e){ UI.hasSave = false; }
+  }
   await CloudSync.init();
+  if(CloudSync.isLoggedIn()){
+    // 已记住上次登录：若有云端恢复的档或本地档，直接进入第2屏（或已在主页）
+    if(S) UI.savePreview = makeSaveSummary(S);
+    UI.entry = 'lobby';
+  } else {
+    // 未登录：始终先展示第 1 屏（登录 / 游客独立门户），绝不与战队混在一起
+    UI.entry = 'gate';
+  }
   render();
 }
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && (e.target.id==='auth-email' || e.target.id==='auth-pass')){
+    e.preventDefault();
+    (UI.authTab==='register' ? ACT.cloudSignUp : ACT.cloudSignIn)();
+  }
+});
 window.addEventListener('load', bootApp);

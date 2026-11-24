@@ -45,6 +45,8 @@ $relDir = Join-Path $root 'release'
 New-Item -ItemType Directory -Force -Path $relDir | Out-Null
 $gameName = [string]::new([char[]]@(0x5CE1,0x8C37,0x7ECF,0x7406,0x4EBA))
 $exeDst = Join-Path $relDir ($gameName + '.exe')
+Get-Process -Name $gameName -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 300
 Copy-Item $exeSrc $exeDst -Force
 $sizeMb = [Math]::Round((Get-Item $exeDst).Length / 1MB, 2)
 Write-Output "BUILD_SUCCESS: $exeDst ($sizeMb MB)"

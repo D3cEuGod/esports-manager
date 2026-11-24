@@ -18,10 +18,12 @@ npm run build:desktop   # 自动构建 dist/index.html 并编译独立客户端
 
 ## 多平台账号登录与云存档同步（Supabase）
 
-内置零依赖 **Supabase Auth + 云存档同步引擎**（支持离线游客模式、邮箱注册/登录、静默自动上传、多端冲突对比防误覆盖）：
+内置零依赖 **Supabase Auth + 云存档同步引擎**（已默认内置云服务，玩家打开软件直接注册/登录即可跨 Windows、Mac 与手机同步进度，也支持离线游客模式与冲突对比防误覆盖）。
+
+如需自行部署独立的 Supabase 后端：
 1. 前往 [supabase.com](https://supabase.com) 免费创建一个项目。
 2. 在 Supabase Dashboard → **SQL Editor** 中运行本仓库的 [`supabase/schema.sql`](supabase/schema.sql) 创建带行级安全（RLS）的 `user_saves` 表。
-3. 复制 Settings → API 中的 **Project URL** 与 **anon public key**，填入游戏内「账号与存档 → Supabase 云服务配置」（或写入 `src/cloud.js` 的 `CLOUD_DEFAULT_CFG` 后重新构建）。
+3. 在 Authentication → Providers → Email 中关闭 Confirm email（实现注册即登录），并将 Project URL 与 publishable/anon key 写入 `src/cloud.js` 的 `CLOUD_DEFAULT_CFG` 后重新构建。
 
 ## 核心特性
 

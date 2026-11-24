@@ -5,12 +5,11 @@
 // - 云端同步：使用零依赖标准 fetch 对接 Supabase Auth + PostgREST（支持多端账号进度互联）
 
 const CLOUD_DEFAULT_CFG = {
-  // 如需打包发行自带固定云服务，可直接在此填入你的 Supabase Project URL 与 anon public key
-  url: '',
-  anonKey: ''
+  // 开发者一次性内置的公开 Supabase 配置（数据安全由数据库 RLS 策略保证）
+  url: 'https://uhrrohofkuqanlafgapn.supabase.co',
+  anonKey: 'sb_publishable_kwNYtASApUqbeBY0PL9snA_kltcGMBP'
 };
 
-const CLOUD_CFG_KEY = 'lolm_cloud_cfg_v1';
 const CLOUD_AUTH_KEY = 'lolm_cloud_auth_v1';
 
 function isTauriApp(){
@@ -125,7 +124,7 @@ const CloudSync = {
     return !!(this.auth && this.auth.access_token && this.auth.user && this.auth.user.id);
   },
   baseUrl(){
-    return String(this.cfg.url || '').trim().replace(/\/+$/, '');
+    return String(this.cfg.url || '').trim().replace(/\/rest\/v1\/?$/i, '').replace(/\/+$/, '');
   },
   headers(withAuth){
     const h = {
@@ -139,41 +138,25 @@ const CloudSync = {
   },
 
   async init(){
-    const savedCfg = await StorageBridge.readMeta(CLOUD_CFG_KEY);
-    if(savedCfg && (savedCfg.url || savedCfg.anonKey)){
-      this.cfg = { url: savedCfg.url || '', anonKey: savedCfg.anonKey || '' };
-    }
+    this.cfg = { url: CLOUD_DEFAULT_CFG.url, anonKey: CLOUD_DEFAULT_CFG.anonKey };
     const savedAuth = await StorageBridge.readMeta(CLOUD_AUTH_KEY);
     if(savedAuth && savedAuth.access_token && savedAuth.user){
       this.auth = savedAuth;
     }
     if(!this.isConfigured()){
       this.status = 'unconfigured';
-      this.statusText = '未配置云服务（本地模式）';
+      this.statusText = '云服务暂未开放（本地模式）';
       return;
     }
     if(!this.isLoggedIn()){
       this.status = 'guest';
-      this.statusText = '游客模式（未登录）';
+      this.statusText = '游客模式（仅存本地）';
       return;
     }
     await this.ensureValidToken();
     if(this.isLoggedIn()){
       await this.syncOnLaunch(false);
     }
-  },
-
-  async saveConfig(url, anonKey){
-    this.cfg = { url: String(url||'').trim().replace(/\/+$/,''), anonKey: String(anonKey||'').trim() };
-    await StorageBridge.writeMeta(CLOUD_CFG_KEY, this.cfg);
-    if(!this.isConfigured()){
-      this.status = 'unconfigured';
-      this.statusText = '未配置云服务（本地模式）';
-    } else if(!this.isLoggedIn()){
-      this.status = 'guest';
-      this.statusText = '云服务已就绪（请登录）';
-    }
-    if(typeof render === 'function') render();
   },
 
   async ensureValidToken(){

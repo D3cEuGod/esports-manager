@@ -34,6 +34,7 @@ function migrateSave(s){
     Object.values(s.players).forEach(p=>{
       if(!p.tag) p.tag = p.pid;
       if(typeof p.form!=='number' || isNaN(p.form)) p.form = 0;
+      if(typeof p.mental!=='number' || isNaN(p.mental)) p.mental = 0;
       if(!Array.isArray(p.champs)) p.champs = [];
       p.champs = p.champs.filter(x=>x && CH[x.c]);
       if(!p.champs.length) genChampPool(p, srand(hash(p.pid)));
@@ -79,7 +80,7 @@ function newGame(userTeam){
         const r = srand(hash(pid));
         const age = AGE_FIX[baseId] || p.age || (18 + Math.floor(r()*9));
         const pl = { pid, tag:baseId, name:p.name||baseId, role:p.role, nat:p.nat||(reg==='LPL'?'CN':reg==='LCK'?'KR':'--'),
-          age, rating:p.rating||70, team:key, form:0, champs:[], sub:!!p.sub };
+          age, rating:p.rating||70, team:key, form:0, mental:0, champs:[], sub:!!p.sub };
         pl.pot = Math.round(clamp(pl.rating + Math.max(0,23-age)*1.6 + r()*4, pl.rating, 97));
         pl.salary = fairSalary(pl);
         pl.contract = 2026 + Math.floor(r()*3);
@@ -110,7 +111,7 @@ function genRookie(year, forceRole, forceNat){
   const role = forceRole || pick(ROLES); const age = 17+Math.floor(rnd()*3);
   const rating = Math.round(56+rnd()*12);
   const nat = forceNat || pick(['CN','CN','CN','KR']);
-  const pl = { pid:id, tag:id, name:id+'（虚构新秀）', role, nat, age, rating, team:null, form:0, champs:[], rookie:true,
+  const pl = { pid:id, tag:id, name:id+'（虚构新秀）', role, nat, age, rating, team:null, form:0, mental:0, champs:[], rookie:true,
     pot: Math.round(clamp(rating+8+rnd()*18,rating,96)) };
   pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl);
   S.players[id]=pl; return pl;
@@ -127,7 +128,78 @@ const P = id => S.players[id];
 // ================= 阵容与外援规则 =================
 function isForeign(p){ return !p ? false : !['CN','TW','HK','MO'].includes(p.nat); }
 function maxForeignFor(region){ return region==='LPL' ? 2 : 99; }
-function effRating(p, role){ return p ? p.rating + (p.form||0) - (p.role!==role?8:0) : 45; }
+function effRating(p, role){ return p ? p.rating + formTier(p)*2 - (p.role!==role?8:0) : 45; }
+
+// ================= 状态 / 心态 / 隐藏特质 =================
+// 状态五档：低迷 欠佳 平稳 良好 火热（p.form -5~5）；心态五档：崩溃 紧张 平常 自信 无畏（p.mental -5~5）
+const FORM_TIERS = ['低迷','欠佳','平稳','良好','火热'];
+const MENTAL_TIERS = ['崩溃','紧张','平常','自信','无畏'];
+const tierOf = v => { v = +v||0; return v<=-3?-2 : v<=-1?-1 : v<1?0 : v<3?1 : 2; };
+const formTier = p => p ? tierOf(p.form) : 0;
+const mentalTier = p => p ? tierOf(p.mental) : 0;
+const TIER_LO = {'-2':-5, '-1':-2.9, '0':-0.9, '1':1, '2':3};
+const TIER_HI = {'-2':-3, '-1':-1, '0':0.99, '1':2.99, '2':5};
+// 把数值变化限制在“最多跨一档”
+function stepTier(oldV, newV){
+  const ot = tierOf(oldV); let nv = clamp(newV, -5, 5);
+  const nt = tierOf(nv);
+  if(nt > ot+1) nv = TIER_HI[String(ot+1)];
+  if(nt < ot-1) nv = TIER_LO[String(ot-1)];
+  return Math.round(nv*100)/100;
+}
+// 隐藏特质：stab 稳定性（波动倍率，越低越稳）、big 大赛系数、ko 淘汰赛系数（能力点）、res 抗压（心态韧性倍率）、base 历来表现基线
+const _trCache = {};
+function playerTraits(p){
+  if(!p) return {stab:1,big:0,ko:0,res:1,base:0,tags:[],src:'none'};
+  const key = p.tag || p.pid;
+  if(_trCache[key]) return _trCache[key];
+  const T0 = (typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[key] || TRAITS[String(key).toLowerCase()]) : null;
+  let tr;
+  if(T0){ tr = {stab:T0.stab, big:T0.big, ko:T0.ko, res:T0.res, base:T0.base||0, n:T0.n||0, src:'data'}; }
+  else {
+    // 数据不足：按年龄与能力给保守默认值（不同选手仍略有差异，但不打标签）
+    const r = srand(hash('tr:'+key));
+    const age = p.age||21;
+    tr = { stab: Math.round((1.08 - Math.min(6,Math.max(0,age-18))*0.025 + (r()-0.5)*0.1)*100)/100,
+           big: 0, ko: 0, res: Math.round((0.95 + Math.min(6,Math.max(0,age-18))*0.015 + (r()-0.5)*0.1)*100)/100,
+           base: 0, n:0, src:'default' };
+  }
+  tr.tags = traitTags(tr);
+  _trCache[key] = tr;
+  return tr;
+}
+function traitTags(tr){
+  if(!tr || tr.src!=='data') return [];
+  const out = [];
+  if(tr.big >= 1.2) out.push({t:'大赛爆发', c:'up'}); else if(tr.big <= -1.2) out.push({t:'大赛软脚', c:'down'});
+  if(tr.ko >= 1.2) out.push({t:'大心脏', c:'up'}); else if(tr.ko <= -1.2) out.push({t:'关键局手软', c:'down'});
+  if(tr.stab <= 0.82) out.push({t:'稳定输出', c:'up'}); else if(tr.stab >= 1.22) out.push({t:'起伏较大', c:'down'});
+  if(tr.res >= 1.2) out.push({t:'抗压强', c:'up'}); else if(tr.res <= 0.82) out.push({t:'容易上头', c:'down'});
+  return out;
+}
+// 比赛场合：intl 国际赛、ko 淘汰赛、decider 决胜局
+function pressureOf(ctx){
+  if(!ctx) return 0.15;
+  return clamp(0.15 + (ctx.ko?0.35:0) + (ctx.intl?0.3:0) + (ctx.decider?0.25:0), 0, 1);
+}
+function ctxLabel(ctx){
+  if(!ctx) return '常规赛';
+  const a = [];
+  a.push(ctx.intl ? '国际赛' : '联赛');
+  a.push(ctx.ko ? '淘汰赛' : '小组赛/常规赛');
+  if(ctx.decider) a.push('决胜局');
+  return a.join(' · ');
+}
+// 本场实际发挥能力：基础 + 状态 + 心态×高压程度 + 大赛/淘汰赛特质
+function matchRating(p, role, ctx){
+  if(!p) return 45;
+  const tr = playerTraits(p);
+  const pr = pressureOf(ctx);
+  let v = effRating(p, role) + mentalTier(p)*2.5*pr;
+  if(ctx && ctx.intl) v += tr.big;
+  if(ctx && ctx.ko) v += tr.ko;
+  return v;
+}
 
 function autoLineup(key){
   const t=T(key); if(!t) return;
@@ -310,119 +382,7 @@ function defaultSoloPick(teamKey){
   return { role: bestR, pid: p ? p.pid : null, champ: sig };
 }
 
-// 赛前峡谷 1v1 SOLO 选边模拟引擎（输出逐拍时间轴 frames，供前端 1x/2x/4x 观战回放）
-// 规则：先拿一血（击杀）、或率先 100 补刀、或推掉中路一塔者获胜，所在战队获得选边权
-function simSolo1v1(teamA, teamB, pickA, pickB){
-  const luA = lineupMap(teamA), luB = lineupMap(teamB);
-  const pa = pickA || defaultSoloPick(teamA);
-  const pb = pickB || defaultSoloPick(teamB);
-  const plA = (pa.pid && P(pa.pid)) || luA[pa.role] || Object.values(luA)[0];
-  const plB = (pb.pid && P(pb.pid)) || luB[pb.role] || Object.values(luB)[0];
-  const cA = pa.champ && CH[pa.champ] ? pa.champ : defaultSoloPick(teamA).champ;
-  const cB = pb.champ && CH[pb.champ] ? pb.champ : defaultSoloPick(teamB).champ;
-  const nameA = `${playerTag(plA)}（${CH[cA].cn}）`, nameB = `${playerTag(plB)}（${CH[cB].cn}）`;
-
-  const soloPow = (p, c) => {
-    const base = p ? p.rating + (p.form||0) : 70;
-    const fit = champFit(p, c, p ? p.role : null);
-    const ch = CH[c];
-    const duelBonus = (ch.tags.includes('early')?2.0:0) + (ch.tags.includes('pick')?1.4:0) + (ch.tags.includes('poke')?1.2:0) + (ch.tags.includes('split')?1.0:0);
-    return base + fit*0.8 + duelBonus;
-  };
-  const powA = soloPow(plA, cA), powB = soloPow(plB, cB);
-  const edge = (powA - powB) / 14; // 正数利 A
-
-  let hpA = 100, hpB = 100, csA = 0, csB = 0, turA = 100, turB = 100, sec = 90;
-  const frames = [{
-    t: '01:30', hpA:100, hpB:100, csA:0, csB:0, turA:100, turB:100, side:null, tag:'对线开始',
-    text: `双方中路碰面！${teamName(teamA)} ${nameA} 对阵 ${teamName(teamB)} ${nameB}，谁能拿下首局选边权？`
-  }];
-
-  let winner = null, winReason = '';
-  const maxSteps = 14;
-  for(let step=1; step<=maxSteps && !winner; step++){
-    sec += 18 + Math.floor(rnd()*16);
-    const tStr = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
-    const rollA = rnd() < sigmoid(edge + randn()*0.55);
-    const atkSide = rollA ? 'A' : 'B';
-    const atkName = rollA ? nameA : nameB;
-    const defName = rollA ? nameB : nameA;
-
-    // 推进补刀
-    csA += 5 + Math.floor(rnd()*5) + (rollA ? 2 : 0);
-    csB += 5 + Math.floor(rnd()*5) + (!rollA ? 2 : 0);
-
-    // 事件分支：消耗换血 / 压塔吃镀层 / 回城补给 / 终极单杀
-    const kind = rnd();
-    let tag = '对拼换血', text = '';
-    if(step >= 4 && ((rollA && hpB <= 42) || (!rollA && hpA <= 42) || (step >= 7 && rnd() < 0.45))){
-      // 决胜单杀
-      if(rollA){ hpB = 0; hpA = clamp(hpA - (10 + Math.floor(rnd()*22)), 6, 100); }
-      else { hpA = 0; hpB = clamp(hpB - (10 + Math.floor(rnd()*22)), 6, 100); }
-      winner = atkSide; winReason = '一血单杀';
-      tag = 'SOLO KILL';
-      text = `💥 ${atkName} 闪现先手打满爆发，极限操作完成单杀！击倒 ${defName} 拿下一血！`;
-    } else if((hpA <= 30 || hpB <= 30) && kind < 0.35){
-      // 残血回城补给，对方磨塔
-      if(hpA <= 30){
-        hpA = 95; turA = Math.max(0, turA - (24 + Math.floor(rnd()*18)));
-        tag = '回城磨塔';
-        text = `${nameA} 血量见底被迫回城补给，${nameB} 趁机推线猛点防御塔（残余 ${turA}%）！`;
-        if(turA <= 0){ winner = 'B'; winReason = '推平一塔'; text += ` 防御塔轰然倒塌，${nameB} 赢下选边权！`; }
-      } else {
-        hpB = 95; turB = Math.max(0, turB - (24 + Math.floor(rnd()*18)));
-        tag = '回城磨塔';
-        text = `${nameB} 残血交技能后撤回城，${nameA} 顺势压进防御塔狂吃镀层（残余 ${turB}%）！`;
-        if(turB <= 0){ winner = 'A'; winReason = '推平一塔'; text += ` 防御塔轰然倒塌，${nameA} 赢下选边权！`; }
-      }
-    } else if(kind < 0.65){
-      // 激烈换血
-      const dmg = 18 + Math.floor(rnd()*22);
-      const chip = 6 + Math.floor(rnd()*12);
-      if(rollA){ hpB = Math.max(8, hpB - dmg); hpA = Math.max(12, hpA - chip); }
-      else { hpA = Math.max(8, hpA - dmg); hpB = Math.max(12, hpB - chip); }
-      tag = '拉扯换血';
-      text = `${atkName} 抢到技能空档主动发难，精准连招打掉 ${defName} 大截血量！`;
-    } else {
-      // 控线压刀 & 磨塔
-      const tdmg = 10 + Math.floor(rnd()*16);
-      if(rollA){ turB = Math.max(0, turB - tdmg); hpB = Math.max(15, hpB - 10); }
-      else { turA = Math.max(0, turA - tdmg); hpA = Math.max(15, hpA - 10); }
-      tag = '线权压制';
-      text = `${atkName} 细节卡兵线建立补刀领先，顺势点塔施压！`;
-      if(turA <= 0){ winner = 'B'; winReason = '推平一塔'; text = `🏰 ${nameB} 持续压制点破中路一塔，赢下 1v1 选边赛！`; }
-      else if(turB <= 0){ winner = 'A'; winReason = '推平一塔'; text = `🏰 ${nameA} 持续压制点破中路一塔，赢下 1v1 选边赛！`; }
-    }
-
-    if(!winner && (csA >= 100 || csB >= 100)){
-      winner = csA >= csB ? 'A' : 'B';
-      winReason = '率先百刀';
-      tag = '100 补刀胜';
-      text = `🌾 ${winner==='A'?nameA:nameB} 率先达成 100 补刀，稳健运营拿下 1v1 选边赛胜利！`;
-    }
-
-    frames.push({ t: tStr, hpA, hpB, csA: Math.min(100, csA), csB: Math.min(100, csB), turA, turB, side: atkSide, tag, text });
-  }
-
-  if(!winner){
-    sec += 15;
-    const tStr = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
-    winner = (hpA + csA*0.6 + (rnd()-0.5)*10) >= (hpB + csB*0.6) ? 'A' : 'B';
-    winReason = '决死缩圈击杀';
-    if(winner==='A') hpB = 0; else hpA = 0;
-    frames.push({
-      t: tStr, hpA, hpB, csA, csB, turA, turB, side: winner, tag:'缩圈决胜',
-      text: `🔥 火圈收缩终极一战！${winner==='A'?nameA:nameB} 顶住压力完成终结，为 ${teamName(winner==='A'?teamA:teamB)} 赢下选边权！`
-    });
-  }
-
-  return {
-    teamA, teamB,
-    A: { pid: plA?plA.pid:null, tag: playerTag(plA), role: pa.role, champ: cA },
-    B: { pid: plB?plB.pid:null, tag: playerTag(plB), role: pb.role, champ: cB },
-    winner, winReason, frames
-  };
-}
+// 赛前峡谷 1v1 SOLO 选边模拟引擎：见 sim.js（simSolo1v1 / createSolo）
 
 // draft: {A,B (team keys), first:'A'|'B', blue:'A'|'B', locked:[], bans:{A:[],B:[]}, picks:{A:{role:champ},B:{}}, pickOrder:{A:[],B:[]}, step}
 const DRAFT_SEQ = [ // F=先选方 S=后选方
@@ -665,7 +625,7 @@ function draftPower(d, side){
   let earlyP=0, midP=0, lateP=0;
   for(const r of ROLES){
     const p=lu[r], c=picks[r];
-    const base = effRating(p, r);
+    const base = matchRating(p, r, d.ctx);
     const fit = c? champFit(p,c,r) : 0;
     const total = base + fit*0.85;
     s += total;
@@ -718,170 +678,7 @@ function fmtClock(minFloat){
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function playGame(d){
-  const ev = evalDraft(d);
-  const luA = lineupMap(d.A), luB = lineupMap(d.B);
-  const nameOf = (side, r) => {
-    const lu = side==='A'?luA:luB;
-    const c = d.picks[side][r];
-    return `${playerTag(lu[r])}（${c&&CH[c]?CH[c].cn:r}）`;
-  };
-  const tName = side => teamName(d[side]);
-  const events = [];
-
-  // ---- 阶段 1：对线期与前期节奏（0~14分钟） ----
-  const earlyRoll = ev.earlyDiff + randn()*5.2;
-  const fbSide = rnd() < sigmoid(earlyRoll/4.6) ? 'A' : 'B';
-  const fbOpp = fbSide==='A' ? 'B' : 'A';
-  const fbRole = pick(['JUG','MID','ADC','TOP']);
-  const fbAssist = pick(ROLES.filter(r=>r!==fbRole));
-  const fbVictim = fbRole==='JUG' ? pick(['TOP','MID','ADC']) : fbRole;
-  events.push({
-    t: fmtClock(3.5 + rnd()*4.5), side: fbSide, tag:'一血',
-    text: `${nameOf(fbSide, fbRole)} 配合 ${nameOf(fbSide, fbAssist)} 击杀 ${nameOf(fbOpp, fbVictim)}，${tName(fbSide)} 拿下一血！`
-  });
-
-  const grubSide = rnd() < sigmoid(earlyRoll/4.5) ? 'A' : 'B';
-  const g14 = clamp((earlyRoll * 0.36) + (fbSide==='A'?0.45:-0.45) + (grubSide==='A'?0.35:-0.35) + randn()*0.85, -6.5, 6.5);
-  events.push({
-    t: fmtClock(9.5 + rnd()*4.0), side: grubSide, tag:'前期资源',
-    text: `${tName(grubSide)} 控下峡谷巢虫与先锋节奏，14分钟${Math.abs(g14)<0.8 ? '双方经济基本持平' : `${tName(g14>0?'A':'B')} 领先 ${Math.abs(g14).toFixed(1)}k 经济`}。`
-  });
-
-  // ---- 阶段 2：中期小龙与转线团战（14~24分钟） ----
-  const midRoll = ev.midDiff + g14*0.45 + randn()*5.4;
-  const midWin = midRoll >= 0 ? 'A' : 'B';
-  const midStar = pick(['JUG','MID','SUP','TOP']);
-  let dragA = 0, dragB = 0;
-  for(let i=0;i<3;i++){
-    if(rnd() < sigmoid((midRoll*0.7 + earlyRoll*0.3)/5.0)) dragA++; else dragB++;
-  }
-  const g24 = clamp(g14*0.66 + midRoll*0.42 + randn()*1.1, -10.5, 10.5);
-  events.push({
-    t: fmtClock(16.5 + rnd()*4.5), side: midWin, tag:'中期团战',
-    text: `小龙河道爆发关键团战，${nameOf(midWin, midStar)} 进场撕开阵型，${tName(midWin)} 打出优势并推进外塔！`
-  });
-
-  // ---- 阶段 3：后期大龙/龙魂与决胜（24分钟~结束） ----
-  const stomp = Math.abs(g24) >= 5.8 && rnd() < 0.45;
-  let winA, dur, baronA=0, baronB=0, goldDiff;
-  if(stomp){
-    winA = g24 > 0;
-    const wSide = winA ? 'A' : 'B';
-    dur = Math.round(23 + rnd()*5);
-    if(winA){ baronA = 1; if(dragA<3) dragA++; } else { baronB = 1; if(dragB<3) dragB++; }
-    goldDiff = (winA?1:-1) * Math.round((Math.abs(g24) + 2.5 + rnd()*3.5)*10)/10;
-    events.push({
-      t: fmtClock(dur - 2.5), side: wSide, tag:'滚雪球终结',
-      text: `${tName(wSide)} 凭借巨大经济差控下大龙，中路抱团一波平推高地，${dur} 分钟速胜！`
-    });
-  } else {
-    const lateRoll = ev.lateDiff*0.42 + g24*0.52 + ev.diff*0.32 + randn()*8.2;
-    winA = lateRoll >= 0;
-    const wSide = winA ? 'A' : 'B';
-    const lSide = winA ? 'B' : 'A';
-    const carryRole = pick(['ADC','MID','TOP']);
-    dur = Math.round(29 + rnd()*11 + (Math.abs(ev.diff)<1.8 ? 3 : 0));
-    if(winA){
-      baronA = 1 + (dur>=36 && rnd()<0.55 ? 1 : 0);
-      baronB = dur>=34 && rnd()<0.35 ? 1 : 0;
-      dragA = Math.min(4, dragA + (rnd()<0.75?1:0) + (dur>=35?1:0));
-      dragB = Math.min(3, dragB + (rnd()<0.35?1:0));
-    } else {
-      baronB = 1 + (dur>=36 && rnd()<0.55 ? 1 : 0);
-      baronA = dur>=34 && rnd()<0.35 ? 1 : 0;
-      dragB = Math.min(4, dragB + (rnd()<0.75?1:0) + (dur>=35?1:0));
-      dragA = Math.min(3, dragA + (rnd()<0.35?1:0));
-    }
-    const comeback = (winA && g24 < -2.0) || (!winA && g24 > 2.0);
-    events.push({
-      t: fmtClock(dur - 4.5), side: wSide, tag: comeback ? '绝境翻盘' : '大龙决胜',
-      text: comeback
-        ? `${tName(lSide)} 推进失误，${nameOf(wSide, carryRole)} 团战输出拉满完成团灭，${tName(wSide)} 抢下大龙逆转局势！`
-        : `${tName(wSide)} 拿下关键大龙并掌控视野，${nameOf(wSide, carryRole)} 接管团战锁定胜局！`
-    });
-    events.push({
-      t: fmtClock(dur - 0.5), side: wSide, tag:'推平水晶',
-      text: `${tName(wSide)} 携兵线攻破敌方主水晶，结束本局较量。`
-    });
-    goldDiff = (winA?1:-1) * Math.round((2.4 + Math.max(0, (winA?g24:-g24)*0.45) + rnd()*4.8)*10)/10;
-  }
-
-  // 防御塔统计
-  const turW = 8 + Math.floor(rnd()*4); // 8~11
-  const turL = clamp(Math.floor(rnd()*5) + (dur>=34?2:0) - (stomp?2:0), 0, 7);
-  const turA = winA ? turW : turL, turB = winA ? turL : turW;
-
-  // ---- 严格对账的 K/D/A 分配 ----
-  const tempo = ((ev.a.comp.tags.early||0)+(ev.b.comp.tags.early||0)+(ev.a.comp.tags.pick||0)+(ev.b.comp.tags.pick||0))*0.7;
-  const wk = clamp(Math.round(11 + tempo + (dur-25)*0.22 + rnd()*9), 8, 32);
-  const lk = clamp(Math.round(wk*(stomp ? (0.2+rnd()*0.28) : (0.38+rnd()*0.44))), 2, Math.max(3, wk-1));
-  const kA = winA ? wk : lk, kB = winA ? lk : wk;
-
-  function buildStats(side, teamKills, teamDeaths){
-    const lu = side==='A'?luA:luB;
-    const isWin = (side==='A')===winA;
-    const kBaseW = {TOP:0.17, JUG:0.20, MID:0.26, ADC:0.31, SUP:0.06};
-    const dBaseW = {TOP:0.20, JUG:0.22, MID:0.18, ADC:0.16, SUP:0.24};
-    const aProb  = {TOP:0.46, JUG:0.64, MID:0.54, ADC:0.48, SUP:0.78};
-
-    const kWeights = ROLES.map(r=>{
-      const p=lu[r], c=d.picks[side][r];
-      const skill = p ? clamp((p.rating-65)/25, -0.3, 0.7) : 0;
-      const fit = c ? clamp(champFit(p,c,r)/15, -0.25, 0.35) : 0;
-      return kBaseW[r] * (1 + skill*0.35 + fit*0.3 + rnd()*0.55);
-    });
-    const dWeights = ROLES.map(r=>{
-      const p=lu[r];
-      const skill = p ? clamp((82-p.rating)/30, -0.25, 0.45) : 0.2;
-      return dBaseW[r] * (1 + skill*0.3 + rnd()*0.55);
-    });
-
-    const ks = distributeInt(teamKills, kWeights);
-    const ds = distributeInt(teamDeaths, dWeights);
-    const as = new Array(5).fill(0);
-    // 按每次击杀独立分配队友助攻，严格保证 a_i <= teamKills - k_i
-    for(let i=0;i<5;i++){
-      for(let n=0;n<ks[i];n++){
-        for(let j=0;j<5;j++){
-          if(j===i) continue;
-          const prob = aProb[ROLES[j]] * (isWin ? 1.0 : 0.88);
-          if(rnd() < prob) as[j]++;
-        }
-      }
-    }
-    return ROLES.map((r,i)=>({
-      pid: lu[r]&&lu[r].pid,
-      tag: playerTag(lu[r]),
-      r, c: d.picks[side][r],
-      k: ks[i], d: ds[i], a: as[i]
-    }));
-  }
-
-  const sa = buildStats('A', kA, kB);
-  const sb = buildStats('B', kB, kA);
-  const winStats = winA ? sa : sb;
-  const winTotalK = Math.max(1, winA ? kA : kB);
-  const mvpRow = winStats.slice().sort((x,y)=>{
-    const sx = x.k*2.4 + x.a*1.2 - x.d*1.6 + ((x.k+x.a)/winTotalK)*4 + rnd()*0.8;
-    const sy = y.k*2.4 + y.a*1.2 - y.d*1.6 + ((y.k+y.a)/winTotalK)*4 + rnd()*0.8;
-    return sy - sx;
-  })[0];
-
-  const game = {
-    w: winA?'A':'B', dur, kA, kB,
-    turA, turB, dragA, dragB, baronA, baronB, goldDiff,
-    mvp: mvpRow ? mvpRow.pid : null,
-    mvpTag: mvpRow ? mvpRow.tag : '',
-    pA: ev.pA, sa, sb, events,
-    bans: {A:d.bans.A.slice(), B:d.bans.B.slice()},
-    picks: {A:{...d.picks.A}, B:{...d.picks.B}},
-    blue: d.blue, first: d.first,
-    styleA: ev.a.comp.style, styleB: ev.b.comp.style
-  };
-  game.impacts = applyGameImpact(game, d.A, d.B);
-  return game;
-}
+// 5v5 对局模拟：见 sim.js（playGame / createGame5 / step5）
 
 // 赛后联动：选手状态 form 波动 & 英雄熟练度成长
 function applyGameImpact(g, teamA, teamB){
@@ -893,9 +690,14 @@ function applyGameImpact(g, teamA, teamB){
       const p = P(row.pid); if(!p) continue;
       const isMvp = row.pid === g.mvp;
       const kda = (row.k + row.a) / Math.max(1, row.d);
-      // 状态变化
-      let df = won ? (0.25 + (kda>=4?0.3:0) + (isMvp?0.45:0)) : (-0.35 + (kda>=3?0.2:0));
-      p.form = Math.round(clamp((p.form||0) + df, -5, 5)*10)/10;
+      // 状态变化：近期个人表现为主，向个人历来表现基线回归，幅度乘以稳定性，噪声很小
+      const tr = playerTraits(p);
+      const perf = (won?0.45:-0.45) + clamp((kda-3)/3, -1, 1)*0.55 + (isMvp?0.5:0);
+      const f0 = p.form||0;
+      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn()*0.12);
+      // 小局胜负对心态的即时影响（系列赛结束时另有更大的结算）
+      const m0 = p.mental||0;
+      p.mental = stepTier(m0, m0 + (won ? 0.22*tr.res : -0.3/tr.res) + randn()*0.05);
       // 英雄熟练度积累（获胜或高 KDA 更易成长）
       if(row.c && CH[row.c] && CH[row.c].roles.includes(p.role)){
         const entry = p.champs.find(x=>x.c===row.c);
@@ -909,7 +711,7 @@ function applyGameImpact(g, teamA, teamB){
           if(isUserTeam) impacts.push(`${playerTag(p)} 扩充英雄池，习得 ${CH[row.c].cn}！`);
         }
       }
-      if(isUserTeam && isMvp) impacts.push(`${playerTag(p)} 斩获 MVP，手感火热（状态 ${p.form>0?'+':''}${p.form}）`);
+      if(isUserTeam && isMvp) impacts.push(`${playerTag(p)} 斩获 MVP，状态 ${FORM_TIERS[formTier(p)+2]}`);
     }
   };
   handleSide('A', g.sa);
@@ -920,6 +722,8 @@ function applyGameImpact(g, teamA, teamB){
 // 系列赛（AI 自动）
 function simSeries(m, keepGames){
   const need=Math.ceil(m.bo/2); let wa=0,wb=0; const games=[]; let locked=[];
+  const baseCtx = m.ctx || findMatchCtx(m) || {intl:false, ko:false};
+  m.ctx = baseCtx;
   // 首局通过 1v1 决定选边权
   let chooser = simSolo1v1(m.a, m.b).winner;
   while(wa<need && wb<need){
@@ -929,6 +733,7 @@ function simSeries(m, keepGames){
     const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked);
     const blue = sidePick==='blue' ? chooser : other;
     const d=newDraft(m.a,m.b,blue,locked);
+    d.ctx = Object.assign({}, baseCtx, {decider: wa===need-1 && wb===need-1 && m.bo>1});
     autoDraftRest(d);
     const g=playGame(d); games.push(g);
     if(g.w==='A')wa++; else wb++;
@@ -939,10 +744,12 @@ function simSeries(m, keepGames){
 }
 function finishSeries(m, wa, wb, games, keep){
   m.s=[wa,wb]; m.w = wa>wb? m.a : m.b; m.l = wa>wb? m.b : m.a;
+  settleSeriesMental(m, games);
   if(keep) m.gm = games.map(g=>({
     w:g.w, dur:g.dur, kA:g.kA, kB:g.kB,
     turA:g.turA, turB:g.turB, dragA:g.dragA, dragB:g.dragB, baronA:g.baronA, baronB:g.baronB, goldDiff:g.goldDiff,
-    mvp:g.mvp, mvpTag:g.mvpTag, picks:g.picks, bans:g.bans, blue:g.blue, events:g.events
+    mvp:g.mvp, mvpTag:g.mvpTag, picks:g.picks, bans:g.bans, blue:g.blue, events:g.events,
+    sa:g.sa, sb:g.sb, rid:g.rid||null
   }));
   // 英雄统计
   for(const g of games){
@@ -950,6 +757,41 @@ function finishSeries(m, wa, wb, games, keep){
     [...g.bans.A,...g.bans.B].filter(Boolean).forEach(c=>{S.log[c]=S.log[c]||{p:0,w:0,b:0};S.log[c].b++;});
   }
   return m;
+}
+
+// 系列赛结束：心态结算（连胜连败、淘汰赛与国际赛放大、夺冠/出局带动全队），幅度乘以抗压
+function settleSeriesMental(m, games){
+  const ctx = m.ctx || findMatchCtx(m) || {};
+  const amp = 1 + (ctx.ko?0.6:0) + (ctx.intl?0.4:0);
+  const isFinal = ctx.ko && /总决赛|决赛/.test(m.label||'') && !/半决赛|败者组决赛|胜者组决赛/.test(m.label||'');
+  for(const [key, won] of [[m.w,true],[m.l,false]]){
+    const t = T(key); if(!t) continue;
+    t.streak = won ? Math.max(1,(t.streak||0)+1) : Math.min(-1,(t.streak||0)-1);
+    const streakAmp = 1 + Math.min(2, Math.abs(t.streak)-1)*0.15;
+    for(const pid of Object.values(t.lineup)){
+      const p = P(pid); if(!p) continue;
+      const tr = playerTraits(p);
+      const m0 = p.mental||0;
+      // 胜负对心态的冲击基本对称；抗压强的人输了掉得少、回到平常心更快
+      let dm = won ? 0.5*amp*streakAmp*(0.85+0.15*tr.res) : -0.5*amp*streakAmp/tr.res;
+      if(isFinal) dm += won ? 1.0 : -0.5/tr.res;
+      dm += (0 - m0) * 0.3 * tr.res;
+      p.mental = stepTier(m0, m0 + dm + randn()*0.08);
+    }
+  }
+}
+// 根据当前赛事与阶段推断比赛场合（国际赛 / 淘汰赛）
+function findMatchCtx(m){
+  if(!S || !S.events) return null;
+  const INTL_EV = {fst:1, msi:1, ewc:1, worlds:1};
+  for(const ev of S.events){
+    for(const st of ev.stages){
+      if(!st.matches.includes(m)) continue;
+      const ko = st.kind==='br' && !/小组赛|入围赛/.test(st.name) || ev.type==='lpl_rf';
+      return { intl: !!INTL_EV[ev.type], ko: !!ko };
+    }
+  }
+  return null;
 }
 
 // ================= 赛事结构：循环赛 / 对阵图 / 瑞士轮 =================
@@ -1332,7 +1174,7 @@ function splitEnd(split, order){
   Object.values(S.players).forEach(p=>{ if(p.retired) return;
     let d = p.age<=22 ? (p.pot-p.rating)*0.1+randn()*0.7 : p.age<=26 ? randn()*0.7 : -0.35+randn()*0.7;
     p.rating = clamp(Math.round((p.rating+d)*10)/10, 45, 97);
-    p.form = Math.round(clamp((p.form||0)*0.45 + randn()*1.2, -5, 5)*10)/10; });
+    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.4*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + randn()*0.3, -5, 5)*100)/100; });
   newPatch();
   addNews(`🔧 新版本 ${S.year%100}.${S.patchNo} 上线，英雄强度发生变化。`);
 }

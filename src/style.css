@@ -1187,6 +1187,21 @@ body.cb-lock{overflow:hidden}
   .mh-lol .mh-score{font-size:32px}
   .mh-title{font-size:12px}
 }
+@media(max-width:600px){
+  .tabs a{flex:0 0 auto;min-height:44px}
+  .match.hex .pool-tools,.match.hex .coach-bar{align-items:stretch;flex-direction:column}
+  .match.hex .role-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .match.hex .role-tabs .rtab{justify-content:center;min-height:44px}
+  .match.hex .pool-search{width:100%;min-height:44px}
+  .match.hex .pool-search [data-d="q"]{flex:1;min-width:0}
+  .match.hex .coach-list{gap:6px}
+  .match.hex .coach-chip{min-height:44px}
+  .match.hex .dock-actions{width:100%;align-items:stretch;gap:8px}
+  .match.hex .dock-actions button,.w-ctrl .spd-btn{min-height:44px}
+  .watch5,.watch1{padding-bottom:0}
+  .watch5>.w-ctrl,.watch1>.w-ctrl{position:sticky;gap:8px}
+  .w-ctrl .w-seek{flex:1 0 100%}
+}
 @media(max-width:920px){
   /* 手机 BP：确认禁用/选择按钮吸底，滚动英雄池时也随时可点 */
   .match.hex .lock-dock{position:sticky;bottom:0;z-index:5;margin:0 -12px -12px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(4,12,24,0),rgba(4,12,24,.97) 12px,#040c18)}

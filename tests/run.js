@@ -324,5 +324,69 @@ section('内核边界回归');
   ok(r.style, '抓单克制消耗，交换阵容时克制分取反');
 }
 
+section('英雄机制克制与分路联动');
+{
+  const r = run(`(()=>{
+    const pool = window.CHAMP_TACTICS;
+    const fields = ['dash','escape','magic','autos','engage','range'];
+    const covered = CHAMP_KEYS.length===Object.keys(pool).length &&
+      CHAMP_KEYS.every(c=>fields.every(f=>[0,1,2].includes(pool[c]?.[f])));
+    const mobile = {TOP:'Ambessa',JUG:'Lee Sin',MID:'Sylas',ADC:"Kai'Sa",SUP:'Rell'};
+    const immune = {TOP:'Malphite',JUG:'Nocturne'};
+    const artillery = {TOP:'Jayce',JUG:'Graves',MID:'Yasuo',ADC:'Jhin'};
+    const magic = {TOP:'Rumble',JUG:'Karthus',MID:'Annie',ADC:'Ziggs'};
+    const autos = {TOP:'Fiora',JUG:'Viego',MID:'Yone',ADC:'Jinx'};
+    const score = (own,opponent={}) => draftTactics(own,opponent).score;
+    const duo = {ADC:'Ashe',SUP:'Seraphine'};
+    const engage = {TOP:'Malphite',JUG:'Nocturne',MID:'Lissandra',SUP:'Rell'};
+    const addsDuo = (a, b) => score({...a,...b})>score(a)+score(b)+0.25;
+    const notes = [];
+    draftTactics(duo,engage,undefined,notes);
+
+    newGame('TES');
+    const d = newDraft('BLG','TES','A',[]);
+    d.step = 18;
+    d.picks.A = {TOP:'Gwen',JUG:'Lee Sin',MID:'Azir',ADC:'Ziggs'};
+    d.picks.B = {TOP:'Camille',JUG:'Vi',MID:'Hwei',ADC:'Varus',SUP:'Rell'};
+    const ai = aiChoose(d);
+    const coach = coachSuggest(d,'A');
+    const manual = draftAct(d,'Karma','SUP',false);
+    const warning = evalDraft(d).a.comp.notes.some(n=>n.includes('炸弹人下路缺少硬辅'));
+    d.step = 18;
+    delete d.picks.A.ADC;
+    const aiWithSoft = aiChoose(d);
+    const fallback = draftBotPairFilter({ADC:'Ziggs'},new Set(HARD_SUPPORTS))('SUP','Karma');
+
+    d.picks.A = {TOP:'Gwen',JUG:'Lee Sin',MID:'Azir',ADC:'Ezreal',SUP:'Karma'};
+    const G = createGame5(d);
+    const tactics = draftTactics;
+    const draftWith = evalDraft(d);
+    let draftWithout;
+    try{
+      draftTactics = () => ({early:0, mid:0, late:0, score:0});
+      draftWithout = evalDraft(d);
+    } finally {
+      draftTactics = tactics;
+    }
+    return {
+      covered,
+      counters: score({SUP:'Poppy'},mobile)>score({SUP:'Poppy'},immune)+0.5 &&
+        score({MID:'Galio'},magic)>score({MID:'Galio'},artillery)+0.45 &&
+        score({TOP:'Jax'},autos)>score({TOP:'Jax'},magic)+0.4,
+      duos: addsDuo({ADC:'Ezreal'},{SUP:'Karma'}) && addsDuo({MID:'Orianna'},{JUG:'Nocturne'}) &&
+        addsDuo({MID:'Jayce'},{JUG:'Maokai'}) && score(duo)>0.4 && score(duo,engage)<0 && notes.some(n=>n.includes('怕连续先手')),
+      bot: ai.role==='SUP' && HARD_SUPPORTS.has(ai.c) && coach.length>0 &&
+        coach.every(p=>HARD_SUPPORTS.has(p.c)) && manual && warning && aiWithSoft.role==='ADC' && aiWithSoft.c!=='Ziggs' && fallback,
+      game: G.ev.pA===draftWith.pA && draftWith.pA>draftWithout.pA &&
+        Math.abs(phaseAdj(G,'A',0) - (draftWith.a.early+draftWith.blueEdge*0.3-G.avgSk.A)) < 1e-9
+    };
+  })()`);
+  ok(r.covered, '全英雄拥有经过分级的技能机制');
+  ok(r.counters, '波比、加里奥、贾克斯针对其对应机制取得优势');
+  ok(r.duos, '下路和中野按分路联动，寒冰萨勒芬妮可被多开团压成劣势');
+  ok(r.bot, '炸弹人走下时 AI 与教练优先硬辅，手选软辅可用且收到提示');
+  ok(r.game, '阵容克制进入 BP 胜率与实战阶段战力');
+}
+
 console.log(fails ? `\n✗ ${fails} 项失败` : '\n✓ 全部通过');
 process.exit(fails ? 1 : 0);

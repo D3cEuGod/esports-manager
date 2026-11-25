@@ -1199,6 +1199,21 @@ body.cb-lock{overflow:hidden}
   .mh-lol .mh-score{font-size:32px}
   .mh-title{font-size:12px}
 }
+@media(max-width:600px){
+  .tabs a{flex:0 0 auto;min-height:44px}
+  .match.hex .pool-tools,.match.hex .coach-bar{align-items:stretch;flex-direction:column}
+  .match.hex .role-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .match.hex .role-tabs .rtab{justify-content:center;min-height:44px}
+  .match.hex .pool-search{width:100%;min-height:44px}
+  .match.hex .pool-search [data-d="q"]{flex:1;min-width:0}
+  .match.hex .coach-list{gap:6px}
+  .match.hex .coach-chip{min-height:44px}
+  .match.hex .dock-actions{width:100%;align-items:stretch;gap:8px}
+  .match.hex .dock-actions button,.w-ctrl .spd-btn{min-height:44px}
+  .watch5,.watch1{padding-bottom:0}
+  .watch5>.w-ctrl,.watch1>.w-ctrl{position:sticky;gap:8px}
+  .w-ctrl .w-seek{flex:1 0 100%}
+}
 @media(max-width:920px){
   /* 手机 BP：确认禁用/选择按钮吸底，滚动英雄池时也随时可点 */
   .match.hex .lock-dock{position:sticky;bottom:0;z-index:5;margin:0 -12px -12px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(4,12,24,0),rgba(4,12,24,.97) 12px,#040c18)}
@@ -1358,6 +1373,62 @@ window.DDRAGON_MAP = {
 };
 window.champDDId = k => window.DDRAGON_MAP[k] || String(k||'').replace(/[^A-Za-z0-9]/g,'');
 window.champIconUrl = k => `https://ddragon.leagueoflegends.com/cdn/${window.DDRAGON_VER}/img/champion/${window.champDDId(k)}.png`;
+
+// 技能机制分级参考 Riot Data Dragon 16.2.1 的逐英雄技能说明。
+// https://developer.riotgames.com/docs/lol#data-dragon
+// 0–2 分依次为可打断的进场位移、自保机动、魔法伤害、普攻/攻击特效依赖、先手可靠性、有效射程。
+// 闪烁、不可打断的进场与单纯逃生技能不记作进场位移。等级表示建模强弱，并非历史胜率。
+window.CHAMP_TACTICS = Object.fromEntries([
+
+ // ---- 上野 ----
+ ['Aatrox',1,1,0,1,1,1], ['Ambessa',2,2,0,1,2,1], ['Camille',2,2,0,2,2,0],
+ ['Gnar',2,2,1,2,1,1], ['Gwen',1,2,2,2,0,1], ['Jax',2,2,1,2,2,0],
+ ['Jayce',1,1,0,1,1,2], ["K'Sante",1,2,0,1,1,1], ['Kennen',0,2,2,1,2,1],
+ ['Renekton',2,2,0,1,2,0], ['Rumble',0,1,2,1,1,2], ['Sion',0,1,1,1,2,1],
+ ['Ornn',2,1,2,1,2,2], ['Fiora',2,2,0,2,0,0], ['Gangplank',0,1,0,1,1,2],
+ ['Gragas',1,2,2,1,2,1], ['Mordekaiser',0,1,2,1,2,1], ['Yorick',0,0,0,1,1,1],
+ ['Kled',1,1,0,2,2,0], ['Malphite',0,1,2,1,2,1], ['Poppy',2,1,0,1,1,0],
+ ['Rengar',2,1,0,2,1,0], ['Udyr',0,1,1,2,1,0], ['Volibear',0,1,1,2,2,0],
+ ['Olaf',0,1,0,2,1,1], ["Cho'Gath",0,0,2,0,1,1],
+ ['Lee Sin',2,2,0,1,2,1], ['Xin Zhao',2,1,0,2,2,0], ['Vi',1,2,0,2,2,0],
+ ['Sejuani',1,2,2,1,2,2], ['Maokai',2,0,2,1,2,2], ['Wukong',2,2,0,2,2,0],
+ ['Nidalee',1,2,2,1,0,2], ['Viego',1,2,0,2,1,0], ['Jarvan IV',2,2,0,1,2,0],
+ ['Pantheon',2,1,0,1,2,1], ['Skarner',2,2,1,1,2,1], ['Kindred',1,2,0,2,0,1],
+ ['Nocturne',0,1,0,2,2,0], ['Elise',1,2,2,1,1,1], ["Rek'Sai",2,2,0,2,2,0],
+ ['Trundle',0,1,0,2,1,0], ['Ivern',0,1,2,0,1,1], ['Brand',0,0,2,0,1,2],
+ ['Zyra',0,0,2,0,2,2], ['Lillia',0,2,2,0,2,1], ['Graves',1,2,0,2,1,1],
+ ['Zac',2,1,2,1,2,0], ['Karthus',0,0,2,0,1,2], ['Diana',2,1,2,1,2,1],
+ ['Hecarim',0,2,0,1,2,0], ["Bel'Veth",2,2,0,2,1,0], ["Kha'Zix",2,2,0,1,1,1],
+ // ---- 中单 ----
+ ['Azir',2,2,2,2,2,2], ['Orianna',0,1,2,1,2,2], ['Syndra',0,1,2,0,2,2],
+ ['Ahri',1,2,2,0,2,2], ['Sylas',2,1,2,1,2,1], ['LeBlanc',2,2,2,0,1,1],
+ ['Taliyah',0,1,2,0,1,2], ['Viktor',0,1,2,1,1,2], ['Corki',0,2,1,2,0,2],
+ ['Yone',1,2,1,2,2,0], ['Yasuo',1,1,0,2,1,0], ['Akali',2,2,2,1,1,0],
+ ['Galio',1,1,2,1,2,1], ['Ryze',0,1,2,0,1,1], ['Hwei',0,1,2,0,2,2],
+ ['Aurora',1,2,2,1,1,1], ['Annie',0,1,2,0,2,1], ['Mel',0,1,2,1,1,2],
+ ['Zoe',0,0,2,1,1,2], ['Cassiopeia',0,1,2,0,1,1], ['Twisted Fate',0,1,2,2,2,1],
+ ['Tristana',1,2,0,2,1,2], ['Lissandra',0,2,2,0,2,1], ['Naafiri',2,2,0,1,1,0],
+ ['Swain',0,0,2,0,1,1], ['Malzahar',0,1,2,0,2,1],
+ // ---- ADC ----
+ ["Kai'Sa",2,2,1,2,0,1], ['Varus',0,0,1,2,2,2], ['Ezreal',0,2,1,2,0,2],
+ ['Jinx',0,1,0,2,1,2], ['Xayah',0,2,0,2,1,1], ['Aphelios',0,0,0,2,1,1],
+ ['Zeri',1,2,1,2,0,1], ['Ashe',0,0,0,2,2,2], ['Kalista',1,2,0,2,2,1],
+ ['Lucian',1,2,0,2,0,1], ['Sivir',0,2,0,2,1,1], ['Jhin',0,1,0,2,1,2],
+ ['Caitlyn',0,1,0,2,1,2], ['Ziggs',0,1,2,1,0,2], ['Smolder',0,2,1,2,0,2],
+ ['Draven',0,1,0,2,1,1], ["Kog'Maw",0,0,1,2,0,2], ['Miss Fortune',0,1,0,1,1,2],
+ ['Yunara',0,2,1,2,0,1], ['Senna',0,1,0,2,1,2], ['Samira',2,1,0,2,0,0],
+ ['Vayne',0,2,0,2,1,1], ['Twitch',0,1,0,2,0,2], ['Nilah',2,2,0,2,2,0],
+ // ---- 辅助 ----
+ ['Rakan',2,2,2,0,2,1], ['Alistar',2,1,2,1,2,0], ['Nautilus',1,1,2,1,2,1],
+ ['Rell',2,1,2,1,2,0], ['Leona',1,0,2,1,2,1], ['Braum',0,2,2,2,1,1],
+ ['Renata Glasc',0,1,2,1,1,2], ['Lulu',0,1,2,1,1,1], ['Milio',0,1,2,0,0,1],
+ ['Karma',0,1,2,0,1,2], ['Bard',0,2,2,2,2,2], ['Thresh',0,0,2,1,2,1],
+ ['Neeko',0,2,2,1,2,1], ['Pyke',1,2,0,0,2,1], ['Blitzcrank',0,1,2,1,2,1],
+ ['Nami',0,1,2,0,1,2], ['Taric',0,1,1,2,1,0], ['Seraphine',0,1,2,1,2,2],
+ ['Janna',0,2,2,0,1,2], ['Morgana',0,1,2,0,1,2], ['Tahm Kench',0,1,2,2,1,1],
+ ['Soraka',0,1,2,0,0,1], ['Yuumi',0,2,2,0,0,1], ['Sona',0,1,2,1,1,1],
+ ['Amumu',2,0,2,1,2,1]
+].map(([id,dash,escape,magic,autos,engage,range]) => [id,{dash,escape,magic,autos,engage,range}]));
 </script>
 <script>// ================= 基础工具 =================
 const ROLES = ['TOP','JUG','MID','ADC','SUP'];
@@ -2126,6 +2197,156 @@ function styleEdge(a,b){
   return 0;
 }
 
+// ---------- 英雄机制克制与分路联动 ----------
+const HARD_SUPPORTS = new Set(['Alistar','Amumu','Braum','Blitzcrank','Galio','Gragas','Leona','Malphite','Maokai','Nautilus','Poppy','Rakan','Rell','Tahm Kench','Taric','Thresh','Zac']);
+const PEEL_CHAMPS = new Set(['Braum','Gragas','Janna','Lulu','Milio','Poppy','Renata Glasc','Tahm Kench','Taric','Thresh']);
+const PROJECTILE_PRESSURE = new Set(['Ahri','Ashe','Caitlyn','Corki','Ezreal','Jhin','Jinx','Kai\'Sa','Kalista','Kennen','Lucian','Miss Fortune','Nidalee','Sivir','Taliyah','Varus','Xayah','Zoe']);
+const DRAFT_COUNTERS = {
+  Poppy: ['dash',0.22,'打断进场位移'],
+  Taliyah: ['dash',0.14,'限制进场位移'],
+  Cassiopeia: ['dash',0.13,'缚地限制位移'],
+  Galio: ['magic',0.17,'抵挡魔法伤害'],
+  Jax: ['autos',0.21,'反制依赖普攻的对手'],
+  Nilah: ['autos',0.19,'规避敌方普攻'],
+  Malphite: ['autos',0.12,'降低敌方攻速'],
+  Braum: ['projectiles',0.15,'遮挡关键弹道'],
+  Mel: ['projectiles',0.13,'反射关键弹道'],
+  Samira: ['projectiles',0.12,'拦截关键弹道'],
+  Yasuo: ['projectiles',0.14,'风墙拦截弹道']
+};
+const BOT_DUOS = {
+  'Ezreal+Karma': [0.56,0.36,'EZ＋卡尔玛的远程换血'],
+  'Ashe+Seraphine': [0.46,0.52,'寒冰减速衔接萨勒芬妮控制'],
+  'Xayah+Rakan': [0.42,0.65,'霞洛的专属技能联动'],
+  'Lucian+Nami': [0.66,0.32,'卢锡安＋娜美的换血爆发'],
+  'Lucian+Milio': [0.46,0.35,'米利欧强化卢锡安的输出窗口'],
+  'Kog\'Maw+Lulu': [0.31,0.65,'璐璐强化并保护大嘴输出'],
+  'Caitlyn+Morgana': [0.64,0.30,'莫甘娜禁锢接女警夹子'],
+  'Kalista+Nautilus': [0.45,0.52,'滑板鞋大招送泰坦近身开团'],
+  'Nilah+Taric': [0.33,0.56,'尼菈与宝石的近身保护联动'],
+  'Nilah+Soraka': [0.38,0.41,'尼菈放大星妈治疗']
+};
+const MID_JUNGLE_DUOS = {
+  'Orianna+Nocturne': [0.22,0.68,'梦魇带球进场接发条大招'],
+  'Jayce+Maokai': [0.39,0.53,'大树先手为杰斯远程火力留空间'],
+  'Yasuo+Diana': [0.32,0.62,'皎月聚拢敌人后亚索接大'],
+  'Galio+Jarvan IV': [0.26,0.63,'皇子困住目标后加里奥进场'],
+  'Ahri+Vi': [0.31,0.53,'蔚锁定目标后阿狸接控制'],
+  'Twisted Fate+Nocturne': [0.26,0.45,'卡牌与梦魇的边线联动']
+};
+const TOP_JUNGLE_DUOS = {
+  'Renekton+Nidalee': [0.58,0.25,'鳄鱼点控帮助豹女命中标枪']
+};
+const TACTIC_DAMAGE_SHARE = {TOP:0.9,JUG:0.85,MID:1.05,ADC:1.15,SUP:0.3};
+
+function draftThreats(picks){
+  const out = {dash:0, magic:0, autos:0, engage:0, projectiles:0};
+  for(const role of ROLES){
+    const c = picks[role], kit = window.CHAMP_TACTICS[c];
+    if(!kit) continue;
+    const share = TACTIC_DAMAGE_SHARE[role];
+    out.dash += kit.dash;
+    out.magic += kit.magic * share;
+    out.autos += kit.autos * share * (1 - kit.range*kit.escape*0.10);
+    out.engage += kit.engage;
+    if(PROJECTILE_PRESSURE.has(c)) out.projectiles += share;
+  }
+  return out;
+}
+
+function laneTacticEdge(champ, enemy){
+  const own = window.CHAMP_TACTICS[champ], opp = window.CHAMP_TACTICS[enemy];
+  if(!own || !opp) return 0;
+  let edge = 0.10 * Math.max(0, own.range-opp.range) * (2-opp.escape);
+  const rule = DRAFT_COUNTERS[champ];
+  if(rule){
+    const [key, weight] = rule;
+    const threat = key==='projectiles' ? Number(PROJECTILE_PRESSURE.has(enemy))*2 : opp[key];
+    edge += 0.68 * weight * threat;
+  }
+  return edge;
+}
+
+function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null){
+  let lane = 0, fight = 0, peel = 0, vulnerable = 0;
+  for(const role of ROLES){
+    const c = picks[role], kit = window.CHAMP_TACTICS[c];
+    if(!kit) continue;
+    const rule = DRAFT_COUNTERS[c];
+    if(rule){
+      const [key, weight, label] = rule;
+      const strength = weight * threats[key];
+      fight += Math.min(1.03, strength);
+      if(notes && strength>=0.30) notes.push(CH[c].cn + label);
+    }
+    if(role==='TOP' || role==='MID') lane += laneTacticEdge(c,enemy[role]);
+    if(role==='ADC' || role==='SUP'){
+      lane += 0.35 * (laneTacticEdge(c,enemy.ADC) + laneTacticEdge(c,enemy.SUP));
+    }
+    if(PEEL_CHAMPS.has(c)) peel++;
+    if((role==='MID' || role==='ADC' || role==='SUP') && kit.range>0) vulnerable += (2-kit.escape)/2;
+  }
+
+  const dive = Math.max(0, threats.engage-2)*0.5;
+  const exposed = dive / (1+0.45*peel);
+  fight -= 0.24 * vulnerable * exposed;
+  if(notes && vulnerable*exposed>=1.4) notes.push('后排缺位移，容易被对方开团');
+
+  const bot = BOT_DUOS[picks.ADC + '+' + picks.SUP];
+  const mid = MID_JUNGLE_DUOS[picks.MID + '+' + picks.JUG];
+  const top = TOP_JUNGLE_DUOS[picks.TOP + '+' + picks.JUG];
+  for(const duo of [bot,mid,top]){
+    if(!duo) continue;
+    lane += duo[0];
+    fight += duo[1];
+    if(notes) notes.push(duo[2]);
+  }
+  if(picks.ADC==='Ashe' && picks.SUP==='Seraphine'){
+    lane -= 0.39 * exposed;
+    fight -= 0.86 * exposed;
+    if(notes && exposed>=0.7) notes.push('寒冰＋萨勒芬妮怕连续先手');
+  }
+  if(picks.ADC==='Ziggs' && picks.SUP){
+    const hard = HARD_SUPPORTS.has(picks.SUP);
+    lane += hard ? 0.56 : -0.58;
+    fight += hard ? 0.42 : -0.45;
+    if(notes) notes.push(hard ? '硬辅定身配合炸弹人输出' : '炸弹人下路缺少硬辅留人与保护');
+  }
+
+  const early = clamp(lane + fight*0.23,-1.45,1.45);
+  const midgame = clamp(lane*0.30 + fight,-1.60,1.60);
+  const late = clamp(lane*0.15 + fight*0.90,-1.50,1.50);
+  return {early, mid:midgame, late, score:early*0.30 + midgame*0.35 + late*0.35};
+}
+
+// 只评估已亮出的英雄和位置。新增英雄也可能让对方的反制更有效。
+function draftTacticGain(own, enemy){
+  const threats = draftThreats(enemy);
+  const base = draftTactics(own,enemy,threats).score - draftTactics(enemy,own).score;
+  const next = {...own};
+  return (role, champ) => {
+    next[role] = champ;
+    const gain = draftTactics(next,enemy,threats).score - draftTactics(enemy,next).score - base;
+    delete next[role];
+    return gain;
+  };
+}
+
+function ziggsBotPairConflict(adc, sup){
+  return adc==='Ziggs' && sup && !HARD_SUPPORTS.has(sup);
+}
+
+function draftBotPairFilter(picks, unavailableChamps){
+  const canPickHard = !picks.SUP && CHAMP_KEYS.some(c => HARD_SUPPORTS.has(c) && CH[c].roles.includes('SUP') && !unavailableChamps.has(c));
+  const hasOtherAdc = !picks.ADC && CHAMP_KEYS.some(c => c!=='Ziggs' && CH[c].roles.includes('ADC') && !unavailableChamps.has(c));
+  const canPairZiggs = picks.SUP ? HARD_SUPPORTS.has(picks.SUP) : canPickHard;
+  return (r,c) => {
+    if(r==='SUP' && canPickHard && ziggsBotPairConflict(picks.ADC,c)) return false;
+    if(r==='ADC' && c==='Ziggs' && !canPairZiggs && hasOtherAdc) return false;
+    return true;
+  };
+}
+
 // 经典职业选边 AI 决策（蓝色方 = 固定 BP 先手；红色方 = 固定 BP 后手拿五楼康特位）
 function aiChooseSide(meKey, oppKey, locked){
   const un = new Set(locked||[]);
@@ -2216,14 +2437,20 @@ function optimizeAiFlex(d, side){
   const champs = entries.map(([,c])=>c);
   const roles = entries.map(([r])=>r);
   const curScore = entries.reduce((s,[r,c])=>s+champFit(lu[r],c,r), 0);
-  let bestPerm = null, bestScore = curScore + 0.35;
+  const enemy = d.picks[side==='A' ? 'B' : 'A'];
+  const threats = draftThreats(enemy);
+  const next = {};
+  let bestPerm = null, bestScore = curScore + 1.6*draftTactics(d.picks[side],enemy,threats).score + 0.35;
   function permute(arr, start){
     if(start===arr.length){
       let sc = 0;
       for(let i=0;i<arr.length;i++){
+        next[roles[i]] = arr[i];
         if(!CH[arr[i]].roles.includes(roles[i])) sc -= 3;
         sc += champFit(lu[roles[i]], arr[i], roles[i]);
       }
+      if(sc < curScore-2 || ziggsBotPairConflict(next.ADC,next.SUP)) return;
+      sc += 1.6*draftTactics(next,enemy,threats).score;
       if(sc > bestScore){ bestScore = sc; bestPerm = arr.slice(); }
       return;
     }
@@ -2271,6 +2498,7 @@ function aiChoose(d){
     const myOpen = openRolesFor(d, me);
     const oppComp = compInfo(oppPicks);
     const isRound2 = d.step >= 12;
+    const tacticGain = isRound2 ? draftTacticGain(d.picks[opp],d.picks[me]) : null;
     // 判断下一手是否由我方先选（首轮 Ban 尽量少 Ban 自己下一手就能抢的绝活 T0）
     const nextIsMyPick = d.step===5 && d.first===me;
     for(const c of CHAMP_KEYS){
@@ -2284,6 +2512,7 @@ function aiChoose(d){
       if(isRound2 && oppPicks.length>=3){
         const gain = compInfo(oppPicks.concat(c)).score - oppComp.score;
         s += Math.max(0, gain) * 1.1;
+        s += Math.max(0, ...validOppRoles.map(r=>tacticGain(r,c))) * 1.6;
       }
       // 避免把己方立刻能抢到的强势招牌给 Ban 了
       if(nextIsMyPick){
@@ -2304,19 +2533,23 @@ function aiChoose(d){
   const earlyPhase = myPicks.length < 3;
   let br=null;
   const allowOff = !hasAnyOnRoleChamp(d, me);
+  const tacticGain = draftTacticGain(d.picks[me],d.picks[opp]);
+  const allowsPair = draftBotPairFilter(d.picks[me],un);
 
   for(const c of CHAMP_KEYS){
     if(un.has(c)) continue;
     // AI 默认选本位，或在伤害极度单一需要法核下路时考虑合理奇招
     let candRoles = allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r));
-    if(!allowOff && myPicks.length>=3 && baseComp.ad>=3 && myOpen.includes('ADC') && offRoleKind(c,'ADC').kind==='apc_bot'){
+    if(!allowOff && myPicks.length>=3 && baseComp.ad>=3 && myOpen.includes('ADC') && !candRoles.includes('ADC') && offRoleKind(c,'ADC').kind==='apc_bot'){
       candRoles = candRoles.concat('ADC');
     }
+    if(!candRoles.length) continue;
+    const nextComp = compInfo(myPicks.concat(c));
     for(const r of candRoles){
-      const nextList = myPicks.concat(c);
-      const nextComp = compInfo(nextList);
+      if(!allowsPair(r,c)) continue;
       let s = champFit(myLu[r], c, r);
       s += (nextComp.score - baseComp.score) * 1.15;
+      s += 2.4 * tacticGain(r,c);
       // 克制对手已亮阵容风格
       if(oppPicks.length>=2){
         s += (styleEdge(nextComp.style, oppComp.style) - styleEdge(baseComp.style, oppComp.style)) * 0.9;
@@ -2334,7 +2567,7 @@ function aiChoose(d){
       if(s>bs){ bs=s; best=c; br=r; }
     }
   }
-  return {c:best, role:br, offrole:allowOff};
+  return {c:best, role:br, offrole:!!best && !CH[best].roles.includes(br)};
 }
 
 function autoDraftRest(d){
@@ -2361,6 +2594,7 @@ function coachSuggest(d, side){
   const out = [];
 
   if(cur.kind==='ban'){
+    const tacticGain = d.step>=12 ? draftTacticGain(d.picks[opp],d.picks[side]) : null;
     for(const c of CHAMP_KEYS){
       if(un.has(c)) continue;
       const roles = oppOpen.filter(r=>CH[c].roles.includes(r));
@@ -2369,25 +2603,34 @@ function coachSuggest(d, side){
       for(const r of roles){ const f=champFit(oppLu[r],c,r); if(f>bestF){bestF=f;bestR=r;} }
       let s = bestF*1.1 + ((S.meta[c]||0)>=2?2.2:0);
       let reason = bestF>=5.5 ? `针对 ${playerTag(oppLu[bestR])} 招牌` : (S.meta[c]||0)>=2 ? '版本T0威胁' : `限制对方${ROLE_CN[bestR]}`;
+      if(tacticGain){
+        const gain = Math.max(0, ...roles.map(r=>tacticGain(r,c)));
+        s += 1.6*gain;
+        if(gain>=0.4) reason = '拆解对手技能联动或关键克制';
+      }
       out.push({c, score:s, reason});
     }
   } else {
     const allowOff = !hasAnyOnRoleChamp(d, side);
+    const tacticGain = draftTacticGain(d.picks[side],d.picks[opp]);
+    const allowsPair = draftBotPairFilter(d.picks[side],un);
     for(const c of CHAMP_KEYS){
       if(un.has(c)) continue;
-      const roles = allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r));
+      const roles = (allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r))).filter(r=>allowsPair(r,c));
       if(!roles.length) continue;
       let bestR = roles[0], bestS = -99, bestReason = '';
+      const nextComp = compInfo(myPicks.concat(c));
+      const compGain = nextComp.score - baseComp.score;
       for(const r of roles){
         const fit = champFit(myLu[r],c,r);
-        const nextComp = compInfo(myPicks.concat(c));
-        const compGain = nextComp.score - baseComp.score;
-        let s = fit + compGain*1.1 + ((S.meta[c]||0)>=2?1.0:0);
+        const gain = tacticGain(r,c);
+        let s = fit + compGain*1.1 + 2.4*gain + ((S.meta[c]||0)>=2?1.0:0);
         if(myPicks.length>=3 && baseComp.ad>=3 && CH[c].dmg==='AP') s+=1.2;
         if(myPicks.length>=3 && baseComp.ap>=3 && CH[c].dmg==='AD') s+=1.2;
         if(s > bestS){
           bestS = s; bestR = r;
           bestReason = fit>=5.5 ? `${playerTag(myLu[r])} 招牌` : (S.meta[c]||0)>=2 ? '版本T0强抢' : compGain>=0.8 ? '极佳阵容搭配' : (CH[c].roles.length>=2&&myPicks.length<3?'优质摇摆位':`适配${ROLE_CN[r]}`);
+          if(gain>=0.28) bestReason = '有利的英雄克制或分路联动';
         }
       }
       out.push({c, role:bestR, score:bestS, reason:bestReason});
@@ -2437,13 +2680,16 @@ function draftPower(d, side){
     det.push({r,p,c,fit,base});
   }
   const tacShare = tacBonus * 0.85 / 5;
+  const notes = [];
+  const tactics = draftTactics(picks,oppPicks,undefined,notes);
+  ci.notes.unshift(...notes);
   const chem = teamChemistry(team);
   const chemB = chem.bonus; // 团队化学反应轻中度加成（满默契约 +2.0，生疏拼凑约 -1.8）
   return {
-    power: s/5 + ci.score + tacShare + chemB,
-    early: earlyP + ci.early*1.1 + tacShare + tacEarly + chemB*0.85,
-    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare + chemB*1.05,
-    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + chemB*1.1,
+    power: s/5 + ci.score + tacShare + chemB + tactics.score,
+    early: earlyP + ci.early*1.1 + tacShare + tacEarly + chemB*0.85 + tactics.early,
+    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare + chemB*1.05 + tactics.mid,
+    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + chemB*1.1 + tactics.late,
     comp: ci, chem, det
   };
 }
@@ -4755,6 +5001,7 @@ function detectPlatformLabel(){
 const StorageBridge = {
   mode: isTauriApp() ? 'tauri-file' : 'browser-local',
   savePath: '',
+  _saveWrite: Promise.resolve(),
   async init(){
     if(isTauriApp()){
       try{
@@ -4774,12 +5021,16 @@ const StorageBridge = {
   async writeSaveText(text){
     try{ localStorage.setItem(SAVE_KEY, text); }catch(e){}
     if(isTauriApp()){
-      try{ await tauriInvoke('write_local_save', { content: text }); }catch(e){ console.warn('write_local_save failed:', e); }
+      this._saveWrite = this._saveWrite.then(async ()=>{
+        try{ await tauriInvoke('write_local_save', { content: text }); }catch(e){ console.warn('write_local_save failed:', e); }
+      });
+      await this._saveWrite;
     }
   },
   async deleteSave(){
     try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
     if(isTauriApp()){
+      await this._saveWrite;
       try{ await tauriInvoke('delete_local_save'); }catch(e){}
     }
   },
@@ -4826,14 +5077,43 @@ function fmtTime(ts){
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+let syncStampNo = 0;
+function makeSyncStamp(){
+  const updatedAt = Date.now();
+  const randomId = typeof crypto!=='undefined' && typeof crypto.randomUUID==='function'
+    ? crypto.randomUUID() : updatedAt.toString(36) + '-' + (++syncStampNo).toString(36) + '-' + Math.random().toString(36).slice(2);
+  return {updatedAt, device:detectPlatformLabel(), revision:randomId};
+}
+
+function saveSyncVersion(save){
+  if(!save) return null;
+  if(save._sync?.revision) return save._sync.revision;
+  // PostgREST 的 JSONB 会重排键。旧存档按内容识别，不依赖设备时钟或赛事索引。
+  const json = JSON.stringify(save, (_,v) => v && typeof v==='object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])) : v);
+  let h1 = 2166136261, h2 = 5381;
+  for(let i=0;i<json.length;i++){
+    const ch = json.charCodeAt(i);
+    h1 = Math.imul(h1^ch,16777619);
+    h2 = Math.imul(h2,33)^ch;
+  }
+  return 'legacy-' + json.length + '-' + (h1>>>0) + '-' + (h2>>>0);
+}
+
+function canApplyCloudSave(){
+  if(typeof UI!=='undefined' && (UI.match || UI.replay || UI.modal || UI.authBusy)) return false;
+  return typeof document==='undefined' || !document.activeElement?.matches?.('input,textarea,select,[contenteditable="true"]');
+}
+
 const CloudSync = {
   cfg: { url: CLOUD_DEFAULT_CFG.url, anonKey: CLOUD_DEFAULT_CFG.anonKey },
   auth: null, // { access_token, refresh_token, expires_at, user:{id, email} }
-  status: 'guest', // guest | syncing | synced | offline | unconfigured | error
+  status: 'guest', // guest | synced | offline | reauth | unconfigured
   statusText: '本地游客模式',
   lastSyncAt: null,
   conflict: null, // { localSave, localSummary, cloudSave, cloudSummary }
   _pushTimer: null,
+  _syncJob: null,
 
   isConfigured(){
     return !!(this.cfg && this.cfg.url && this.cfg.anonKey);
@@ -4871,25 +5151,48 @@ const CloudSync = {
       this.statusText = '游客模式（仅存本地）';
       return;
     }
-    await this.ensureValidToken();
-    if(this.isLoggedIn()){
-      await this.syncOnLaunch(false);
-    }
+    await this.syncOnLaunch(false);
   },
 
-  async ensureValidToken(){
+  async requireNewLogin(auth){
+    if(this.auth!==auth) return;
+    this.auth = null;
+    this.conflict = null;
+    this.status = 'reauth';
+    this.statusText = '登录已失效，请重新登录，进度已存本地';
+    if(typeof notifyCloudStatus==='function') notifyCloudStatus('登录失效，请重新登录');
+    await StorageBridge.writeMeta(CLOUD_AUTH_KEY,null);
+  },
+
+  async ensureValidToken(force=false){
     if(!this.isLoggedIn() || !this.isConfigured()) return false;
+    const auth = this.auth;
     const now = Math.floor(Date.now() / 1000);
-    if(this.auth.expires_at && this.auth.expires_at - now > 90) return true;
-    if(!this.auth.refresh_token) return true;
+    if(!force && auth.expires_at && auth.expires_at - now > 90) return true;
+    if(!auth.refresh_token){
+      if(force || (auth.expires_at && auth.expires_at<=now)){
+        await this.requireNewLogin(auth);
+        return false;
+      }
+      return true;
+    }
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/token?grant_type=refresh_token`, {
         method: 'POST',
         headers: this.headers(false),
-        body: JSON.stringify({ refresh_token: this.auth.refresh_token })
+        body: JSON.stringify({ refresh_token: auth.refresh_token }),
+        signal: typeof AbortSignal!=='undefined' ? AbortSignal.timeout?.(12000) : undefined
       });
-      if(!r.ok) throw new Error('refresh failed');
-      const d = await r.json();
+      const d = await r.json().catch(()=>({}));
+      if(this.auth!==auth) return false;
+      if(!r.ok || !d.access_token){
+        const code = d.error_code || d.code || d.error;
+        if(['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired','invalid_grant'].includes(code) || r.status===401 || r.status===403){
+          await this.requireNewLogin(auth);
+          return false;
+        }
+        throw new Error('HTTP ' + r.status);
+      }
       this.auth = {
         access_token: d.access_token,
         refresh_token: d.refresh_token || this.auth.refresh_token,
@@ -4899,6 +5202,7 @@ const CloudSync = {
       await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
       return true;
     }catch(e){
+      if(this.auth!==auth) return false;
       this.status = 'offline';
       this.statusText = '离线（令牌待刷新）';
       return false;
@@ -5024,9 +5328,11 @@ const CloudSync = {
   },
 
   async signOut(){
+    clearTimeout(this._pushTimer);
+    this._pushTimer = null;
     if(this.isConfigured() && this.isLoggedIn()){
       try{
-        await fetch(`${this.baseUrl()}/auth/v1/logout`, { method:'POST', headers: this.headers(true) });
+        await fetch(`${this.baseUrl()}/auth/v1/logout?scope=local`, { method:'POST', headers: this.headers(true) });
       }catch(e){}
     }
     this.auth = null;
@@ -5037,221 +5343,257 @@ const CloudSync = {
     if(typeof render === 'function') render();
   },
 
-  async fetchCloudSave(){
-    if(!this.isConfigured() || !this.isLoggedIn()) return null;
-    await this.ensureValidToken();
-    const uid = encodeURIComponent(this.auth.user.id);
-    const r = await fetch(`${this.baseUrl()}/rest/v1/user_saves?user_id=eq.${uid}&select=save_data,summary,updated_at`, {
-      method: 'GET',
-      headers: this.headers(true)
+  async requestSaveRows(uid, path, options){
+    if(!await this.ensureValidToken() || this.auth?.user?.id!==uid) throw new Error('会话待刷新');
+    const send = () => fetch(this.baseUrl()+path,{
+      ...options,
+      headers:{...this.headers(true), ...options.headers},
+      signal:typeof AbortSignal!=='undefined' ? AbortSignal.timeout?.(12000) : undefined
     });
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    const rows = await r.json();
+    let r = await send();
+    let body = r.ok ? null : await r.json().catch(()=>({}));
+    if(r.status===401 && body?.code!=='42501' && await this.ensureValidToken(true) && this.auth?.user?.id===uid){
+      r = await send();
+      body = r.ok ? null : await r.json().catch(()=>({}));
+    }
+    if(!r.ok){
+      const error = new Error('云存档 HTTP ' + r.status);
+      error.code = body?.code;
+      throw error;
+    }
+    return r.json();
+  },
+
+  async fetchCloudSave(uid, metadataOnly=false){
+    const fields = metadataOnly ? 'updated_at' : 'save_data,summary,updated_at';
+    const rows = await this.requestSaveRows(uid,'/rest/v1/user_saves?user_id=eq.' + encodeURIComponent(uid) + '&select=' + fields,{
+      method:'GET'
+    });
     return Array.isArray(rows) && rows.length ? rows[0] : null;
   },
 
-  async pushSave(saveObj){
-    if(!saveObj || !this.isConfigured() || !this.isLoggedIn()) return false;
-    this.status = 'syncing';
-    this.statusText = '正在同步云端…';
-    if(typeof render === 'function') render();
-    try{
-      await this.ensureValidToken();
-      const summary = makeSaveSummary(saveObj);
-      const body = {
-        user_id: this.auth.user.id,
-        save_data: saveObj,
-        summary,
-        updated_at: new Date(summary.updatedAt).toISOString()
-      };
-      const r = await fetch(`${this.baseUrl()}/rest/v1/user_saves?on_conflict=user_id`, {
-        method: 'POST',
-        headers: Object.assign({}, this.headers(true), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
-        body: JSON.stringify(body)
-      });
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      this.status = 'synced';
-      this.lastSyncAt = Date.now();
-      this.statusText = '云端已同步';
-      if(typeof render === 'function') render();
-      return true;
-    }catch(e){
-      console.warn('Cloud push failed:', e);
-      this.status = 'offline';
-      this.statusText = '离线（已存本地）';
-      if(typeof render === 'function') render();
-      return false;
-    }
+  async writeCloudSave(uid, save, observed){
+    const updated = Date.parse(observed?.updated_at) || 0;
+    const updatedAt = new Date(Math.max(Date.now(),updated+1)).toISOString();
+    const body = JSON.stringify({user_id:uid, save_data:save, summary:makeSaveSummary(save), updated_at:updatedAt});
+    const path = '/rest/v1/user_saves?select=updated_at&';
+    const where = observed
+      ? 'user_id=eq.' + encodeURIComponent(uid) + '&updated_at=eq.' + encodeURIComponent(observed.updated_at)
+      : 'on_conflict=user_id';
+    const prefer = observed ? 'return=representation' : 'resolution=ignore-duplicates,return=representation';
+    const rows = await this.requestSaveRows(uid,path+where,{
+      method:observed?'PATCH':'POST',
+      headers:{Prefer:prefer},
+      body
+    });
+    return rows[0]?.updated_at || null;
   },
 
   schedulePush(saveObj){
     if(!saveObj || !this.isConfigured() || !this.isLoggedIn()) return;
     clearTimeout(this._pushTimer);
-    this._pushTimer = setTimeout(()=>{ this.pushSave(saveObj); }, 1400);
+    this._pushTimer = setTimeout(()=>{
+      this._pushTimer = null;
+      this.syncOnLaunch(false);
+    }, 1400);
   },
 
-  async syncOnLaunch(interactive){
-    if(!this.isConfigured() || !this.isLoggedIn()) return { ok:false };
-    this.status = 'syncing';
-    this.statusText = '检查云端进度…';
-    if(typeof render === 'function') render();
-    try{
-      const row = await this.fetchCloudSave();
-      const hasLocal = !!S;
-      const hasCloud = !!(row && row.save_data);
+  async localCloudSave(){
+    if(S) return S;
+    const raw = await StorageBridge.readSaveText();
+    if(S) return S;
+    try{ return raw ? JSON.parse(raw) : null; }
+    catch(e){ return null; }
+  },
 
-      if(!hasLocal && hasCloud){
-        S = migrateSave(row.save_data);
-        await StorageBridge.writeSaveText(JSON.stringify(S));
-        this.status = 'synced';
-        this.lastSyncAt = Date.now();
-        this.statusText = '已从云端恢复';
-        if(typeof render === 'function') render();
-        return { ok:true, msg:'已自动加载云端存档！' };
-      }
-      if(hasLocal && !hasCloud){
-        await this.pushSave(S);
-        return { ok:true, msg:'已将当前本地进度绑定并上传至云端！' };
-      }
-      if(hasLocal && hasCloud){
-        const localTs = (S._sync && S._sync.updatedAt) || 0;
-        const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
-        const sameProgress = Math.abs(localTs - cloudTs) <= 5000 && S.user === row.save_data.user && S.year === row.save_data.year && S.evIdx === row.save_data.evIdx;
-        if(sameProgress){
-          this.status = 'synced';
-          this.lastSyncAt = Date.now();
-          this.statusText = '云端已同步';
-          if(typeof render === 'function') render();
-          return { ok:true, msg:'本地与云端进度一致！' };
-        }
-        // 两端存在实质差异：弹出冲突对比框，绝不悄悄覆盖！
-        this.conflict = {
-          localSave: S,
-          localSummary: makeSaveSummary(S),
-          cloudSave: migrateSave(row.save_data),
-          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
-        };
-        this.status = 'synced';
-        this.statusText = '检测到多端进度差异';
-        if(typeof openConflictModal === 'function') openConflictModal();
-        else if(typeof render === 'function') render();
-        return { ok:true, msg:'检测到云端与本地存档不同，请选择保留哪一份' };
-      }
-      this.status = 'synced';
-      this.statusText = '云端已连接';
-      if(typeof render === 'function') render();
-      return { ok:true };
-    }catch(e){
-      console.warn('syncOnLaunch failed:', e);
-      this.status = 'offline';
-      this.statusText = '离线模式（本地可用）';
-      if(typeof render === 'function') render();
-      return { ok:false, msg:'暂无法连接云端，已使用本地存档' };
+  async markCloudBase(uid, localVersion, cloudTime, label){
+    if(this.auth?.user?.id!==uid) return;
+    await StorageBridge.writeMeta('rift-sync-v2-'+uid,{localVersion,cloudTime});
+    if(this.auth?.user?.id!==uid) return;
+    this.conflict = null;
+    this.markCloudSynced(label);
+  },
+
+  markCloudSynced(label){
+    this.status = 'synced';
+    this.lastSyncAt = Date.now();
+    this.statusText = label;
+    if(typeof notifyCloudStatus==='function') notifyCloudStatus('云端已同步');
+  },
+
+  async applyCloudSave(uid, row){
+    if(this.auth?.user?.id!==uid) return {ok:false};
+    S = migrateSave(row.save_data);
+    const version = saveSyncVersion(S);
+    const stored = StorageBridge.writeSaveText(JSON.stringify(S));
+    this.conflict = null;
+    this.markCloudSynced('已同步云端最新进度');
+    if(typeof UI!=='undefined'){
+      UI.hasSave = true;
+      UI.savePreview = makeSaveSummary(S);
     }
+    if(typeof render==='function') render();
+    await stored;
+    await this.markCloudBase(uid,version,row.updated_at,'已同步云端最新进度');
+    return {ok:true, msg:'已同步云端最新进度'};
+  },
+
+  async reconcileCloud(uid, interactive, preferLocal, retry=true){
+    const base = await StorageBridge.readMeta('rift-sync-v2-'+uid);
+    let row = await this.fetchCloudSave(uid,!!base);
+    const remoteUnchanged = !!(base && row && row.updated_at===base.cloudTime);
+    let local = await this.localCloudSave();
+    if(row && base && (!remoteUnchanged || !local)){
+      if(!interactive && !canApplyCloudSave()) return {ok:true,deferred:true,msg:'将在当前操作结束后同步'};
+      row = await this.fetchCloudSave(uid);
+      local = await this.localCloudSave();
+    }
+    if(this.auth?.user?.id!==uid) return {ok:false};
+    const version = saveSyncVersion(local);
+
+    if(!row && !local){
+      this.markCloudSynced('云端已连接');
+      return {ok:true, msg:'云端已连接'};
+    }
+    if(row && row.save_data && version===saveSyncVersion(row.save_data)){
+      await this.markCloudBase(uid,version,row.updated_at,'云端已同步');
+      return {ok:true, msg:'本地与云端进度一致'};
+    }
+    if(local && remoteUnchanged && row?.updated_at===base.cloudTime && version===base.localVersion){
+      this.markCloudSynced('云端已同步');
+      return {ok:true, msg:'本地与云端进度一致'};
+    }
+    if(local && (!row || (remoteUnchanged && row.updated_at===base.cloudTime))){
+      const time = await this.writeCloudSave(uid,local,row);
+      if(!time){
+        return retry ? this.reconcileCloud(uid,interactive,preferLocal,false) : {ok:false,msg:'云端刚有更新，将自动重试'};
+      }
+      await this.markCloudBase(uid,version,time,'云端已同步');
+      return {ok:true, msg:'已自动上传本地进度'};
+    }
+
+    if(!interactive && !canApplyCloudSave()) return {ok:true,deferred:true,msg:'将在当前操作结束后同步'};
+    if(!local || (!preferLocal && base && version===base.localVersion)){
+      return this.applyCloudSave(uid,row);
+    }
+
+    const alreadyReported = this.conflict?.cloudTime===row.updated_at;
+    this.conflict = {
+      localSave:local, localSummary:makeSaveSummary(local),
+      cloudSave:row.save_data, cloudTime:row.updated_at,
+      cloudSummary:{...makeSaveSummary(row.save_data), ...(row.summary||{})}
+    };
+    this.statusText = '检测到多端进度差异';
+    if(interactive && typeof openConflictModal==='function') openConflictModal();
+    else if(!alreadyReported && typeof notifyCloudStatus==='function') notifyCloudStatus('待处理存档差异');
+    return {ok:true,msg:'检测到多端进度差异，请选择要保留的存档'};
+  },
+
+  async syncOnLaunch(interactive, {preferLocal=false}={}){
+    if(!this.isConfigured() || !this.isLoggedIn()) return {ok:false,msg:this.status==='reauth' ? this.statusText : '请先登录云存档账号'};
+    if(this._resolving) return {ok:false,msg:'正在处理存档差异'};
+    const uid = this.auth.user.id;
+    if(this._syncJob){
+      const job = this._syncJob;
+      const result = await job.promise;
+      if(job.uid!==uid || preferLocal || (interactive && result.deferred)) return this.syncOnLaunch(interactive,{preferLocal});
+      if(interactive && this.conflict && typeof openConflictModal==='function') openConflictModal();
+      return result;
+    }
+    const job = {uid};
+    this._syncJob = job;
+    job.promise = this.reconcileCloud(uid,interactive,preferLocal).catch(e=>{
+      if(this.status==='reauth' && !this.isLoggedIn()) return {ok:false,msg:this.statusText};
+      const msg = ['42501','PGRST205','42P01'].includes(e.code)
+        ? '云端存档接口不可用，进度已存本地'
+        : '暂无法连接云端，将自动重试';
+      if(this.auth?.user?.id===uid){
+        console.warn('Cloud sync failed:', e);
+        this.status = 'offline';
+        this.statusText = msg;
+        if(typeof notifyCloudStatus==='function') notifyCloudStatus('离线(已存本地)');
+      }
+      return {ok:false,msg};
+    }).finally(()=>{
+      if(this._syncJob===job) this._syncJob = null;
+    });
+    return job.promise;
   },
 
   async resolveConflict(choice){
-    if(!this.conflict) return;
-    if(choice === 'cloud'){
-      S = migrateSave(this.conflict.cloudSave);
-      await StorageBridge.writeSaveText(JSON.stringify(S));
-      this.status = 'synced';
-      this.lastSyncAt = Date.now();
-      this.statusText = '已加载云端进度';
-    } else if(choice === 'local'){
-      S = this.conflict.localSave;
-      S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
-      await StorageBridge.writeSaveText(JSON.stringify(S));
-      await this.pushSave(S);
+    if(!this.conflict || !this.isLoggedIn() || this._resolving) return {ok:false,msg:'没有待处理的存档差异'};
+    this._resolving = true;
+    const uid = this.auth.user.id;
+    let advanced = false;
+    try{
+      if(this._syncJob) await this._syncJob.promise;
+      if(this.auth?.user?.id!==uid) return {ok:false,msg:'账号状态已变化'};
+      const pending = this.conflict;
+      if(!pending) return {ok:true,msg:'本地与云端已同步'};
+      const remote = await this.fetchCloudSave(uid,true);
+      if(remote?.updated_at!==pending.cloudTime){
+        advanced = true;
+      } else if(choice==='cloud'){
+        if(typeof UI!=='undefined') UI.modal = null;
+        return await this.applyCloudSave(uid,{save_data:pending.cloudSave,updated_at:pending.cloudTime});
+      } else if(choice==='local'){
+        const save = await this.localCloudSave();
+        const version = saveSyncVersion(save);
+        const time = await this.writeCloudSave(uid,save,remote);
+        if(time){
+          await this.markCloudBase(uid,version,time,'已用本地进度更新云端');
+          if(typeof UI!=='undefined') UI.modal = null;
+          if(typeof render==='function') render();
+          return {ok:true,msg:'已用本地进度更新云端'};
+        }
+        advanced = true;
+      }
+    }catch(e){
+      return {ok:false,msg:'暂无法连接云端，请稍后重试'};
+    }finally{
+      this._resolving = false;
     }
-    this.conflict = null;
-    if(typeof UI !== 'undefined'){ UI.modal = null; }
-    if(typeof render === 'function') render();
+    if(advanced){
+      this.conflict = null;
+      if(typeof UI!=='undefined') UI.modal = null;
+      return this.syncOnLaunch(true);
+    }
+    return {ok:false,msg:'请选择要保留的存档'};
   },
 
-  // 自动双向云同步：切回前台/重连网络/定时静默检查云端更新，切走前台时立即冲刷待上传存档
   _autoStarted: false,
-  _lastPullCheck: 0,
   _autoTimer: null,
   startAutoSync(){
     if(this._autoStarted) return;
     this._autoStarted = true;
-    const tryPull = () => {
-      if(!this.isConfigured() || !this.isLoggedIn() || this.conflict) return;
-      if(typeof UI !== 'undefined' && (UI.match || UI.modal || UI.replay)) return;
-      if(typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-      if(Date.now() - this._lastPullCheck < 20000) return;
-      this.backgroundPullCheck();
+    const trySync = () => {
+      if(typeof document!=='undefined' && document.visibilityState==='hidden') return;
+      if(this.isLoggedIn()) this.syncOnLaunch(false);
     };
-    if(typeof document !== 'undefined' && document.addEventListener){
-      document.addEventListener('visibilitychange', ()=>{
-        if(document.visibilityState === 'hidden'){
-          if(this._pushTimer && S && this.isLoggedIn()){
-            clearTimeout(this._pushTimer); this._pushTimer = null;
-            this.pushSave(S);
+    if(typeof document!=='undefined' && document.addEventListener){
+      document.addEventListener('visibilitychange',()=>{
+        if(document.visibilityState==='hidden'){
+          if(this._pushTimer){
+            clearTimeout(this._pushTimer);
+            this._pushTimer = null;
+            this.syncOnLaunch(false);
           }
-        } else {
-          tryPull();
-        }
+        } else trySync();
       });
     }
-    if(typeof window !== 'undefined' && window.addEventListener){
-      window.addEventListener('focus', tryPull);
-      window.addEventListener('online', ()=>{
-        if(this.isLoggedIn()){
-          if(S && this.status === 'offline') this.pushSave(S);
-          else tryPull();
-        }
+    if(typeof window!=='undefined' && window.addEventListener){
+      window.addEventListener('focus',trySync);
+      window.addEventListener('online',()=>{
+        if(this.isLoggedIn()) this.syncOnLaunch(false);
       });
     }
-    this._autoTimer = setInterval(tryPull, 90000);
-  },
-
-  async backgroundPullCheck(){
-    if(!this.isConfigured() || !this.isLoggedIn() || this.status === 'syncing') return;
-    this._lastPullCheck = Date.now();
-    try{
-      const row = await this.fetchCloudSave();
-      if(!row || !row.save_data) return;
-      const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
-      if(!S){
-        S = migrateSave(row.save_data);
-        await StorageBridge.writeSaveText(JSON.stringify(S));
-        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
-        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '已自动同步云端存档';
-        if(typeof render === 'function') render();
-        return;
-      }
-      const localTs = (S._sync && S._sync.updatedAt) || 0;
-      if(cloudTs <= localTs + 5000) return;
-      // 如果本地在最后一次同步后没有新改动，说明是其他设备推进了进度 -> 无感自动拉新
-      const localDirty = this.lastSyncAt > 0 && localTs > this.lastSyncAt + 2000;
-      if(!localDirty){
-        S = migrateSave(row.save_data);
-        await StorageBridge.writeSaveText(JSON.stringify(S));
-        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
-        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '云端已自动更新';
-        if(typeof toast === 'function') toast('已自动拉取云端最新存档进度');
-        else if(typeof render === 'function') render();
-      } else {
-        this.conflict = {
-          localSave: S,
-          localSummary: makeSaveSummary(S),
-          cloudSave: migrateSave(row.save_data),
-          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
-        };
-        this.statusText = '检测到多端进度差异';
-        if(typeof openConflictModal === 'function') openConflictModal();
-      }
-    }catch(e){
-      // 静默容错，不打扰游玩
-    }
+    this._autoTimer = setInterval(trySync,15000);
   }
 };
 
 // ================= 云端版本自动更新检测 =================
 window.AppUpdater = {
-  currentVersion: '2.1.1',
+  currentVersion: '2.1.2',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null,
@@ -6012,7 +6354,7 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 function save(){
   if(!S) return;
   try{
-    S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
+    S._sync = makeSyncStamp();
     const txt = JSON.stringify(S);
     UI.hasSave = true;
     UI.savePreview = makeSaveSummary(S);
@@ -6201,11 +6543,16 @@ function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } 
 
 function cloudPillHtml(){
   const st = CloudSync.status;
+  if(st==='reauth') return `<button class="cloud-pill guest" data-a="openAccount">${ico('cloud')} <b>重新登录</b><small>进度已存本地</small></button>`;
   if(CloudSync.isLoggedIn()){
-    const label = st==='syncing' ? '同步中…' : st==='offline' ? '离线(已存本地)' : '云端已同步';
-    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">${ico('cloud')} <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small>${label}</small></button>`;
+    const label = CloudSync.conflict ? '待处理存档差异' : st==='offline' ? '离线(已存本地)' : '云端已同步';
+    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">${ico('cloud')} <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small data-cloud-status aria-live="polite">${label}</small></button>`;
   }
   return `<button class="cloud-pill guest" data-a="openAccount" title="登录账号以开启多平台进度云同步">${ico('user')} <b>游客模式</b><small>云同步</small></button>`;
+}
+function notifyCloudStatus(label){
+  const status = document.querySelector('[data-cloud-status]');
+  if(status && status.textContent!==label) status.textContent = label;
 }
 function updateBannerHtml(){
   const u = typeof AppUpdater !== 'undefined' && AppUpdater.available;
@@ -6734,7 +7081,7 @@ function accountPanelHtml(){
       <div class="acct-user">
         <div>当前账号：<b>${esc(CloudSync.auth.user.email)}</b> <small>（${esc(detectPlatformLabel())}）</small></div>
         <div class="btns">
-          <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>立即同步云端</button>
+          <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>${CloudSync.conflict?'处理存档差异':'立即同步云端'}</button>
           ${S?`<button class="btn ghost" data-a="cloudPushNow" ${UI.authBusy?'disabled':''}>上传本地进度到云端</button>`:''}
           <button class="btn ghost" data-a="cloudSignOut" ${UI.authBusy?'disabled':''}>退出登录</button>
         </div>
@@ -6774,7 +7121,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.1')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.2')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -7673,17 +8020,17 @@ const ACT = {
     UI.authBusy = false;
     toast(res.msg || '同步完成'); render();
   },
+  resolveConflict:async d=>{
+    const res = await CloudSync.resolveConflict(d.c);
+    if(S) UI.savePreview = makeSaveSummary(S);
+    toast(res.msg || '同步完成');
+  },
   cloudPushNow:async()=>{
     if(!S) return;
     UI.authBusy = true; render();
-    const ok = await CloudSync.pushSave(S);
+    const res = await CloudSync.syncOnLaunch(true,{preferLocal:true});
     UI.authBusy = false;
-    toast(ok?'本地存档已上传至云端':'上传失败，请检查网络'); render();
-  },
-  resolveConflict:async d=>{
-    await CloudSync.resolveConflict(d.c);
-    if(S) UI.savePreview = makeSaveSummary(S);
-    toast(d.c==='cloud'?'已加载云端存档':'已用本地存档更新云端');
+    toast(res.msg || '同步完成'); render();
   },
   offTab:d=>{ UI.offTab=d.t; render(); },
   selTrainPid:d=>{ UI.trainPid=d.p; render(); },
@@ -7733,7 +8080,7 @@ const ACT = {
   release:d=>{ UI.modal=()=>`<h3>确定与 ${esc(playerTag(P(d.p)))} 解约？</h3><p>需支付半年薪违约金（${fmtMoney(P(d.p).salary*0.5)}），选手将成为自由球员。</p><div class="btns"><button class="btn" data-a="doRelease" data-p="${esc(d.p)}">确定解约</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
   doRelease:d=>{ releasePlayer(d.p); UI.modal=null; save(); render(); },
   startEv:()=>{ startEvent(); save(); render(); },
-  offer:d=>{ UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
+  offer:d=>{ clearTimeout(UI._t); UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
   doOffer:d=>{ const p=P(d.p); const cash=p.team?offerCashNow(p):0; const r=makeOffer(d.p,cash,UI.offerGive||null); if(r.ok){ UI.modal=null; UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; save(); } toast(r.msg); render(); },
   export:()=>{ UI.modal=()=>`<h3>导出存档</h3><p>复制下面的文本保存到本地文件（.json），以后可用“导入存档”恢复。</p><textarea id="expt" readonly style="width:100%;height:200px">${esc(JSON.stringify(S))}</textarea><div class="btns"><button class="btn" data-a="copyExp">复制</button><button class="btn ghost" data-a="dlExp">下载文件</button><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); },
   copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
@@ -7882,7 +8229,16 @@ document.addEventListener('change', e=>{
 });
 document.addEventListener('input', e=>{
   const el=e.target;
-  if(el.dataset.f==='q'){ UI.mk.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-f=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },300); }
+  if(el.dataset.f==='q'){
+    UI.mk.q=el.value;
+    clearTimeout(UI._t);
+    UI._t=setTimeout(()=>{
+      if(UI.modal) return;
+      render();
+      const input = document.querySelector('[data-f=q]');
+      if(input){ input.focus(); input.setSelectionRange(input.value.length,input.value.length); }
+    },300);
+  }
   if(el.dataset.d==='q' && UI.match){ UI.match.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-d=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },220); }
   if(el.dataset.o==='cash'){
     // 只保留数字；不重绘整个弹窗，只刷新评估文字，输入框内容与光标保持原样

@@ -18,7 +18,7 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 function save(){
   if(!S) return;
   try{
-    S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
+    S._sync = makeSyncStamp();
     const txt = JSON.stringify(S);
     UI.hasSave = true;
     UI.savePreview = makeSaveSummary(S);
@@ -207,11 +207,16 @@ function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } 
 
 function cloudPillHtml(){
   const st = CloudSync.status;
+  if(st==='reauth') return `<button class="cloud-pill guest" data-a="openAccount">${ico('cloud')} <b>重新登录</b><small>进度已存本地</small></button>`;
   if(CloudSync.isLoggedIn()){
-    const label = st==='syncing' ? '同步中…' : st==='offline' ? '离线(已存本地)' : '云端已同步';
-    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">${ico('cloud')} <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small>${label}</small></button>`;
+    const label = CloudSync.conflict ? '待处理存档差异' : st==='offline' ? '离线(已存本地)' : '云端已同步';
+    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">${ico('cloud')} <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small data-cloud-status aria-live="polite">${label}</small></button>`;
   }
   return `<button class="cloud-pill guest" data-a="openAccount" title="登录账号以开启多平台进度云同步">${ico('user')} <b>游客模式</b><small>云同步</small></button>`;
+}
+function notifyCloudStatus(label){
+  const status = document.querySelector('[data-cloud-status]');
+  if(status && status.textContent!==label) status.textContent = label;
 }
 function updateBannerHtml(){
   const u = typeof AppUpdater !== 'undefined' && AppUpdater.available;
@@ -740,7 +745,7 @@ function accountPanelHtml(){
       <div class="acct-user">
         <div>当前账号：<b>${esc(CloudSync.auth.user.email)}</b> <small>（${esc(detectPlatformLabel())}）</small></div>
         <div class="btns">
-          <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>立即同步云端</button>
+          <button class="btn" data-a="cloudSyncNow" ${UI.authBusy?'disabled':''}>${CloudSync.conflict?'处理存档差异':'立即同步云端'}</button>
           ${S?`<button class="btn ghost" data-a="cloudPushNow" ${UI.authBusy?'disabled':''}>上传本地进度到云端</button>`:''}
           <button class="btn ghost" data-a="cloudSignOut" ${UI.authBusy?'disabled':''}>退出登录</button>
         </div>
@@ -780,7 +785,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.1')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.2')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -1679,17 +1684,17 @@ const ACT = {
     UI.authBusy = false;
     toast(res.msg || '同步完成'); render();
   },
+  resolveConflict:async d=>{
+    const res = await CloudSync.resolveConflict(d.c);
+    if(S) UI.savePreview = makeSaveSummary(S);
+    toast(res.msg || '同步完成');
+  },
   cloudPushNow:async()=>{
     if(!S) return;
     UI.authBusy = true; render();
-    const ok = await CloudSync.pushSave(S);
+    const res = await CloudSync.syncOnLaunch(true,{preferLocal:true});
     UI.authBusy = false;
-    toast(ok?'本地存档已上传至云端':'上传失败，请检查网络'); render();
-  },
-  resolveConflict:async d=>{
-    await CloudSync.resolveConflict(d.c);
-    if(S) UI.savePreview = makeSaveSummary(S);
-    toast(d.c==='cloud'?'已加载云端存档':'已用本地存档更新云端');
+    toast(res.msg || '同步完成'); render();
   },
   offTab:d=>{ UI.offTab=d.t; render(); },
   selTrainPid:d=>{ UI.trainPid=d.p; render(); },
@@ -1739,7 +1744,7 @@ const ACT = {
   release:d=>{ UI.modal=()=>`<h3>确定与 ${esc(playerTag(P(d.p)))} 解约？</h3><p>需支付半年薪违约金（${fmtMoney(P(d.p).salary*0.5)}），选手将成为自由球员。</p><div class="btns"><button class="btn" data-a="doRelease" data-p="${esc(d.p)}">确定解约</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
   doRelease:d=>{ releasePlayer(d.p); UI.modal=null; save(); render(); },
   startEv:()=>{ startEvent(); save(); render(); },
-  offer:d=>{ UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
+  offer:d=>{ clearTimeout(UI._t); UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
   doOffer:d=>{ const p=P(d.p); const cash=p.team?offerCashNow(p):0; const r=makeOffer(d.p,cash,UI.offerGive||null); if(r.ok){ UI.modal=null; UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; save(); } toast(r.msg); render(); },
   export:()=>{ UI.modal=()=>`<h3>导出存档</h3><p>复制下面的文本保存到本地文件（.json），以后可用“导入存档”恢复。</p><textarea id="expt" readonly style="width:100%;height:200px">${esc(JSON.stringify(S))}</textarea><div class="btns"><button class="btn" data-a="copyExp">复制</button><button class="btn ghost" data-a="dlExp">下载文件</button><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); },
   copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
@@ -1888,7 +1893,16 @@ document.addEventListener('change', e=>{
 });
 document.addEventListener('input', e=>{
   const el=e.target;
-  if(el.dataset.f==='q'){ UI.mk.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-f=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },300); }
+  if(el.dataset.f==='q'){
+    UI.mk.q=el.value;
+    clearTimeout(UI._t);
+    UI._t=setTimeout(()=>{
+      if(UI.modal) return;
+      render();
+      const input = document.querySelector('[data-f=q]');
+      if(input){ input.focus(); input.setSelectionRange(input.value.length,input.value.length); }
+    },300);
+  }
   if(el.dataset.d==='q' && UI.match){ UI.match.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-d=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },220); }
   if(el.dataset.o==='cash'){
     // 只保留数字；不重绘整个弹窗，只刷新评估文字，输入框内容与光标保持原样

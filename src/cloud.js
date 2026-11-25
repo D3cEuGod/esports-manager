@@ -37,6 +37,7 @@ function detectPlatformLabel(){
 const StorageBridge = {
   mode: isTauriApp() ? 'tauri-file' : 'browser-local',
   savePath: '',
+  _saveWrite: Promise.resolve(),
   async init(){
     if(isTauriApp()){
       try{
@@ -56,12 +57,16 @@ const StorageBridge = {
   async writeSaveText(text){
     try{ localStorage.setItem(SAVE_KEY, text); }catch(e){}
     if(isTauriApp()){
-      try{ await tauriInvoke('write_local_save', { content: text }); }catch(e){ console.warn('write_local_save failed:', e); }
+      this._saveWrite = this._saveWrite.then(async ()=>{
+        try{ await tauriInvoke('write_local_save', { content: text }); }catch(e){ console.warn('write_local_save failed:', e); }
+      });
+      await this._saveWrite;
     }
   },
   async deleteSave(){
     try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
     if(isTauriApp()){
+      await this._saveWrite;
       try{ await tauriInvoke('delete_local_save'); }catch(e){}
     }
   },
@@ -108,14 +113,43 @@ function fmtTime(ts){
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+let syncStampNo = 0;
+function makeSyncStamp(){
+  const updatedAt = Date.now();
+  const randomId = typeof crypto!=='undefined' && typeof crypto.randomUUID==='function'
+    ? crypto.randomUUID() : updatedAt.toString(36) + '-' + (++syncStampNo).toString(36) + '-' + Math.random().toString(36).slice(2);
+  return {updatedAt, device:detectPlatformLabel(), revision:randomId};
+}
+
+function saveSyncVersion(save){
+  if(!save) return null;
+  if(save._sync?.revision) return save._sync.revision;
+  // PostgREST 的 JSONB 会重排键。旧存档按内容识别，不依赖设备时钟或赛事索引。
+  const json = JSON.stringify(save, (_,v) => v && typeof v==='object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])) : v);
+  let h1 = 2166136261, h2 = 5381;
+  for(let i=0;i<json.length;i++){
+    const ch = json.charCodeAt(i);
+    h1 = Math.imul(h1^ch,16777619);
+    h2 = Math.imul(h2,33)^ch;
+  }
+  return 'legacy-' + json.length + '-' + (h1>>>0) + '-' + (h2>>>0);
+}
+
+function canApplyCloudSave(){
+  if(typeof UI!=='undefined' && (UI.match || UI.replay || UI.modal || UI.authBusy)) return false;
+  return typeof document==='undefined' || !document.activeElement?.matches?.('input,textarea,select,[contenteditable="true"]');
+}
+
 const CloudSync = {
   cfg: { url: CLOUD_DEFAULT_CFG.url, anonKey: CLOUD_DEFAULT_CFG.anonKey },
   auth: null, // { access_token, refresh_token, expires_at, user:{id, email} }
-  status: 'guest', // guest | syncing | synced | offline | unconfigured | error
+  status: 'guest', // guest | synced | offline | reauth | unconfigured
   statusText: '本地游客模式',
   lastSyncAt: null,
   conflict: null, // { localSave, localSummary, cloudSave, cloudSummary }
   _pushTimer: null,
+  _syncJob: null,
 
   isConfigured(){
     return !!(this.cfg && this.cfg.url && this.cfg.anonKey);
@@ -153,25 +187,48 @@ const CloudSync = {
       this.statusText = '游客模式（仅存本地）';
       return;
     }
-    await this.ensureValidToken();
-    if(this.isLoggedIn()){
-      await this.syncOnLaunch(false);
-    }
+    await this.syncOnLaunch(false);
   },
 
-  async ensureValidToken(){
+  async requireNewLogin(auth){
+    if(this.auth!==auth) return;
+    this.auth = null;
+    this.conflict = null;
+    this.status = 'reauth';
+    this.statusText = '登录已失效，请重新登录，进度已存本地';
+    if(typeof notifyCloudStatus==='function') notifyCloudStatus('登录失效，请重新登录');
+    await StorageBridge.writeMeta(CLOUD_AUTH_KEY,null);
+  },
+
+  async ensureValidToken(force=false){
     if(!this.isLoggedIn() || !this.isConfigured()) return false;
+    const auth = this.auth;
     const now = Math.floor(Date.now() / 1000);
-    if(this.auth.expires_at && this.auth.expires_at - now > 90) return true;
-    if(!this.auth.refresh_token) return true;
+    if(!force && auth.expires_at && auth.expires_at - now > 90) return true;
+    if(!auth.refresh_token){
+      if(force || (auth.expires_at && auth.expires_at<=now)){
+        await this.requireNewLogin(auth);
+        return false;
+      }
+      return true;
+    }
     try{
       const r = await fetch(`${this.baseUrl()}/auth/v1/token?grant_type=refresh_token`, {
         method: 'POST',
         headers: this.headers(false),
-        body: JSON.stringify({ refresh_token: this.auth.refresh_token })
+        body: JSON.stringify({ refresh_token: auth.refresh_token }),
+        signal: typeof AbortSignal!=='undefined' ? AbortSignal.timeout?.(12000) : undefined
       });
-      if(!r.ok) throw new Error('refresh failed');
-      const d = await r.json();
+      const d = await r.json().catch(()=>({}));
+      if(this.auth!==auth) return false;
+      if(!r.ok || !d.access_token){
+        const code = d.error_code || d.code || d.error;
+        if(['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired','invalid_grant'].includes(code) || r.status===401 || r.status===403){
+          await this.requireNewLogin(auth);
+          return false;
+        }
+        throw new Error('HTTP ' + r.status);
+      }
       this.auth = {
         access_token: d.access_token,
         refresh_token: d.refresh_token || this.auth.refresh_token,
@@ -181,6 +238,7 @@ const CloudSync = {
       await StorageBridge.writeMeta(CLOUD_AUTH_KEY, this.auth);
       return true;
     }catch(e){
+      if(this.auth!==auth) return false;
       this.status = 'offline';
       this.statusText = '离线（令牌待刷新）';
       return false;
@@ -306,9 +364,11 @@ const CloudSync = {
   },
 
   async signOut(){
+    clearTimeout(this._pushTimer);
+    this._pushTimer = null;
     if(this.isConfigured() && this.isLoggedIn()){
       try{
-        await fetch(`${this.baseUrl()}/auth/v1/logout`, { method:'POST', headers: this.headers(true) });
+        await fetch(`${this.baseUrl()}/auth/v1/logout?scope=local`, { method:'POST', headers: this.headers(true) });
       }catch(e){}
     }
     this.auth = null;
@@ -319,221 +379,257 @@ const CloudSync = {
     if(typeof render === 'function') render();
   },
 
-  async fetchCloudSave(){
-    if(!this.isConfigured() || !this.isLoggedIn()) return null;
-    await this.ensureValidToken();
-    const uid = encodeURIComponent(this.auth.user.id);
-    const r = await fetch(`${this.baseUrl()}/rest/v1/user_saves?user_id=eq.${uid}&select=save_data,summary,updated_at`, {
-      method: 'GET',
-      headers: this.headers(true)
+  async requestSaveRows(uid, path, options){
+    if(!await this.ensureValidToken() || this.auth?.user?.id!==uid) throw new Error('会话待刷新');
+    const send = () => fetch(this.baseUrl()+path,{
+      ...options,
+      headers:{...this.headers(true), ...options.headers},
+      signal:typeof AbortSignal!=='undefined' ? AbortSignal.timeout?.(12000) : undefined
     });
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    const rows = await r.json();
+    let r = await send();
+    let body = r.ok ? null : await r.json().catch(()=>({}));
+    if(r.status===401 && body?.code!=='42501' && await this.ensureValidToken(true) && this.auth?.user?.id===uid){
+      r = await send();
+      body = r.ok ? null : await r.json().catch(()=>({}));
+    }
+    if(!r.ok){
+      const error = new Error('云存档 HTTP ' + r.status);
+      error.code = body?.code;
+      throw error;
+    }
+    return r.json();
+  },
+
+  async fetchCloudSave(uid, metadataOnly=false){
+    const fields = metadataOnly ? 'updated_at' : 'save_data,summary,updated_at';
+    const rows = await this.requestSaveRows(uid,'/rest/v1/user_saves?user_id=eq.' + encodeURIComponent(uid) + '&select=' + fields,{
+      method:'GET'
+    });
     return Array.isArray(rows) && rows.length ? rows[0] : null;
   },
 
-  async pushSave(saveObj){
-    if(!saveObj || !this.isConfigured() || !this.isLoggedIn()) return false;
-    this.status = 'syncing';
-    this.statusText = '正在同步云端…';
-    if(typeof render === 'function') render();
-    try{
-      await this.ensureValidToken();
-      const summary = makeSaveSummary(saveObj);
-      const body = {
-        user_id: this.auth.user.id,
-        save_data: saveObj,
-        summary,
-        updated_at: new Date(summary.updatedAt).toISOString()
-      };
-      const r = await fetch(`${this.baseUrl()}/rest/v1/user_saves?on_conflict=user_id`, {
-        method: 'POST',
-        headers: Object.assign({}, this.headers(true), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
-        body: JSON.stringify(body)
-      });
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      this.status = 'synced';
-      this.lastSyncAt = Date.now();
-      this.statusText = '云端已同步';
-      if(typeof render === 'function') render();
-      return true;
-    }catch(e){
-      console.warn('Cloud push failed:', e);
-      this.status = 'offline';
-      this.statusText = '离线（已存本地）';
-      if(typeof render === 'function') render();
-      return false;
-    }
+  async writeCloudSave(uid, save, observed){
+    const updated = Date.parse(observed?.updated_at) || 0;
+    const updatedAt = new Date(Math.max(Date.now(),updated+1)).toISOString();
+    const body = JSON.stringify({user_id:uid, save_data:save, summary:makeSaveSummary(save), updated_at:updatedAt});
+    const path = '/rest/v1/user_saves?select=updated_at&';
+    const where = observed
+      ? 'user_id=eq.' + encodeURIComponent(uid) + '&updated_at=eq.' + encodeURIComponent(observed.updated_at)
+      : 'on_conflict=user_id';
+    const prefer = observed ? 'return=representation' : 'resolution=ignore-duplicates,return=representation';
+    const rows = await this.requestSaveRows(uid,path+where,{
+      method:observed?'PATCH':'POST',
+      headers:{Prefer:prefer},
+      body
+    });
+    return rows[0]?.updated_at || null;
   },
 
   schedulePush(saveObj){
     if(!saveObj || !this.isConfigured() || !this.isLoggedIn()) return;
     clearTimeout(this._pushTimer);
-    this._pushTimer = setTimeout(()=>{ this.pushSave(saveObj); }, 1400);
+    this._pushTimer = setTimeout(()=>{
+      this._pushTimer = null;
+      this.syncOnLaunch(false);
+    }, 1400);
   },
 
-  async syncOnLaunch(interactive){
-    if(!this.isConfigured() || !this.isLoggedIn()) return { ok:false };
-    this.status = 'syncing';
-    this.statusText = '检查云端进度…';
-    if(typeof render === 'function') render();
-    try{
-      const row = await this.fetchCloudSave();
-      const hasLocal = !!S;
-      const hasCloud = !!(row && row.save_data);
+  async localCloudSave(){
+    if(S) return S;
+    const raw = await StorageBridge.readSaveText();
+    if(S) return S;
+    try{ return raw ? JSON.parse(raw) : null; }
+    catch(e){ return null; }
+  },
 
-      if(!hasLocal && hasCloud){
-        S = migrateSave(row.save_data);
-        await StorageBridge.writeSaveText(JSON.stringify(S));
-        this.status = 'synced';
-        this.lastSyncAt = Date.now();
-        this.statusText = '已从云端恢复';
-        if(typeof render === 'function') render();
-        return { ok:true, msg:'已自动加载云端存档！' };
-      }
-      if(hasLocal && !hasCloud){
-        await this.pushSave(S);
-        return { ok:true, msg:'已将当前本地进度绑定并上传至云端！' };
-      }
-      if(hasLocal && hasCloud){
-        const localTs = (S._sync && S._sync.updatedAt) || 0;
-        const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
-        const sameProgress = Math.abs(localTs - cloudTs) <= 5000 && S.user === row.save_data.user && S.year === row.save_data.year && S.evIdx === row.save_data.evIdx;
-        if(sameProgress){
-          this.status = 'synced';
-          this.lastSyncAt = Date.now();
-          this.statusText = '云端已同步';
-          if(typeof render === 'function') render();
-          return { ok:true, msg:'本地与云端进度一致！' };
-        }
-        // 两端存在实质差异：弹出冲突对比框，绝不悄悄覆盖！
-        this.conflict = {
-          localSave: S,
-          localSummary: makeSaveSummary(S),
-          cloudSave: migrateSave(row.save_data),
-          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
-        };
-        this.status = 'synced';
-        this.statusText = '检测到多端进度差异';
-        if(typeof openConflictModal === 'function') openConflictModal();
-        else if(typeof render === 'function') render();
-        return { ok:true, msg:'检测到云端与本地存档不同，请选择保留哪一份' };
-      }
-      this.status = 'synced';
-      this.statusText = '云端已连接';
-      if(typeof render === 'function') render();
-      return { ok:true };
-    }catch(e){
-      console.warn('syncOnLaunch failed:', e);
-      this.status = 'offline';
-      this.statusText = '离线模式（本地可用）';
-      if(typeof render === 'function') render();
-      return { ok:false, msg:'暂无法连接云端，已使用本地存档' };
+  async markCloudBase(uid, localVersion, cloudTime, label){
+    if(this.auth?.user?.id!==uid) return;
+    await StorageBridge.writeMeta('rift-sync-v2-'+uid,{localVersion,cloudTime});
+    if(this.auth?.user?.id!==uid) return;
+    this.conflict = null;
+    this.markCloudSynced(label);
+  },
+
+  markCloudSynced(label){
+    this.status = 'synced';
+    this.lastSyncAt = Date.now();
+    this.statusText = label;
+    if(typeof notifyCloudStatus==='function') notifyCloudStatus('云端已同步');
+  },
+
+  async applyCloudSave(uid, row){
+    if(this.auth?.user?.id!==uid) return {ok:false};
+    S = migrateSave(row.save_data);
+    const version = saveSyncVersion(S);
+    const stored = StorageBridge.writeSaveText(JSON.stringify(S));
+    this.conflict = null;
+    this.markCloudSynced('已同步云端最新进度');
+    if(typeof UI!=='undefined'){
+      UI.hasSave = true;
+      UI.savePreview = makeSaveSummary(S);
     }
+    if(typeof render==='function') render();
+    await stored;
+    await this.markCloudBase(uid,version,row.updated_at,'已同步云端最新进度');
+    return {ok:true, msg:'已同步云端最新进度'};
+  },
+
+  async reconcileCloud(uid, interactive, preferLocal, retry=true){
+    const base = await StorageBridge.readMeta('rift-sync-v2-'+uid);
+    let row = await this.fetchCloudSave(uid,!!base);
+    const remoteUnchanged = !!(base && row && row.updated_at===base.cloudTime);
+    let local = await this.localCloudSave();
+    if(row && base && (!remoteUnchanged || !local)){
+      if(!interactive && !canApplyCloudSave()) return {ok:true,deferred:true,msg:'将在当前操作结束后同步'};
+      row = await this.fetchCloudSave(uid);
+      local = await this.localCloudSave();
+    }
+    if(this.auth?.user?.id!==uid) return {ok:false};
+    const version = saveSyncVersion(local);
+
+    if(!row && !local){
+      this.markCloudSynced('云端已连接');
+      return {ok:true, msg:'云端已连接'};
+    }
+    if(row && row.save_data && version===saveSyncVersion(row.save_data)){
+      await this.markCloudBase(uid,version,row.updated_at,'云端已同步');
+      return {ok:true, msg:'本地与云端进度一致'};
+    }
+    if(local && remoteUnchanged && row?.updated_at===base.cloudTime && version===base.localVersion){
+      this.markCloudSynced('云端已同步');
+      return {ok:true, msg:'本地与云端进度一致'};
+    }
+    if(local && (!row || (remoteUnchanged && row.updated_at===base.cloudTime))){
+      const time = await this.writeCloudSave(uid,local,row);
+      if(!time){
+        return retry ? this.reconcileCloud(uid,interactive,preferLocal,false) : {ok:false,msg:'云端刚有更新，将自动重试'};
+      }
+      await this.markCloudBase(uid,version,time,'云端已同步');
+      return {ok:true, msg:'已自动上传本地进度'};
+    }
+
+    if(!interactive && !canApplyCloudSave()) return {ok:true,deferred:true,msg:'将在当前操作结束后同步'};
+    if(!local || (!preferLocal && base && version===base.localVersion)){
+      return this.applyCloudSave(uid,row);
+    }
+
+    const alreadyReported = this.conflict?.cloudTime===row.updated_at;
+    this.conflict = {
+      localSave:local, localSummary:makeSaveSummary(local),
+      cloudSave:row.save_data, cloudTime:row.updated_at,
+      cloudSummary:{...makeSaveSummary(row.save_data), ...(row.summary||{})}
+    };
+    this.statusText = '检测到多端进度差异';
+    if(interactive && typeof openConflictModal==='function') openConflictModal();
+    else if(!alreadyReported && typeof notifyCloudStatus==='function') notifyCloudStatus('待处理存档差异');
+    return {ok:true,msg:'检测到多端进度差异，请选择要保留的存档'};
+  },
+
+  async syncOnLaunch(interactive, {preferLocal=false}={}){
+    if(!this.isConfigured() || !this.isLoggedIn()) return {ok:false,msg:this.status==='reauth' ? this.statusText : '请先登录云存档账号'};
+    if(this._resolving) return {ok:false,msg:'正在处理存档差异'};
+    const uid = this.auth.user.id;
+    if(this._syncJob){
+      const job = this._syncJob;
+      const result = await job.promise;
+      if(job.uid!==uid || preferLocal || (interactive && result.deferred)) return this.syncOnLaunch(interactive,{preferLocal});
+      if(interactive && this.conflict && typeof openConflictModal==='function') openConflictModal();
+      return result;
+    }
+    const job = {uid};
+    this._syncJob = job;
+    job.promise = this.reconcileCloud(uid,interactive,preferLocal).catch(e=>{
+      if(this.status==='reauth' && !this.isLoggedIn()) return {ok:false,msg:this.statusText};
+      const msg = ['42501','PGRST205','42P01'].includes(e.code)
+        ? '云端存档接口不可用，进度已存本地'
+        : '暂无法连接云端，将自动重试';
+      if(this.auth?.user?.id===uid){
+        console.warn('Cloud sync failed:', e);
+        this.status = 'offline';
+        this.statusText = msg;
+        if(typeof notifyCloudStatus==='function') notifyCloudStatus('离线(已存本地)');
+      }
+      return {ok:false,msg};
+    }).finally(()=>{
+      if(this._syncJob===job) this._syncJob = null;
+    });
+    return job.promise;
   },
 
   async resolveConflict(choice){
-    if(!this.conflict) return;
-    if(choice === 'cloud'){
-      S = migrateSave(this.conflict.cloudSave);
-      await StorageBridge.writeSaveText(JSON.stringify(S));
-      this.status = 'synced';
-      this.lastSyncAt = Date.now();
-      this.statusText = '已加载云端进度';
-    } else if(choice === 'local'){
-      S = this.conflict.localSave;
-      S._sync = { updatedAt: Date.now(), device: detectPlatformLabel() };
-      await StorageBridge.writeSaveText(JSON.stringify(S));
-      await this.pushSave(S);
+    if(!this.conflict || !this.isLoggedIn() || this._resolving) return {ok:false,msg:'没有待处理的存档差异'};
+    this._resolving = true;
+    const uid = this.auth.user.id;
+    let advanced = false;
+    try{
+      if(this._syncJob) await this._syncJob.promise;
+      if(this.auth?.user?.id!==uid) return {ok:false,msg:'账号状态已变化'};
+      const pending = this.conflict;
+      if(!pending) return {ok:true,msg:'本地与云端已同步'};
+      const remote = await this.fetchCloudSave(uid,true);
+      if(remote?.updated_at!==pending.cloudTime){
+        advanced = true;
+      } else if(choice==='cloud'){
+        if(typeof UI!=='undefined') UI.modal = null;
+        return await this.applyCloudSave(uid,{save_data:pending.cloudSave,updated_at:pending.cloudTime});
+      } else if(choice==='local'){
+        const save = await this.localCloudSave();
+        const version = saveSyncVersion(save);
+        const time = await this.writeCloudSave(uid,save,remote);
+        if(time){
+          await this.markCloudBase(uid,version,time,'已用本地进度更新云端');
+          if(typeof UI!=='undefined') UI.modal = null;
+          if(typeof render==='function') render();
+          return {ok:true,msg:'已用本地进度更新云端'};
+        }
+        advanced = true;
+      }
+    }catch(e){
+      return {ok:false,msg:'暂无法连接云端，请稍后重试'};
+    }finally{
+      this._resolving = false;
     }
-    this.conflict = null;
-    if(typeof UI !== 'undefined'){ UI.modal = null; }
-    if(typeof render === 'function') render();
+    if(advanced){
+      this.conflict = null;
+      if(typeof UI!=='undefined') UI.modal = null;
+      return this.syncOnLaunch(true);
+    }
+    return {ok:false,msg:'请选择要保留的存档'};
   },
 
-  // 自动双向云同步：切回前台/重连网络/定时静默检查云端更新，切走前台时立即冲刷待上传存档
   _autoStarted: false,
-  _lastPullCheck: 0,
   _autoTimer: null,
   startAutoSync(){
     if(this._autoStarted) return;
     this._autoStarted = true;
-    const tryPull = () => {
-      if(!this.isConfigured() || !this.isLoggedIn() || this.conflict) return;
-      if(typeof UI !== 'undefined' && (UI.match || UI.modal || UI.replay)) return;
-      if(typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-      if(Date.now() - this._lastPullCheck < 20000) return;
-      this.backgroundPullCheck();
+    const trySync = () => {
+      if(typeof document!=='undefined' && document.visibilityState==='hidden') return;
+      if(this.isLoggedIn()) this.syncOnLaunch(false);
     };
-    if(typeof document !== 'undefined' && document.addEventListener){
-      document.addEventListener('visibilitychange', ()=>{
-        if(document.visibilityState === 'hidden'){
-          if(this._pushTimer && S && this.isLoggedIn()){
-            clearTimeout(this._pushTimer); this._pushTimer = null;
-            this.pushSave(S);
+    if(typeof document!=='undefined' && document.addEventListener){
+      document.addEventListener('visibilitychange',()=>{
+        if(document.visibilityState==='hidden'){
+          if(this._pushTimer){
+            clearTimeout(this._pushTimer);
+            this._pushTimer = null;
+            this.syncOnLaunch(false);
           }
-        } else {
-          tryPull();
-        }
+        } else trySync();
       });
     }
-    if(typeof window !== 'undefined' && window.addEventListener){
-      window.addEventListener('focus', tryPull);
-      window.addEventListener('online', ()=>{
-        if(this.isLoggedIn()){
-          if(S && this.status === 'offline') this.pushSave(S);
-          else tryPull();
-        }
+    if(typeof window!=='undefined' && window.addEventListener){
+      window.addEventListener('focus',trySync);
+      window.addEventListener('online',()=>{
+        if(this.isLoggedIn()) this.syncOnLaunch(false);
       });
     }
-    this._autoTimer = setInterval(tryPull, 90000);
-  },
-
-  async backgroundPullCheck(){
-    if(!this.isConfigured() || !this.isLoggedIn() || this.status === 'syncing') return;
-    this._lastPullCheck = Date.now();
-    try{
-      const row = await this.fetchCloudSave();
-      if(!row || !row.save_data) return;
-      const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
-      if(!S){
-        S = migrateSave(row.save_data);
-        await StorageBridge.writeSaveText(JSON.stringify(S));
-        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
-        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '已自动同步云端存档';
-        if(typeof render === 'function') render();
-        return;
-      }
-      const localTs = (S._sync && S._sync.updatedAt) || 0;
-      if(cloudTs <= localTs + 5000) return;
-      // 如果本地在最后一次同步后没有新改动，说明是其他设备推进了进度 -> 无感自动拉新
-      const localDirty = this.lastSyncAt > 0 && localTs > this.lastSyncAt + 2000;
-      if(!localDirty){
-        S = migrateSave(row.save_data);
-        await StorageBridge.writeSaveText(JSON.stringify(S));
-        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
-        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '云端已自动更新';
-        if(typeof toast === 'function') toast('已自动拉取云端最新存档进度');
-        else if(typeof render === 'function') render();
-      } else {
-        this.conflict = {
-          localSave: S,
-          localSummary: makeSaveSummary(S),
-          cloudSave: migrateSave(row.save_data),
-          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
-        };
-        this.statusText = '检测到多端进度差异';
-        if(typeof openConflictModal === 'function') openConflictModal();
-      }
-    }catch(e){
-      // 静默容错，不打扰游玩
-    }
+    this._autoTimer = setInterval(trySync,15000);
   }
 };
 
 // ================= 云端版本自动更新检测 =================
 window.AppUpdater = {
-  currentVersion: '2.1.1',
+  currentVersion: '2.1.2',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null,

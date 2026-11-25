@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "峡谷经理人",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "identifier": "com.d3ceugod.riftmanager",
   "build": {
     "beforeBuildCommand": "python build_web.py",

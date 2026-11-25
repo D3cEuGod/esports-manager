@@ -11,8 +11,9 @@ grill-me 的位置：
 
 来源：github.com/mattpocock/skills（grilling / grill-me，MIT）。
 
-## 分工
+## 分工与模型调度
 
+- **收集信息等工作都交给低消耗模型子代理去做**（如检索目录、扫描代码结构、收集名单与数据事实）；**高消耗模型只负责搭建游戏、分析数据、写代码**。
 - **Codex 负责比赛内核**：`src/sim.js`、`src/engine.js`、`data/traits/`、`tests/`。
 - **Claude 负责界面与前端**：`src/ui.js`、`src/watch.js`、`src/style.css`、`src/index.tpl.html`、打包脚本（`build_web.py` / `build.sh`）与桌面端（`src-tauri/`、`scripts/`）。
 - 跨边界的改动（回放数据格式、`playGame` / `simSolo1v1` 返回字段、`watch.js` 读取的状态字段）要在 PR 描述里写明“接口变更”。接口清单见 `docs/CODEX_KERNEL_REVIEW.md`。

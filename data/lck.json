@@ -14,7 +14,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": 27,
-     "rating": 88,
+     "rating": 89,
      "sub": false
     },
     {
@@ -32,7 +32,7 @@
      "role": "MID",
      "nat": "KR",
      "age": 25,
-     "rating": 94,
+     "rating": 93,
      "sub": false
     },
     {
@@ -50,7 +50,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 24,
-     "rating": 80,
+     "rating": 84,
      "sub": false
     }
    ]
@@ -85,7 +85,7 @@
      "role": "MID",
      "nat": "KR",
      "age": 30,
-     "rating": 92,
+     "rating": 91,
      "sub": false
     },
     {
@@ -103,7 +103,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 24,
-     "rating": 93,
+     "rating": 92,
      "sub": false
     }
    ]
@@ -120,7 +120,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": 22,
-     "rating": 89,
+     "rating": 90,
      "sub": false
     },
     {
@@ -156,7 +156,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 23,
-     "rating": 82,
+     "rating": 87,
      "sub": false
     }
    ]
@@ -173,7 +173,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": 21,
-     "rating": 78,
+     "rating": 81,
      "sub": false
     },
     {
@@ -182,7 +182,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": 22,
-     "rating": 81,
+     "rating": 84,
      "sub": false
     },
     {
@@ -200,7 +200,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": 21,
-     "rating": 80,
+     "rating": 81,
      "sub": false
     },
     {
@@ -209,7 +209,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 22,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     }
    ]
@@ -226,7 +226,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": 21,
-     "rating": 78,
+     "rating": 79,
      "sub": false
     },
     {
@@ -235,7 +235,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": 26,
-     "rating": 82,
+     "rating": 84,
      "sub": false
     },
     {
@@ -244,7 +244,7 @@
      "role": "MID",
      "nat": "KR",
      "age": 29,
-     "rating": 83,
+     "rating": 89,
      "sub": false
     },
     {
@@ -253,7 +253,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": 27,
-     "rating": 81,
+     "rating": 85,
      "sub": false
     },
     {
@@ -262,7 +262,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 21,
-     "rating": 74,
+     "rating": 76,
      "sub": false
     },
     {
@@ -297,7 +297,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": 22,
-     "rating": 78,
+     "rating": 79,
      "sub": false
     },
     {
@@ -315,7 +315,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": 21,
-     "rating": 77,
+     "rating": 80,
      "sub": false
     },
     {
@@ -324,7 +324,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 26,
-     "rating": 78,
+     "rating": 79,
      "sub": false
     },
     {
@@ -350,7 +350,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": 26,
-     "rating": 78,
+     "rating": 80,
      "sub": false
     },
     {
@@ -368,7 +368,7 @@
      "role": "MID",
      "nat": "KR",
      "age": 28,
-     "rating": 82,
+     "rating": 83,
      "sub": false
     },
     {
@@ -386,7 +386,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 27,
-     "rating": 80,
+     "rating": 83,
      "sub": false
     },
     {
@@ -430,7 +430,7 @@
      "role": "MID",
      "nat": "KR",
      "age": 21,
-     "rating": 81,
+     "rating": 82,
      "sub": false
     },
     {
@@ -501,7 +501,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": 27,
-     "rating": 80,
+     "rating": 81,
      "sub": false
     },
     {

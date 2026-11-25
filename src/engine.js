@@ -18,10 +18,33 @@ const playerTag = p => p ? (p.tag || p.pid) : '—';
 const AGE_FIX = {"Faker": 30, "Ruler": 28, "Chovy": 25, "Canyon": 25, "Kiin": 27, "Keria": 24, "Oner": 24, "Peyz": 21, "Doran": 26, "Zeus": 22, "Gumayusi": 24, "Kanavi": 26, "Zeka": 24, "ShowMaker": 26, "Viper": 26, "Bin": 23, "knight": 26, "XUN": 24, "ON": 23, "Flandre": 28, "Tarzan": 27, "Shanks": 25, "369": 25, "Tian": 26, "JackeyLove": 26, "Creme": 23, "TheShy": 26, "Rookie": 29, "Wei": 23, "Meiko": 28, "Xiaohu": 28, "Elk": 25, "Jiejie": 25, "GALA": 25, "Caps": 27, "BrokenBlade": 26, "Hans Sama": 27, "CoreJJ": 32, "Inspired": 24, "Berserker": 23, "Scout": 28, "Lehends": 28, "Bdd": 27, "Aiming": 26, "Cuzz": 27, "Pyosik": 26, "Teddy": 28, "Kingen": 26, "Lucid": 22, "Delight": 24, "Mikyx": 28, "Upset": 26, "Razork": 26, "Elyoya": 26, "Wunder": 28, "Blaber": 26, "Zven": 29, "Impact": 31, "Missing": 25, "Kael": 24, "Hope": 24, "Rich": 29, "Clozer": 23, "deokdam": 26, "Fisher": 22, "Duro": 24, "Kellin": 25, "Clear": 24, "Raptor": 22, "BuLLDoG": 22, "Croco": 26, "Breathe": 24, "Leave": 25, "Assum": 26, "Carzzy": 24, "Labrov": 24, "Canna": 26, "Busio": 22, "Jojopyun": 21, "Josedeodo": 26}; // 部分知名选手2026年龄（按出生年估算）
 let S = null; // 全局存档状态
 
+// ================= 英雄熟练度五档体系（0~100 连续经验值） =================
+// 0~24 生疏 | 25~44 略懂 | 45~64 熟练(✦) | 65~84 精通(◆) | 85~100 招牌(👑)
+function profTier(val){
+  const v = val || 0;
+  if(v >= 85) return { tier:4, name:'招牌', icon:'👑', cls:'sig', bonus: 5.0 };
+  if(v >= 65) return { tier:3, name:'精通', icon:'◆',  cls:'mas', bonus: 3.6 };
+  if(v >= 45) return { tier:2, name:'熟练', icon:'✦',  cls:'pro', bonus: 2.2 };
+  if(v >= 25) return { tier:1, name:'略懂', icon:'',   cls:'fam', bonus: 0.6 };
+  return { tier:0, name:'生疏', icon:'', cls:'raw', bonus: -1.4 };
+}
+function migrateChampProf(rawP){
+  if(typeof rawP !== 'number' || isNaN(rawP)) return 35;
+  // 旧存档兼容：旧版 p 为 1~5 小整数档位，平滑映射到 0~100 连续值
+  if(rawP <= 6){
+    if(rawP >= 5) return 90;
+    if(rawP >= 4) return 74;
+    if(rawP >= 3) return 56;
+    if(rawP >= 2) return 38;
+    return 22;
+  }
+  return clamp(Math.round(rawP), 5, 100);
+}
+
 // ================= 存档向下兼容迁移 =================
 function migrateSave(s){
   if(!s || typeof s!=='object') return s;
-  s.ver = 2;
+  s.ver = 3;
   s.meta = s.meta || {};
   for(const k of CHAMP_KEYS){
     if(s.meta[k]==null){ const x=rnd(); s.meta[k] = x<0.08?2 : x<0.25?1 : x<0.8?0 : -1; }
@@ -36,8 +59,9 @@ function migrateSave(s){
       if(typeof p.form!=='number' || isNaN(p.form)) p.form = 0;
       if(typeof p.mental!=='number' || isNaN(p.mental)) p.mental = 0;
       if(!Array.isArray(p.champs)) p.champs = [];
-      p.champs = p.champs.filter(x=>x && CH[x.c]);
+      p.champs = p.champs.filter(x=>x && CH[x.c]).map(x=>({ c:x.c, p:migrateChampProf(x.p) }));
       if(!p.champs.length) genChampPool(p, srand(hash(p.pid)));
+      if(!Array.isArray(p.trainTargets)) p.trainTargets = [];
     });
   }
   return s;
@@ -101,8 +125,11 @@ function newGame(userTeam){
 function genChampPool(pl, r){
   r = r || rnd;
   const pool = CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
-  const sorted = pool.map(k=>[k, (CH[k].roles[0]===pl.role?0.35:0)+r()]).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  pl.champs = sorted.map(([c],i)=>({c, p: i<2?5:i<4?3:2}));
+  const depth = (pl.rating||70)>=86 ? 8 : 7;
+  const sorted = pool.map(k=>[k, (CH[k].roles[0]===pl.role?0.35:0)+r()]).sort((a,b)=>b[1]-a[1]).slice(0, depth);
+  const baseVals = [92, 87, 74, 68, 56, 48, 36, 30];
+  pl.champs = sorted.map(([c],i)=>({c, p: clamp(Math.round((baseVals[i]||32) + (r()-0.5)*6), 25, 98)}));
+  pl.trainTargets = pl.trainTargets || [];
 }
 const RK_A=['Shy','Lin','Kai','Ming','Zero','Neo','Hao','Yun','Feng','Bai','Leo','Qing','Ace','Mist','Ray','Tian','Sky','Jin','Rin','Sol','Xia','Lan','Mo','Chen','Yu','Nova','Rex','Hex','Ark','Vex'];
 const RK_B=['','x','o','7','in','er','yu','ze','ki','an','99','ly','Q','zz','ra'];
@@ -116,9 +143,56 @@ function genRookie(year, forceRole, forceNat){
   pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl);
   S.players[id]=pl; return pl;
 }
-function newPatch(){
-  S.meta = {};
-  for(const k of CHAMP_KEYS){ const x=rnd(); S.meta[k] = x<0.08?2 : x<0.25?1 : x<0.8?0 : -1; }
+// 生成版本更新详情（用于赛季末前瞻日志与新版本播报）
+function describeChampBuff(k, isBuff){
+  const ch = CH[k]; if(!ch) return isBuff ? '综合属性上调' : '基础数值回调';
+  const tags = ch.tags || [], roles = ch.roles || [];
+  if(isBuff){
+    if(roles.includes('JUG') && tags.includes('early')) return '前期基础伤害与清野效率上调，野区入侵与控图节奏增强';
+    if(roles.includes('ADC') && tags.includes('scale')) return '成长攻速与暴击收益提升，大后期团战接管能力显著强化';
+    if(tags.includes('engage') && (roles.includes('SUP')||roles.includes('TOP'))) return '基础双抗与先手技能容错率提高，中期开团威胁上升';
+    if(tags.includes('poke')) return '核心消耗技能冷却缩短且蓝耗降低，对线压制与团前消耗加强';
+    if(tags.includes('pick')) return '爆发连招伤害系数优化，抓单与切入后排威慑力提升';
+    if(tags.includes('split')) return '边带单挑与拆塔收益上调，单带牵制力大幅增强';
+    if(tags.includes('protect')) return '护盾/治疗与反手保护数值提升，保核体系契合度提高';
+    return '基础属性与核心技能成长加强，整体对局强度上升';
+  } else {
+    if(tags.includes('early')) return '前期基础伤害与换血能力下调，滚雪球难度增加';
+    if(tags.includes('scale')) return '后期技能加成系数微调回落，成型期有所延后';
+    if(tags.includes('engage')) return '大招冷却时间延长，连续开团频率降低';
+    return '基础生命值与护甲微调下调，对线容错率降低';
+  }
+}
+
+function generatePatchData(oldMeta, nextVerLabel){
+  const meta = {};
+  for(const k of CHAMP_KEYS){ const x=rnd(); meta[k] = x<0.09?2 : x<0.27?1 : x<0.80?0 : -1; }
+  const buffs = [], nerfs = [];
+  for(const k of CHAMP_KEYS){
+    const prev = oldMeta && oldMeta[k]!=null ? oldMeta[k] : 0;
+    const cur = meta[k];
+    if(cur >= 1 && cur > prev) buffs.push({ c:k, to:cur, desc: describeChampBuff(k, true) });
+    else if(cur <= 0 && prev >= 1 && cur < prev) nerfs.push({ c:k, to:cur, desc: describeChampBuff(k, false) });
+  }
+  buffs.sort((a,b)=>(b.to - a.to) || (rnd()-0.5));
+  nerfs.sort((a,b)=>(a.to - b.to) || (rnd()-0.5));
+  return {
+    ver: nextVerLabel,
+    meta,
+    buffs: buffs.slice(0, 9),
+    nerfs: nerfs.slice(0, 6)
+  };
+}
+
+function newPatch(precomputed){
+  if(precomputed && precomputed.meta){
+    S.meta = Object.assign({}, precomputed.meta);
+    S.lastPatchNotes = precomputed;
+  } else {
+    const pData = generatePatchData(S.meta, `${S.year%100}.${S.patchNo+1}`);
+    S.meta = pData.meta;
+    S.lastPatchNotes = pData;
+  }
   S.patchNo++;
 }
 const teamName = k => { const t=S.teams[k]; return t? t.short : k; };
@@ -146,11 +220,12 @@ function initialForm(tag){
 }
 // 把数值变化限制在“最多跨一档”
 function stepTier(oldV, newV){
-  const ot = tierOf(oldV); let nv = clamp(newV, -5, 5);
+  const ot = tierOf(oldV);
+  const nv = Math.round(clamp(newV, -5, 5)*100)/100;
   const nt = tierOf(nv);
-  if(nt > ot+1) nv = TIER_HI[String(ot+1)];
-  if(nt < ot-1) nv = TIER_LO[String(ot-1)];
-  return Math.round(nv*100)/100;
+  if(nt > ot+1) return TIER_HI[String(ot+1)];
+  if(nt < ot-1) return TIER_LO[String(ot-1)];
+  return nv;
 }
 // 隐藏特质：stab 稳定性（波动倍率，越低越稳）、big 大赛系数、ko 淘汰赛系数（能力点）、res 抗压（心态韧性倍率）、base 历来表现基线
 const _trCache = {};
@@ -317,15 +392,49 @@ function signPlayer(pid,key,salary,contract){
   if(!T(key).roster.includes(pid)) T(key).roster.push(pid);
 }
 
-// ================= BP / 阵容分析 / 比赛模拟 =================
+// ================= BP / 阵容分析 / 非本位奇招平衡 =================
+const IMMOBILE_MELEE_TOPS = new Set(['Sion','Ornn',"K'Sante","Cho'Gath",'Mordekaiser','Malphite','Maokai','Udyr','Volibear','Zac','Poppy','Skarner','Trundle','Tahm Kench','Sion','Shen']);
+const RANGED_TOP_FLEX = new Set(['Lucian','Tristana','Kalista','Ezreal','Varus','Caitlyn','Smolder','Ashe','Draven','Ryze','Cassiopeia','Viktor','Azir','Neeko']);
+const MID_FLEX_POOL = new Set(['Lucian','Ezreal','Varus','Caitlyn','Renekton',"K'Sante",'Sion','Ornn','Sejuani','Maokai','Gwen','Camille','Jax','Riven']);
+
+function offRoleKind(c, assignedRole){
+  const ch = CH[c]; if(!ch) return { kind:'mismatch', basePen:-2.3 };
+  if(ch.roles.includes(assignedRole)) return { kind:'native', basePen:0 };
+  if(assignedRole==='ADC' && ch.dmg==='AP' && (ch.roles.includes('MID') || ch.tags.includes('poke') || ch.tags.includes('scale'))){
+    return { kind:'apc_bot', basePen:-0.75 };
+  }
+  if(assignedRole==='TOP' && (RANGED_TOP_FLEX.has(c) || ch.roles.includes('ADC'))){
+    return { kind:'ranged_top', basePen:-1.05 };
+  }
+  if(assignedRole==='MID' && MID_FLEX_POOL.has(c)){
+    return { kind:'flex_mid', basePen:-0.95 };
+  }
+  if(assignedRole==='SUP' && (ch.tags.includes('engage') || ch.tags.includes('pick') || ch.tags.includes('poke'))){
+    return { kind:'flex_sup', basePen:-1.2 };
+  }
+  if(assignedRole==='JUG' && (ch.tags.includes('engage') || ch.roles.includes('TOP'))){
+    return { kind:'flex_jug', basePen:-1.6 };
+  }
+  return { kind:'mismatch', basePen:-2.3 };
+}
+
+function champProfVal(p, c){
+  if(!p || !Array.isArray(p.champs)) return 0;
+  const e = p.champs.find(x=>x.c===c);
+  return e ? migrateChampProf(e.p) : 0;
+}
+
 function champFit(p, c, assignedRole){
-  if(!p || !c || !CH[c]) return -6;
-  const e=p.champs.find(x=>x.c===c);
-  let f = e? e.p : -1.5;
-  f += (S.meta[c]||0)*0.95;
+  if(!p || !c || !CH[c]) return -5;
+  const pv = champProfVal(p, c);
+  let f = profTier(pv).bonus;
+  // 同档位内部微调（让熟练度经验增长也能平滑体现细微收益）
+  if(pv >= 25) f += ((pv - 25) / 75) * 0.45;
+  f += (S.meta[c]||0) * 0.95;
   const r = assignedRole || p.role;
-  if(!CH[c].roles.includes(r)) f -= 4.5;
-  if(p.role !== r) f -= 2.0;
+  const off = offRoleKind(c, r);
+  f += off.basePen;
+  if(p.role !== r) f -= 1.5;
   return f;
 }
 function compInfo(champs){
@@ -352,7 +461,7 @@ function compInfo(champs){
 const STYLE_CN={engage:'开团',poke:'消耗',scale:'后期',pick:'抓单',early:'前期'};
 // 克制：开团>消耗>后期>开团；前期>后期；抓单>消耗
 function styleEdge(a,b){
-  const beats={engage:['poke'],poke:['scale','pick'],scale:['engage'],early:['scale'],pick:['poke']};
+  const beats={engage:['poke'],poke:['scale'],scale:['engage'],early:['scale'],pick:['poke']};
   if((beats[a]||[]).includes(b)) return 0.9;
   if((beats[b]||[]).includes(a)) return -0.9;
   return 0;
@@ -425,10 +534,9 @@ function canPickChamp(d, side, c){
   const open = openRolesFor(d, side);
   if(!open.length) return {ok:false, offrole:false, openRoles:[]};
   const onRole = open.filter(r=>CH[c].roles.includes(r));
-  if(onRole.length) return {ok:true, offrole:false, openRoles:onRole};
-  // 无畏征召第5局极端兜底：当剩余英雄中已没有任何符合空缺位置的英雄时，允许跨位强选
-  if(!hasAnyOnRoleChamp(d, side)) return {ok:true, offrole:true, openRoles:open};
-  return {ok:false, offrole:false, openRoles:[]};
+  const otherRole = open.filter(r=>!CH[c].roles.includes(r));
+  // 允许玩家自由选择非本位英雄（奇招/摇摆），默认优先推原生位置，同时保留其余空位置供切换
+  return {ok:true, offrole: onRole.length===0, openRoles: [...onRole, ...otherRole]};
 }
 
 // 摇摆位互换（允许同队任意两位置互换，包括将已选英雄挪到空位）
@@ -540,7 +648,11 @@ function aiChoose(d){
 
   for(const c of CHAMP_KEYS){
     if(un.has(c)) continue;
-    const candRoles = allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r));
+    // AI 默认选本位，或在伤害极度单一需要法核下路时考虑合理奇招
+    let candRoles = allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r));
+    if(!allowOff && myPicks.length>=3 && baseComp.ad>=3 && myOpen.includes('ADC') && offRoleKind(c,'ADC').kind==='apc_bot'){
+      candRoles = candRoles.concat('ADC');
+    }
     for(const r of candRoles){
       const nextList = myPicks.concat(c);
       const nextComp = compInfo(nextList);
@@ -626,27 +738,51 @@ function coachSuggest(d, side){
 }
 
 function draftPower(d, side){
-  const team=d[side], lu=lineupMap(team), picks=d.picks[side];
+  const opp = side==='A' ? 'B' : 'A';
+  const team=d[side], lu=lineupMap(team), picks=d.picks[side], oppPicks=d.picks[opp]||{};
   let s=0, det=[];
   let earlyP=0, midP=0, lateP=0;
+  const ci = compInfo(Object.values(picks).filter(Boolean));
+  let tacBonus = 0, tacEarly = 0;
+
   for(const r of ROLES){
     const p=lu[r], c=picks[r];
     const base = matchRating(p, r, d.ctx);
-    const fit = c? champFit(p,c,r) : 0;
+    let fit = c? champFit(p,c,r) : 0;
+    // 战术奇招情境判定：法核下路补齐 AP、长手上路压制短手坦克等
+    if(c && !CH[c].roles.includes(r)){
+      const ok = offRoleKind(c, r);
+      const otherList = ROLES.filter(x=>x!==r).map(x=>picks[x]).filter(Boolean);
+      const otherCi = compInfo(otherList);
+      if(ok.kind === 'apc_bot' && otherCi.ad >= 2.5){
+        tacBonus += 1.65;
+        if(!ci.notes.includes('法核下路奇招')) ci.notes.unshift('法核下路奇招');
+      } else if(ok.kind === 'ranged_top'){
+        const oppTop = oppPicks.TOP;
+        if(oppTop && IMMOBILE_MELEE_TOPS.has(oppTop)){
+          tacBonus += 1.85; tacEarly += 0.9;
+          if(!ci.notes.includes('长手上路压制')) ci.notes.unshift('长手上路压制');
+        } else if((ci.tags.engage||0) >= 1){
+          tacBonus += 0.7;
+        }
+      } else if(ok.kind === 'flex_mid' && CH[c].dmg==='AD' && otherCi.ap >= 2.0){
+        tacBonus += 1.25;
+        if(!ci.notes.includes('中路摇摆奇招')) ci.notes.unshift('中路摇摆奇招');
+      }
+    }
     const total = base + fit*0.85;
     s += total;
-    // 位置对前中后期权重差异：野/辅偏前期，中/上偏中期，AD/中偏后期
     earlyP += total * ({TOP:.20,JUG:.28,MID:.20,ADC:.14,SUP:.18}[r]);
     midP   += total * ({TOP:.22,JUG:.22,MID:.24,ADC:.18,SUP:.14}[r]);
     lateP  += total * ({TOP:.18,JUG:.14,MID:.24,ADC:.30,SUP:.14}[r]);
     det.push({r,p,c,fit,base});
   }
-  const ci = compInfo(Object.values(picks).filter(Boolean));
+  const tacShare = tacBonus * 0.85 / 5;
   return {
-    power: s/5 + ci.score,
-    early: earlyP + ci.early*1.1,
-    mid:   midP   + ci.mid*1.0 + ci.score*0.6,
-    late:  lateP  + ci.late*1.15 + ci.score*0.7,
+    power: s/5 + ci.score + tacShare,
+    early: earlyP + ci.early*1.1 + tacShare + tacEarly,
+    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare,
+    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8,
     comp: ci, det
   };
 }
@@ -704,17 +840,23 @@ function applyGameImpact(g, teamA, teamB){
       // 小局胜负对心态的即时影响（系列赛结束时另有更大的结算）
       const m0 = p.mental||0;
       p.mental = stepTier(m0, m0 + (won ? 0.22*tr.res : -0.3/tr.res) + randn()*0.05);
-      // 英雄熟练度积累（获胜或高 KDA 更易成长）
-      if(row.c && CH[row.c] && CH[row.c].roles.includes(p.role)){
-        const entry = p.champs.find(x=>x.c===row.c);
-        const learnChance = won ? (isMvp?0.55:0.28) : 0.08;
-        if(entry && entry.p < 5 && rnd() < learnChance){
-          entry.p = Math.min(5, entry.p + 1);
-          if(isUserTeam) impacts.push(`${playerTag(p)} 的 ${CH[row.c].cn} 熟练度提升至 ${entry.p>=5?'招牌':'熟练'}！`);
-        } else if(!entry && won && kda>=2.5 && rnd() < 0.35){
-          p.champs.push({c:row.c, p:2});
-          if(p.champs.length > 8) p.champs.sort((a,b)=>b.p-a.p).length = 8;
-          if(isUserTeam) impacts.push(`${playerTag(p)} 扩充英雄池，习得 ${CH[row.c].cn}！`);
+      // 英雄熟练度经验累积（每次出场累积熟练度数值，跨过档位线时晋升档位）
+      if(row.c && CH[row.c]){
+        p.champs = p.champs || [];
+        let entry = p.champs.find(x=>x.c===row.c);
+        const gain = Math.round(3 + (won?3:1) + clamp((kda-2)*0.9, 0, 3) + (isMvp?2:0));
+        if(entry){
+          const oldT = profTier(entry.p).tier;
+          entry.p = clamp(migrateChampProf(entry.p) + gain, 5, 100);
+          const newInfo = profTier(entry.p);
+          if(isUserTeam && newInfo.tier > oldT && newInfo.tier >= 2){
+            impacts.push(`${playerTag(p)} 的 ${CH[row.c].cn} 熟练度晋升为「${newInfo.name}」！`);
+          }
+        } else {
+          const initP = clamp(16 + gain + (CH[row.c].roles.includes(p.role)?6:0), 18, 42);
+          p.champs.push({c:row.c, p:initP});
+          if(p.champs.length > 11) p.champs.sort((a,b)=>b.p-a.p).length = 11;
+          if(isUserTeam && initP >= 25) impacts.push(`${playerTag(p)} 通过实战熟悉了 ${CH[row.c].cn}`);
         }
       }
       if(isUserTeam && isMvp) impacts.push(`${playerTag(p)} 斩获 MVP，状态 ${FORM_TIERS[formTier(p)+2]}`);
@@ -730,11 +872,9 @@ function simSeries(m, keepGames){
   const need=Math.ceil(m.bo/2); let wa=0,wb=0; const games=[]; let locked=[];
   const baseCtx = m.ctx || findMatchCtx(m) || {intl:false, ko:false};
   m.ctx = baseCtx;
-  // 首局通过 1v1 决定选边权
+  // 仅首局通过 1v1 决定选边权；此后 BO3/BO5 每打一把一律由上一局输方选边
   let chooser = simSolo1v1(m.a, m.b).winner;
   while(wa<need && wb<need){
-    // BO5 决胜局（2:2）再打一场 1v1 决定选边权
-    if(m.bo===5 && wa===2 && wb===2){ chooser = simSolo1v1(m.a, m.b).winner; }
     const other = chooser==='A'?'B':'A';
     const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked);
     const blue = sidePick==='blue' ? chooser : other;
@@ -744,7 +884,7 @@ function simSeries(m, keepGames){
     const g=playGame(d); games.push(g);
     if(g.w==='A')wa++; else wb++;
     locked = locked.concat(Object.values(g.picks.A), Object.values(g.picks.B)).filter(Boolean); // 无畏征召
-    chooser = g.w==='A'?'B':'A'; // 经典规则：上一局败者获得下一局选边权
+    chooser = g.w==='A'?'B':'A'; // 每局败者获得下一局选边权
   }
   return finishSeries(m, wa, wb, games, keepGames);
 }
@@ -1162,7 +1302,91 @@ EV.worlds = {
   }
 };
 EV.window={ init(ev){ ev.done=false; }, next(){} };
-EV.off={ init(ev){}, next(){} };
+EV.off={
+  init(ev){
+    // 进入休赛期时生成下赛季首个大版本的更新日志，供玩家定向安排选手冬训英雄池
+    if(!S.nextPatch || S.nextPatch.forYear !== S.year+1){
+      const np = generatePatchData(S.meta, `${(S.year+1)%100}.1`);
+      np.forYear = S.year + 1;
+      S.nextPatch = np;
+    }
+  },
+  next(){}
+};
+
+function ensureNextPatch(){
+  if(!S.nextPatch || S.nextPatch.forYear !== S.year+1){
+    const np = generatePatchData(S.meta, `${(S.year+1)%100}.1`);
+    np.forYear = S.year + 1;
+    S.nextPatch = np;
+  }
+  return S.nextPatch;
+}
+
+function toggleTrainChamp(pid, champKey){
+  const p = P(pid); if(!p || !CH[champKey]) return {ok:false};
+  p.trainTargets = Array.isArray(p.trainTargets) ? p.trainTargets : [];
+  const idx = p.trainTargets.indexOf(champKey);
+  if(idx >= 0){
+    p.trainTargets.splice(idx, 1);
+    return {ok:true, removed:true};
+  }
+  if(p.trainTargets.length >= 2){
+    p.trainTargets.shift();
+  }
+  p.trainTargets.push(champKey);
+  return {ok:true, added:true};
+}
+
+function evolveChampPool(p, metaTable, isOffseason){
+  p.champs = Array.isArray(p.champs) ? p.champs : [];
+  // 1. 自然遗忘衰减（老英雄长期不练会缓慢流失熟练度）
+  const baseDecay = isOffseason ? 8 : 3;
+  p.champs.forEach(e=>{
+    const d = Math.round(baseDecay + rnd() * (isOffseason ? 6 : 2));
+    e.p = Math.max(0, migrateChampProf(e.p) - d);
+  });
+  p.champs = p.champs.filter(e=>e.p >= 15);
+
+  // 2. 自动适应新版本：自发练习 1~2 个本位置英雄（倾向版本加强英雄）
+  const rolePool = CHAMP_KEYS.filter(k=>CH[k].roles.includes(p.role));
+  if(rolePool.length){
+    const nLearn = isOffseason ? (p.age<=22 ? 2 : 1 + (rnd()<0.5?1:0)) : 1;
+    const weighted = rolePool.slice().sort((a,b)=>((metaTable[b]||0)*1.3 + rnd()*2) - ((metaTable[a]||0)*1.3 + rnd()*2));
+    for(let i=0;i<nLearn && i<weighted.length;i++){
+      const c = weighted[i];
+      const gain = Math.round((isOffseason ? 18 : 8) + rnd() * (isOffseason ? 14 : 6));
+      const ex = p.champs.find(x=>x.c===c);
+      if(ex) ex.p = clamp(ex.p + gain, 15, 98);
+      else p.champs.push({c, p: clamp(22 + gain, 25, 68)});
+    }
+  }
+
+  // 3. 休赛期定向英雄池特训结算
+  const trainedNames = [];
+  if(isOffseason){
+    let targets = Array.isArray(p.trainTargets) ? p.trainTargets.slice(0,2) : [];
+    // AI 选手也会自动定向特训 1 个下版本强势英雄
+    if(p.team !== S.user && !targets.length && rolePool.length){
+      const strong = rolePool.filter(k=>(metaTable[k]||0)>=1);
+      if(strong.length) targets = [pick(strong)];
+    }
+    for(const c of targets){
+      if(!CH[c]) continue;
+      const gain = Math.round(28 + (p.age<=22?6:0) + rnd()*10);
+      const ex = p.champs.find(x=>x.c===c);
+      if(ex) ex.p = clamp(ex.p + gain, 30, 99);
+      else p.champs.push({c, p: clamp(24 + gain, 46, 72)});
+      trainedNames.push(`${CH[c].cn}（${profTier(p.champs.find(x=>x.c===c).p).name}）`);
+    }
+    p.trainTargets = [];
+  }
+
+  p.champs.sort((a,b)=>b.p - a.p);
+  if(p.champs.length > 11) p.champs.length = 11;
+  if(!p.champs.length) genChampPool(p);
+  return trainedNames;
+}
 
 function intlPrize(pl, table){ pl.forEach((t,i)=>{ if(t&&table[i]) T(t).budget+=table[i]; }); const u=pl.indexOf(S.user); if(u>=0&&table[u]) addNews(`💰 ${teamName(S.user)} 获得奖金 ${fmtMoney(table[u])}。`); }
 function splitEnd(split, order){
@@ -1176,13 +1400,15 @@ function splitEnd(split, order){
     const pay = t.roster.map(P).filter(Boolean).reduce((s,p)=>s+p.salary,0)/3; t.budget -= Math.round(pay);
     if(k===S.user) addNews(`💼 赛段结算：收入 ${fmtMoney(income)}，支付薪资 ${fmtMoney(pay)}，余额 ${fmtMoney(t.budget)}。`); });
   Object.values(S.teams).filter(t=>t.region!=='LPL').forEach(t=>{ t.budget += 400 - Math.round(t.roster.map(P).filter(Boolean).reduce((s,p)=>s+p.salary,0)/3*0.6); });
-  // 成长与状态回正
+  newPatch();
+  // 成长、状态回正与赛段间英雄池小幅流转
   Object.values(S.players).forEach(p=>{ if(p.retired) return;
     let d = p.age<=22 ? (p.pot-p.rating)*0.1+randn()*0.7 : p.age<=26 ? randn()*0.7 : -0.35+randn()*0.7;
     p.rating = clamp(Math.round((p.rating+d)*10)/10, 45, 97);
-    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.4*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + randn()*0.3, -5, 5)*100)/100; });
-  newPatch();
-  addNews(`🔧 新版本 ${S.year%100}.${S.patchNo} 上线，英雄强度发生变化。`);
+    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.4*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + randn()*0.3, -5, 5)*100)/100;
+    evolveChampPool(p, S.meta, false);
+  });
+  addNews(`🔧 新版本 ${S.year%100}.${S.patchNo} 上线，英雄强度与选手日常英雄池随之变化。`);
 }
 
 // ---------- 推进逻辑 ----------
@@ -1235,14 +1461,35 @@ function advanceEvent(){
   const ev=curEvent(); if(!ev.done) return;
   S.evIdx++;
   if(S.evIdx>=S.events.length){ S.evIdx=S.events.length-1; }
+  const nxt=curEvent();
+  if(nxt && nxt.type==='off') EV.off.init(nxt);
 }
 function addNews(t){ S.news.unshift({y:S.year, ev:curEvent()?EVENT_INFO[curEvent().type].name:'', t}); if(S.news.length>300) S.news.length=300; }
 
-// ================= 转会 =================
+// ================= 转会（含季中建队非卖品保护） =================
+function isMidSeasonWindow(){
+  const ev = curEvent();
+  return !!(ev && ev.type === 'window');
+}
+// 季中转会窗口期间：各队顶级明星（>=86）以及合同未到期的队内头号核心为非卖品，不上货架
+function isUntouchable(p){
+  if(!p || !p.team || !isMidSeasonWindow()) return false;
+  const t = T(p.team); if(!t) return false;
+  const isStarter = Object.values(t.lineup).includes(p.pid);
+  if(!isStarter) return false;
+  if(p.rating >= 86) return true;
+  if(p.contract > S.year && p.rating >= 81){
+    const topStarter = starters(t.key).slice().sort((a,b)=>b.rating - a.rating)[0];
+    if(topStarter && topStarter.pid === p.pid) return true;
+  }
+  return false;
+}
+
 function askPrice(p){
   const t=T(p.team); let f=1.0;
   if(t && Object.values(t.lineup).includes(p.pid)) f+=0.35;
   if(t && t.tier<=2) f+=0.15;
+  if(p.rating>=88) f+=0.25;
   if(p.contract<=S.year) f*=0.7;
   return Math.round(playerValue(p)*f);
 }
@@ -1268,6 +1515,7 @@ function makeOffer(pid, cash, givePid){
     signPlayer(pid,S.user,Math.round(p.salary*1.1),S.year+2); me.budget-=cash;
     addNews(`✍️ ${teamName(S.user)} 签下自由球员 ${playerTag(p)}（${ROLE_CN[p.role]}）。`); return {ok:true,msg:`签约成功！${playerTag(p)} 加盟。`};
   }
+  if(isUntouchable(p)) return {ok:false,msg:`${teamName(p.team)} 将 ${playerTag(p)} 视为季中非卖核心，拒绝在赛段间出售。`};
   const e=evaluateOffer(pid,cash,givePid);
   const accept = e.ratio>=1.05 || (e.ratio>=0.9 && rnd()<e.chance);
   if(!accept) return {ok:false,msg:`${teamName(p.team)} 拒绝了报价（对方心理价位约 ${fmtMoney(e.ask)}）。`};
@@ -1296,7 +1544,7 @@ function aiTransfers(n){
   const ts=Object.values(S.teams).filter(t=>t.key!==S.user);
   for(let i=0;i<n;i++){
     const buyer=pick(ts); const role=pick(ROLES); const cur=P(buyer.lineup[role]); if(!cur) continue;
-    const cands=Object.values(S.players).filter(p=>p.role===role && p.team && p.team!==buyer.key && p.team!==S.user && p.rating>cur.rating+2 && askPrice(p)<buyer.budget*0.6 && canTeamFitForeign(buyer, p));
+    const cands=Object.values(S.players).filter(p=>p.role===role && p.team && p.team!==buyer.key && p.team!==S.user && !isUntouchable(p) && p.rating>cur.rating+2 && askPrice(p)<buyer.budget*0.6 && canTeamFitForeign(buyer, p));
     if(!cands.length) continue;
     const p=pick(cands.slice(0,40)); const price=askPrice(p); const from=p.team;
     buyer.budget-=price; T(from).budget+=price;
@@ -1308,13 +1556,25 @@ function aiTransfers(n){
 // ================= 休赛期 / 新赛季 =================
 function finishOffseason(){
   const y=S.year;
+  const np = ensureNextPatch();
   Object.values(S.players).forEach(p=>{ if(!p.team || p.contract>y) return;
     if(p.team===S.user){ if(!p.renewed){ const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; addNews(`📤 ${playerTag(p)} 合同到期离队，成为自由球员。`);} }
     else if(rnd()<0.8 || T(p.team).roster.length<=5){ p.contract=y+1+Math.floor(rnd()*2); p.salary=fairSalary(p); }
     else { const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; }
     p.renewed=false; });
   Object.values(S.players).forEach(p=>{ if(!p.team && !p.retired && p.age>=29 && rnd()<0.5){ p.retired=true; } p.age++; });
-  for(let i=0;i<20;i++) genRookie(y+1);
+  // 兑现新赛季版本 & 结算全员年度英雄池流转与定向冬训
+  S.year = y + 1;
+  S.patchNo = 0;
+  newPatch(np);
+  S.nextPatch = null;
+  const userTrainLogs = [];
+  Object.values(S.players).forEach(p=>{
+    if(p.retired) return;
+    const trained = evolveChampPool(p, S.meta, true);
+    if(p.team===S.user && trained.length) userTrainLogs.push(`${playerTag(p)} → ${trained.join('、')}`);
+  });
+  for(let i=0;i<20;i++) genRookie(S.year);
   Object.values(S.teams).forEach(t=>ensureRoster(t.key));
   aiTransfers(12);
   Object.values(S.teams).forEach(t=>{ if(t.key!==S.user) autoLineup(t.key); else { for(const r of ROLES) if(t.lineup[r] && (!P(t.lineup[r]) || P(t.lineup[r]).team!==t.key)) delete t.lineup[r]; } });
@@ -1322,8 +1582,9 @@ function finishOffseason(){
   const s3=S.events.find(e=>e.type==='lpl_s3').res.final;
   const ranked=s3.slice(0,8).concat(S.lplOrder.filter(t=>!s3.slice(0,8).includes(t)).sort((a,b)=>(S.points[b]||0)-(S.points[a]||0)));
   S.history = S.history||[]; S.history.push({year:y, points:{...S.points}, lpl:S.events.filter(e=>/lpl_s/.test(e.type)).map(e=>e.res.champ), fst:S.events[1].res.champ, msi:S.events[4].res.champ, ewc:S.events[5].res.champ, worlds:S.events[9].res.champ});
-  S.year=y+1; S.lplOrder=ranked;
+  S.lplOrder=ranked;
   buildSeason();
-  addNews(`🎆 ${S.year} 赛季开始！`);
+  if(userTrainLogs.length) addNews(`🎯 冬训成果：${userTrainLogs.join('；')}。`);
+  addNews(`🎆 ${S.year} 赛季正式开启！版本 ${np.ver} 实装上线。`);
 }
 function renewPlayer(pid){ const p=P(pid); const s=Math.round(fairSalary(p)*1.1); p.salary=s; p.contract=S.year+2; p.renewed=true; addNews(`✍️ ${teamName(S.user)} 与 ${playerTag(p)} 续约两年，年薪 ${fmtMoney(s)}。`); return s; }

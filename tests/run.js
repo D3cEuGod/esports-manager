@@ -33,7 +33,7 @@ section('1v1 SOLO：100 局');
     ok(r.A && r.B && r.A.champ && r.B.champ, '1v1 有双方英雄');
     ok(r.rec && r.rec.f.length === r.dur - 90 + 1, `1v1 录像逐秒一帧（${r.rec && r.rec.f.length} vs ${r.dur - 89}）`);
     ok(Array.isArray(r.frames) && r.frames.length > 0, '1v1 frames 旧格式日志');
-    ok(r.dur <= 720, `1v1 在 12:00 前结束（${r.dur}s）`);
+    ok(r.dur < 720, `1v1 在 12:00 前结束（${r.dur}s）`);
     const k = /缩圈|火圈|判定/.test(r.winReason) ? '火圈' : /一血|单杀|击杀/.test(r.winReason) ? '一血' : /补刀|百刀/.test(r.winReason) ? '100 补刀' : /塔/.test(r.winReason) ? '一塔' : r.winReason;
     reasons[k] = (reasons[k] || 0) + 1; maxT = Math.max(maxT, r.dur);
   }
@@ -122,25 +122,92 @@ section('状态与心态：五档、每局最多跨一档');
   ok(ctx[1] - ctx[3] > ctx[2] - ctx[0] + 3, '高压场合（国际赛淘汰赛决胜局）心态影响更大');
 }
 
-// ---------------------------------------------------------------- 回放存储
-section('回放：最近 10 局 + 永久保留上限 10 局');
+// ---------------------------------------------------------------- 回放
+section('回放：终局采样与装备事件');
 {
   const r = run(`(()=>{
-    S.replays=[];
-    const ks=Object.keys(S.teams);
-    const ids=[];
-    for(let i=0;i<14;i++){ const d=newDraft(ks[0],ks[1],'A',[]); autoDraftRest(d); const g=playGame(d,{record:true}); ids.push(pushReplay({y:S.year,label:'t',a:ks[0],b:ks[1],gi:1,w:g.w,kA:g.kA,kB:g.kB,dur:g.dur,rec:g.rec,solo:null,kept:false})); }
-    const withRec=S.replays.filter(x=>x.rec).length;
-    const k1=toggleKeepReplay(ids[13]).ok;   // 最早一局已被裁剪，不能收藏
-    let kept=0; for(const id of ids.slice(4)){ if(toggleKeepReplay(id).ok) kept++; }
-    const over=toggleKeepReplay(ids[3]);
-    const size=JSON.stringify(S.replays.filter(x=>x.rec)[0].rec).length;
-    return {withRec, k1, kept, over:over.ok, size};
+    const d = newDraft('BLG', 'TES', 'A', []);
+    autoDraftRest(d);
+    const endings = [12, 15].map(end => {
+      const G = createGame5(d, {record:true});
+      while(G.t < end - SIM5.DT) step5(G);
+      const nexus = G.towers.find(tw => tw.side==='red' && tw.tier===6);
+      for(const tw of G.towers){
+        if(tw.side==='red' && (tw.tier===5 || tw.tier===4 && tw.lane==='mid')) tw.alive = false;
+      }
+      G.towerDirty = true;
+      G.planT = Infinity;
+      nexus.hp = 0.000001;
+      const c = G.champs[0];
+      c.x = nexus.x; c.y = nexus.y; c.cs = 321; c.tg = 4320;
+      c.task = TK({k:'go', x:nexus.x, y:nexus.y});
+      step5(G);
+      const rec = recordOf(G);
+      return {
+        over: G.over && G.winner==='A' && rec.dur===end,
+        frames: rec.f.length===end/3+1 && dec1(rec.f.at(-1),0)===Math.round(nexus.x/1000*63),
+        stats: rec.st.length===Math.ceil(end/12)+1 && dec2(rec.st.at(-1),0)===321 && dec2(rec.st.at(-1),2)===432
+      };
+    });
+
+    const timeout = createGame5(d, {record:true});
+    timeout.t = 3597;
+    step5(timeout);
+    const timeoutFrames = timeout.over && timeout.t===3600 && timeout.frames.length===2 && timeout.stats.length===2;
+
+    const G = createGame5(d, {record:true});
+    const support = G.champs.find(c => c.side==='A' && c.role==='SUP');
+    G.t = 600;
+    support.tg = 1101;
+    shop(G,support);
+    const events = G.evs.filter(e => e[2]===support.i);
+    const upgrade = events.filter(e => e[0]===600);
+    const items = [];
+    for(const [, kind, , value] of events){
+      if(kind==='B') items.push(value);
+      if(kind==='S') items.splice(value,1);
+    }
+    return {
+      endings, timeoutFrames,
+      upgrade: upgrade.length===2 && upgrade[0][1]==='S' && upgrade[0][3]===0 && upgrade[1][1]==='B' && upgrade[1][3]===support.build.sup,
+      inventory: items.join(',')===support.items.join(',')
+    };
   })()`);
-  ok(r.withRec === 10, `只保留最近 10 局完整回放（${r.withRec}）`);
-  ok(r.k1 === true || r.k1 === false, '收藏接口可用');
-  ok(r.kept === 10 && r.over === false, `永久保留最多 10 局（${r.kept}，超出被拒：${!r.over}）`);
-  console.log(`  单局 5v5 回放约 ${(r.size / 1024).toFixed(1)} KB`);
+  ok(r.endings.every(e => e.over && e.frames && e.stats), '整 12 秒和非整 12 秒破主水晶均只存一条终局位置和统计帧');
+  ok(r.timeoutFrames, '超时终局只存一条位置和统计帧');
+  ok(r.upgrade && r.inventory, '辅助装同秒先移除再买入，按原序能还原实时装备');
+}
+
+section('回放：最近 10 局、收藏 10 局、共 200 条');
+{
+  const r = run(`(()=>{
+    S.replays = [];
+    const sa = [{tag:'Bin',r:'TOP',c:'Jax',k:2,d:1,a:3}];
+    const sb = [{tag:'369',r:'TOP',c:'Sion',k:1,d:2,a:1}];
+    for(let i=0;i<202;i++){
+      const id = pushReplay({id:'replay-'+i,w:'A',kA:2,kB:1,sa,sb,rec:i===0?null:{},solo:{}});
+      if(i<10) toggleKeepReplay(id);
+    }
+    const newest = findReplay('replay-201');
+    const over = toggleKeepReplay(newest.id);
+    const kept = S.replays.filter(r => r.kept && (r.rec || r.solo)).length;
+    const recent = S.replays.filter(r => !r.kept && (r.rec || r.solo)).length;
+    const oldestKept = findReplay('replay-0');
+    const summary = findReplay('replay-12');
+    const beforeCancel = {
+      kept, recent,
+      rejectLive: !!newest.rec && !newest.kept && !over.ok && /上限/.test(over.msg),
+      archives: S.replays.length===200 && !findReplay('replay-10') && !findReplay('replay-11') && !!oldestKept?.solo,
+      summary: summary?.trimmed && !summary.rec && !summary.solo && summary.kA===2 && summary.kB===1 &&
+        JSON.stringify([summary.sa, summary.sb])===JSON.stringify([sa, sb])
+    };
+    const cancel = toggleKeepReplay('replay-0');
+    return {...beforeCancel, cancel: cancel.ok && oldestKept.trimmed && !oldestKept.solo && !!findReplay('replay-0')};
+  })()`);
+  ok(r.recent === 10, `只保留最近 10 局未收藏的完整回放（${r.recent}）`);
+  ok(r.kept === 10 && r.rejectLive, '实际收藏 10 局，第 11 局仍有录像时触发收藏上限');
+  ok(r.archives && r.summary, '200 条上限优先清理最旧未收藏摘要，裁剪录像时保留比分与 KDA');
+  ok(r.cancel, '取消旧的 1v1 收藏时裁剪录像并保留摘要');
 }
 
 // ---------------------------------------------------------------- 完整赛季
@@ -164,6 +231,97 @@ section('完整赛季：从 LPL 第一赛段到世界赛 + 休赛期');
   console.log('  ', r.log.join(' → '), ` 用时 ${((performance.now() - t0) / 1000).toFixed(1)}s  存档 ${(r.size / 1024).toFixed(0)}KB`);
   ok(r.log.includes('off') && r.year === 2027, '赛季顺利结束并进入下一年');
   ok(r.ok, '存档序列化与迁移正常');
+}
+
+section('内核边界回归');
+{
+  const r = run(`(()=>{
+    newGame('TES');
+    const d = newDraft('BLG', 'TES', 'A', []);
+    const oldRandom = Math.random;
+    const fight = resolveFight;
+    try {
+      const sides = [];
+      resolveFight = (G, a, b) => sides.push([a[0].side, b[0].side].join(''));
+      Math.random = () => 0.2;
+      for(const losingSide of ['A', 'B']){
+        const G = createGame5(d);
+        G.t = 100;
+        for(const c of G.champs){
+          c.alive = c.role === 'MID';
+          if(!c.alive) continue;
+          [c.x, c.y] = lanePt('mid', 0.5);
+          c.hp = c.side === losingSide ? 0.1 : 1;
+        }
+        laneTrades(G);
+      }
+      resolveFight = fight;
+
+      const G = createGame5(d);
+      G.t = 300;
+      objTimers(G);
+      const [a, b] = [G.champs[0], G.champs[5]];
+      [a.x, a.y] = [b.x, b.y] = MAP5.dragon;
+      a.recall = 8;
+      objectives(G);
+      const activeTakes = G.obj.drag.by === 'B' && G.obj.drag.prog > 0;
+      const progress = G.obj.drag.prog;
+      [a.x, a.y] = MAP5.fountain.blue;
+      b.recall = 8;
+      objectives(G);
+      const recallStops = G.obj.drag.prog === progress;
+
+      const victim = G.champs[2];
+      victim.pw = 8;
+      applyKill(G, b, victim, []);
+      const deathClearsPower = victim.pw === 0;
+      const recalling = G.champs[1];
+      [recalling.x, recalling.y] = [500, 200];
+      recalling.hp = 0.2;
+      recalling.pw = 8;
+      tickChamp(G, recalling);
+      const recallClearsPower = recalling.recall > 0 && recalling.pw === 0;
+
+      Math.random = () => 0.05;
+      const ring = createSolo('BLG', 'TES');
+      ring.t = 599;
+      ring.F.A.hp = 0.001;
+      ring.F.B.hp = 0.01;
+      ring.F.A.sum2 = ring.F.B.sum2 = 'bar';
+      soloStep(ring);
+
+      Math.random = () => 0.75;
+      const tie = createSolo('BLG', 'TES');
+      tie.t = 599;
+      tie.F.A.hp = tie.F.B.hp = 0.001;
+      soloStep(tie);
+
+      Math.random = () => 0.999;
+      const clock = createSolo('BLG', 'TES');
+      clock.t = 599;
+      while(!clock.over && clock.t < 720) soloStep(clock);
+
+      const tiers = [[0, 2.999], [0, -2.999], [-1, 0.999]];
+      return {
+        sides, activeTakes, recallStops, deathClearsPower, recallClearsPower,
+        ringDeath: ring.over && ring.winner === 'B' && !ring.fx,
+        ringTie: tie.over && tie.winner === 'B' && tie.F.B.hp === 0,
+        ringClock: clock.over && clock.t === 719,
+        tiers: tiers.every(([a, b]) => Math.abs(tierOf(stepTier(a, b)) - tierOf(a)) <= 1),
+        style: styleEdge('pick', 'poke') === 0.9 && styleEdge('poke', 'pick') === -0.9
+      };
+    } finally {
+      Math.random = oldRandom;
+      resolveFight = fight;
+    }
+  })()`);
+  ok(r.sides.join(',') === 'AB,AB', '对线战斗按真实 A/B 阵营传入');
+  ok(r.activeTakes && r.recallStops, '回城英雄不阻挡或推进中立资源');
+  ok(r.deathClearsPower && r.recallClearsPower, '阵亡和回城立即清除当帧战力');
+  ok(r.ringDeath && r.ringTie, '先结算火圈致死，同时致死也能判胜');
+  ok(r.ringClock, '双方在 11:59 仍存活时直接判胜');
+  ok(r.tiers, '舍入边界也最多跨一档');
+  ok(r.style, '抓单克制消耗，交换阵容时克制分取反');
 }
 
 console.log(fails ? `\n✗ ${fails} 项失败` : '\n✓ 全部通过');

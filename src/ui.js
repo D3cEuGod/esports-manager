@@ -1,5 +1,5 @@
 // ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false}, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false, verifyEmail:null, resendCd:0 };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false,hideLock:true}, offTab:'patch', trainPid:null, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false, verifyEmail:null, resendCd:0 };
 let _resendTimer = null;
 function startResendCd(sec){
   if(_resendTimer){ clearInterval(_resendTimer); _resendTimer=null; }
@@ -557,7 +557,7 @@ VIEWS.news = () => `<section class="card"><h2>新闻</h2><ul class="news">${S.ne
   <h3>历届冠军</h3><table class="tbl"><tr><th>年份</th><th>LPL S1/S2/S3</th><th>先锋赛</th><th>MSI</th><th>EWC</th><th>世界赛</th></tr>${(S.history||[]).map(h=>`<tr><td>${h.year}</td><td>${h.lpl.map(teamTag).join(' ')}</td><td>${teamTag(h.fst)}</td><td>${teamTag(h.msi)}</td><td>${teamTag(h.ewc)}</td><td>${teamTag(h.worlds)}</td></tr>`).join('')}</table></section>`;
 VIEWS.rules = () => `<section class="card"><h2>赛制说明（2026）</h2><p>✅ = 已从拳头官方/主流媒体核实；⚠️ = 未查到官方细则，游戏内为推测或简化。</p>
   ${['lpl_s1','fst','lpl_s2','msi','ewc','lpl_s3','lpl_rf','worlds'].map(k=>`<h3>${EVENT_INFO[k].name} <small>${EVENT_INFO[k].date} · ${EVENT_INFO[k].loc}</small></h3><p class="fmt">${esc(EVENT_INFO[k].fmt)}</p>`).join('')}
-  <h3>BP与选边规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 经典蓝先红后制：蓝色方永远为 BP 先手（一楼先抢），红色方永远为 BP 后手（拥有五楼康特位）。✅ 峡谷 1v1 选边赛：系列赛首局及 BO5 第五局决胜局开赛前进行 1v1 SOLO 赛（一血 / 百刀 / 一塔定胜负，10 分钟后火圈收缩、12 分钟前必分胜负），胜者战队获得选边权；其余小局由上一局败者获得选边权。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前点击己方槽位进行摇摆位互换。</p>
+  <h3>BP与选边规则</h3><p class="fmt">标准职业BP：禁3-选3（1-2-2-1）-禁2-选2。✅ 经典蓝先红后制：蓝色方永远为 BP 先手（一楼先抢），红色方永远为 BP 后手（拥有五楼康特位）。✅ 选边规则：系列赛首局开赛前进行峡谷 1v1 SOLO 赛（一血 / 百刀 / 一塔定胜负，10 分钟后火圈收缩、12 分钟前必分胜负），胜者战队获得首局选边权；BO3 与 BO5 从第二局起每一局均由上一局败者直接选边。✅ 全程无畏征召：同一系列赛中任一方用过的英雄，双方都不能再选。✅ 支持选人阶段与赛前摇摆换位，并支持法核下路、长手上路等战术奇招（非合理跨位则有轻度胜率惩罚）。✅ 英雄熟练度分五档（招牌/精通/熟练/略懂/生疏），随比赛与休赛期特训动态成长或自然衰退。</p>
   <h3>其他说明</h3><p class="fmt">✅ LPL首发外援上限2人（赛前强制校验，AI 战队同样遵守）。✅ EWC卫冕冠军：Gen.G（EWC 2025冠军），之后赛季为上届冠军。⚠️ 其他赛区不进行逐场模拟，按战力+随机生成各赛段排名。⚠️ 选手能力值、潜力、身价均为游戏估算。✅ 选手状态/心态各分五档；大赛、淘汰赛、稳定性、抗压特质依据 Leaguepedia 2023 年以来的职业比赛数据统计得出（样本不足的选手不打标签）。</p></section>`;
 function accountPanelHtml(){
   const logged = CloudSync.isLoggedIn();
@@ -971,7 +971,7 @@ function matchScreen(){
 
     return `<div class="match hex mode-choose">${head}
       <div class="hex-panel solo-panel">
-        <div class="hex-eyebrow">${M.games.length===0?'系列赛首局选边战':'BO5 决胜局选边战'} · 峡谷 1v1 SOLO</div>
+        <div class="hex-eyebrow">系列赛首局选边战 · 峡谷 1v1 SOLO</div>
         <h2>派出你的单挑王争夺选边权</h2>
         <p class="hex-sub">规则：中路 1v1 单挑，率先拿到 <b>一血</b>、<b>100 补刀</b> 或 <b>推掉一塔</b> 的选手获胜；10 分钟后火圈收缩，12 分钟前必分胜负，所在战队获得本局蓝/红方选边权（蓝色方永远为 BP 先手）。</p>
         <div class="solo-setup">
@@ -1350,20 +1350,22 @@ function matchScreen(){
     </section>`;
   }
 
-  // 阶段切换（Ban <-> Pick）LoL 原版风格中心光束过场动画
+  // 阶段切换（Ban <-> Pick）LoL 原版风格中心光束过场动画（负延迟保持帧同步，不阻塞点击）
   let splashHtml = '';
   if(M.phase === 'draft' && cur && phIdx >= 0 && phIdx <= 3){
     if(M._lastPh !== phIdx){
       M._lastPh = phIdx;
-      M._splashSeq = (M._splashSeq || 0) + 1;
-      M._splashUntil = Date.now() + 1050;
+      M._splashStart = Date.now();
+      M._splashUntil = M._splashStart + 1050;
     }
     if(M._splashUntil && Date.now() < M._splashUntil){
+      const elapsed = Math.max(0, Date.now() - (M._splashStart || Date.now()));
+      const dly = `style="animation-delay:-${elapsed}ms"`;
       const isBanSplash = cur.kind === 'ban';
       const roundLbl = phIdx<=1 ? '第一轮' : '第二轮';
-      splashHtml = `<div class="bp-splash ${isBanSplash?'ban':'pick'}" data-seq="${M._splashSeq}">
-        <div class="bps-beam"></div>
-        <div class="bps-core">
+      splashHtml = `<div class="bp-splash ${isBanSplash?'ban':'pick'}" ${dly}>
+        <div class="bps-beam" ${dly}></div>
+        <div class="bps-core" ${dly}>
           <span class="bps-sub">${roundLbl} · ${isBanSplash?'BAN PHASE':'PICK PHASE'}</span>
           <b>${isBanSplash?'⚔ 进入禁用阶段':'✦ 进入英雄选择'}</b>
         </div>

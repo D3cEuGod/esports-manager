@@ -7,3 +7,10 @@ release/
 *.lnk
 峡谷经理人.html
 .DS_Store
+mobile-android/.gradle/
+mobile-android/app/build/
+mobile-android/app/src/main/assets/
+src-tauri/icons/android/
+src-tauri/icons/ios/
+src-tauri/icons/Square*.png
+src-tauri/icons/StoreLogo.png

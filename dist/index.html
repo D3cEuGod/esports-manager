@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#010a13">
+<meta name="theme-color" content="#091428">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="峡谷经理人">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>峡谷经理人</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>/*
@@ -7811,4 +7817,5 @@ document.addEventListener('mouseout', e=>{
 });
 window.addEventListener('load', bootApp);
 </script>
+<script>if('serviceWorker' in navigator && location.protocol==='https:' && !/appassets\.androidplatform\.net/i.test(location.hostname)){navigator.serviceWorker.register('./sw.js').catch(function(){});}</script>
 </body></html>

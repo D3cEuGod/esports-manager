@@ -1,0 +1,25 @@
+{
+  "name": "峡谷经理人 · 英雄联盟电竞经理",
+  "short_name": "峡谷经理人",
+  "description": "英雄联盟职业电竞经理模拟游戏（支持多端云同步、BP与实时峡谷观战）",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#010a13",
+  "theme_color": "#091428",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

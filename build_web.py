@@ -1,4 +1,4 @@
-import os, sys, json, glob
+import os, sys, json, glob, shutil
 
 root = os.path.dirname(os.path.abspath(__file__))
 os.chdir(root)
@@ -40,4 +40,46 @@ for k, f in [
 
 out_path = os.path.join('dist', 'index.html')
 open(out_path, 'w', encoding='utf-8').write(t)
-print(f'Built {out_path} ({len(t.encode("utf-8"))} bytes)')
+
+# 3. Emit PWA manifest, icons & network-first Service Worker into dist/ (for GitHub Pages / mobile install)
+icons_dir = os.path.join('src-tauri', 'icons')
+if os.path.exists(os.path.join(icons_dir, 'icon.png')):
+    shutil.copyfile(os.path.join(icons_dir, 'icon.png'), os.path.join('dist', 'icon-512.png'))
+if os.path.exists(os.path.join(icons_dir, '128x128@2x.png')):
+    shutil.copyfile(os.path.join(icons_dir, '128x128@2x.png'), os.path.join('dist', 'icon-192.png'))
+    shutil.copyfile(os.path.join(icons_dir, '128x128@2x.png'), os.path.join('dist', 'apple-touch-icon.png'))
+manifest = {
+    "name": "峡谷经理人 · 英雄联盟电竞经理",
+    "short_name": "峡谷经理人",
+    "description": "英雄联盟职业电竞经理模拟游戏（支持多端云同步、BP与实时峡谷观战）",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#010a13",
+    "theme_color": "#091428",
+    "icons": [
+        {"src": "./icon-192.png", "sizes": "256x256", "type": "image/png", "purpose": "any"},
+        {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+    ]
+}
+open(os.path.join('dist', 'manifest.webmanifest'), 'w', encoding='utf-8').write(
+    json.dumps(manifest, ensure_ascii=False, indent=2)
+)
+sw_code = """const CACHE = 'rift-manager-v2.1.0';
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  const u = new URL(e.request.url);
+  if (u.origin !== self.location.origin) return;
+  e.respondWith(fetch(e.request).then(r => {
+    if (r && r.ok) { const c = r.clone(); caches.open(CACHE).then(ch => ch.put(e.request, c)); }
+    return r;
+  }).catch(() => caches.match(e.request)));
+});
+"""
+open(os.path.join('dist', 'sw.js'), 'w', encoding='utf-8').write(sw_code)
+print(f'Built {out_path} ({len(t.encode("utf-8"))} bytes) + PWA assets')

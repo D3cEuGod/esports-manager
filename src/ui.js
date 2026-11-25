@@ -780,7 +780,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.0')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.1')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}

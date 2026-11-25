@@ -765,6 +765,156 @@ function styleEdge(a,b){
   return 0;
 }
 
+// ---------- 英雄机制克制与分路联动 ----------
+const HARD_SUPPORTS = new Set(['Alistar','Amumu','Braum','Blitzcrank','Galio','Gragas','Leona','Malphite','Maokai','Nautilus','Poppy','Rakan','Rell','Tahm Kench','Taric','Thresh','Zac']);
+const PEEL_CHAMPS = new Set(['Braum','Gragas','Janna','Lulu','Milio','Poppy','Renata Glasc','Tahm Kench','Taric','Thresh']);
+const PROJECTILE_PRESSURE = new Set(['Ahri','Ashe','Caitlyn','Corki','Ezreal','Jhin','Jinx','Kai\'Sa','Kalista','Kennen','Lucian','Miss Fortune','Nidalee','Sivir','Taliyah','Varus','Xayah','Zoe']);
+const DRAFT_COUNTERS = {
+  Poppy: ['dash',0.22,'打断进场位移'],
+  Taliyah: ['dash',0.14,'限制进场位移'],
+  Cassiopeia: ['dash',0.13,'缚地限制位移'],
+  Galio: ['magic',0.17,'抵挡魔法伤害'],
+  Jax: ['autos',0.21,'反制依赖普攻的对手'],
+  Nilah: ['autos',0.19,'规避敌方普攻'],
+  Malphite: ['autos',0.12,'降低敌方攻速'],
+  Braum: ['projectiles',0.15,'遮挡关键弹道'],
+  Mel: ['projectiles',0.13,'反射关键弹道'],
+  Samira: ['projectiles',0.12,'拦截关键弹道'],
+  Yasuo: ['projectiles',0.14,'风墙拦截弹道']
+};
+const BOT_DUOS = {
+  'Ezreal+Karma': [0.56,0.36,'EZ＋卡尔玛的远程换血'],
+  'Ashe+Seraphine': [0.46,0.52,'寒冰减速衔接萨勒芬妮控制'],
+  'Xayah+Rakan': [0.42,0.65,'霞洛的专属技能联动'],
+  'Lucian+Nami': [0.66,0.32,'卢锡安＋娜美的换血爆发'],
+  'Lucian+Milio': [0.46,0.35,'米利欧强化卢锡安的输出窗口'],
+  'Kog\'Maw+Lulu': [0.31,0.65,'璐璐强化并保护大嘴输出'],
+  'Caitlyn+Morgana': [0.64,0.30,'莫甘娜禁锢接女警夹子'],
+  'Kalista+Nautilus': [0.45,0.52,'滑板鞋大招送泰坦近身开团'],
+  'Nilah+Taric': [0.33,0.56,'尼菈与宝石的近身保护联动'],
+  'Nilah+Soraka': [0.38,0.41,'尼菈放大星妈治疗']
+};
+const MID_JUNGLE_DUOS = {
+  'Orianna+Nocturne': [0.22,0.68,'梦魇带球进场接发条大招'],
+  'Jayce+Maokai': [0.39,0.53,'大树先手为杰斯远程火力留空间'],
+  'Yasuo+Diana': [0.32,0.62,'皎月聚拢敌人后亚索接大'],
+  'Galio+Jarvan IV': [0.26,0.63,'皇子困住目标后加里奥进场'],
+  'Ahri+Vi': [0.31,0.53,'蔚锁定目标后阿狸接控制'],
+  'Twisted Fate+Nocturne': [0.26,0.45,'卡牌与梦魇的边线联动']
+};
+const TOP_JUNGLE_DUOS = {
+  'Renekton+Nidalee': [0.58,0.25,'鳄鱼点控帮助豹女命中标枪']
+};
+const TACTIC_DAMAGE_SHARE = {TOP:0.9,JUG:0.85,MID:1.05,ADC:1.15,SUP:0.3};
+
+function draftThreats(picks){
+  const out = {dash:0, magic:0, autos:0, engage:0, projectiles:0};
+  for(const role of ROLES){
+    const c = picks[role], kit = window.CHAMP_TACTICS[c];
+    if(!kit) continue;
+    const share = TACTIC_DAMAGE_SHARE[role];
+    out.dash += kit.dash;
+    out.magic += kit.magic * share;
+    out.autos += kit.autos * share * (1 - kit.range*kit.escape*0.10);
+    out.engage += kit.engage;
+    if(PROJECTILE_PRESSURE.has(c)) out.projectiles += share;
+  }
+  return out;
+}
+
+function laneTacticEdge(champ, enemy){
+  const own = window.CHAMP_TACTICS[champ], opp = window.CHAMP_TACTICS[enemy];
+  if(!own || !opp) return 0;
+  let edge = 0.10 * Math.max(0, own.range-opp.range) * (2-opp.escape);
+  const rule = DRAFT_COUNTERS[champ];
+  if(rule){
+    const [key, weight] = rule;
+    const threat = key==='projectiles' ? Number(PROJECTILE_PRESSURE.has(enemy))*2 : opp[key];
+    edge += 0.68 * weight * threat;
+  }
+  return edge;
+}
+
+function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null){
+  let lane = 0, fight = 0, peel = 0, vulnerable = 0;
+  for(const role of ROLES){
+    const c = picks[role], kit = window.CHAMP_TACTICS[c];
+    if(!kit) continue;
+    const rule = DRAFT_COUNTERS[c];
+    if(rule){
+      const [key, weight, label] = rule;
+      const strength = weight * threats[key];
+      fight += Math.min(1.03, strength);
+      if(notes && strength>=0.30) notes.push(CH[c].cn + label);
+    }
+    if(role==='TOP' || role==='MID') lane += laneTacticEdge(c,enemy[role]);
+    if(role==='ADC' || role==='SUP'){
+      lane += 0.35 * (laneTacticEdge(c,enemy.ADC) + laneTacticEdge(c,enemy.SUP));
+    }
+    if(PEEL_CHAMPS.has(c)) peel++;
+    if((role==='MID' || role==='ADC' || role==='SUP') && kit.range>0) vulnerable += (2-kit.escape)/2;
+  }
+
+  const dive = Math.max(0, threats.engage-2)*0.5;
+  const exposed = dive / (1+0.45*peel);
+  fight -= 0.24 * vulnerable * exposed;
+  if(notes && vulnerable*exposed>=1.4) notes.push('后排缺位移，容易被对方开团');
+
+  const bot = BOT_DUOS[picks.ADC + '+' + picks.SUP];
+  const mid = MID_JUNGLE_DUOS[picks.MID + '+' + picks.JUG];
+  const top = TOP_JUNGLE_DUOS[picks.TOP + '+' + picks.JUG];
+  for(const duo of [bot,mid,top]){
+    if(!duo) continue;
+    lane += duo[0];
+    fight += duo[1];
+    if(notes) notes.push(duo[2]);
+  }
+  if(picks.ADC==='Ashe' && picks.SUP==='Seraphine'){
+    lane -= 0.39 * exposed;
+    fight -= 0.86 * exposed;
+    if(notes && exposed>=0.7) notes.push('寒冰＋萨勒芬妮怕连续先手');
+  }
+  if(picks.ADC==='Ziggs' && picks.SUP){
+    const hard = HARD_SUPPORTS.has(picks.SUP);
+    lane += hard ? 0.56 : -0.58;
+    fight += hard ? 0.42 : -0.45;
+    if(notes) notes.push(hard ? '硬辅定身配合炸弹人输出' : '炸弹人下路缺少硬辅留人与保护');
+  }
+
+  const early = clamp(lane + fight*0.23,-1.45,1.45);
+  const midgame = clamp(lane*0.30 + fight,-1.60,1.60);
+  const late = clamp(lane*0.15 + fight*0.90,-1.50,1.50);
+  return {early, mid:midgame, late, score:early*0.30 + midgame*0.35 + late*0.35};
+}
+
+// 只评估已亮出的英雄和位置。新增英雄也可能让对方的反制更有效。
+function draftTacticGain(own, enemy){
+  const threats = draftThreats(enemy);
+  const base = draftTactics(own,enemy,threats).score - draftTactics(enemy,own).score;
+  const next = {...own};
+  return (role, champ) => {
+    next[role] = champ;
+    const gain = draftTactics(next,enemy,threats).score - draftTactics(enemy,next).score - base;
+    delete next[role];
+    return gain;
+  };
+}
+
+function ziggsBotPairConflict(adc, sup){
+  return adc==='Ziggs' && sup && !HARD_SUPPORTS.has(sup);
+}
+
+function draftBotPairFilter(picks, unavailableChamps){
+  const canPickHard = !picks.SUP && CHAMP_KEYS.some(c => HARD_SUPPORTS.has(c) && CH[c].roles.includes('SUP') && !unavailableChamps.has(c));
+  const hasOtherAdc = !picks.ADC && CHAMP_KEYS.some(c => c!=='Ziggs' && CH[c].roles.includes('ADC') && !unavailableChamps.has(c));
+  const canPairZiggs = picks.SUP ? HARD_SUPPORTS.has(picks.SUP) : canPickHard;
+  return (r,c) => {
+    if(r==='SUP' && canPickHard && ziggsBotPairConflict(picks.ADC,c)) return false;
+    if(r==='ADC' && c==='Ziggs' && !canPairZiggs && hasOtherAdc) return false;
+    return true;
+  };
+}
+
 // 经典职业选边 AI 决策（蓝色方 = 固定 BP 先手；红色方 = 固定 BP 后手拿五楼康特位）
 function aiChooseSide(meKey, oppKey, locked){
   const un = new Set(locked||[]);
@@ -855,14 +1005,20 @@ function optimizeAiFlex(d, side){
   const champs = entries.map(([,c])=>c);
   const roles = entries.map(([r])=>r);
   const curScore = entries.reduce((s,[r,c])=>s+champFit(lu[r],c,r), 0);
-  let bestPerm = null, bestScore = curScore + 0.35;
+  const enemy = d.picks[side==='A' ? 'B' : 'A'];
+  const threats = draftThreats(enemy);
+  const next = {};
+  let bestPerm = null, bestScore = curScore + 1.6*draftTactics(d.picks[side],enemy,threats).score + 0.35;
   function permute(arr, start){
     if(start===arr.length){
       let sc = 0;
       for(let i=0;i<arr.length;i++){
+        next[roles[i]] = arr[i];
         if(!CH[arr[i]].roles.includes(roles[i])) sc -= 3;
         sc += champFit(lu[roles[i]], arr[i], roles[i]);
       }
+      if(sc < curScore-2 || ziggsBotPairConflict(next.ADC,next.SUP)) return;
+      sc += 1.6*draftTactics(next,enemy,threats).score;
       if(sc > bestScore){ bestScore = sc; bestPerm = arr.slice(); }
       return;
     }
@@ -910,6 +1066,7 @@ function aiChoose(d){
     const myOpen = openRolesFor(d, me);
     const oppComp = compInfo(oppPicks);
     const isRound2 = d.step >= 12;
+    const tacticGain = isRound2 ? draftTacticGain(d.picks[opp],d.picks[me]) : null;
     // 判断下一手是否由我方先选（首轮 Ban 尽量少 Ban 自己下一手就能抢的绝活 T0）
     const nextIsMyPick = d.step===5 && d.first===me;
     for(const c of CHAMP_KEYS){
@@ -923,6 +1080,7 @@ function aiChoose(d){
       if(isRound2 && oppPicks.length>=3){
         const gain = compInfo(oppPicks.concat(c)).score - oppComp.score;
         s += Math.max(0, gain) * 1.1;
+        s += Math.max(0, ...validOppRoles.map(r=>tacticGain(r,c))) * 1.6;
       }
       // 避免把己方立刻能抢到的强势招牌给 Ban 了
       if(nextIsMyPick){
@@ -943,19 +1101,23 @@ function aiChoose(d){
   const earlyPhase = myPicks.length < 3;
   let br=null;
   const allowOff = !hasAnyOnRoleChamp(d, me);
+  const tacticGain = draftTacticGain(d.picks[me],d.picks[opp]);
+  const allowsPair = draftBotPairFilter(d.picks[me],un);
 
   for(const c of CHAMP_KEYS){
     if(un.has(c)) continue;
     // AI 默认选本位，或在伤害极度单一需要法核下路时考虑合理奇招
     let candRoles = allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r));
-    if(!allowOff && myPicks.length>=3 && baseComp.ad>=3 && myOpen.includes('ADC') && offRoleKind(c,'ADC').kind==='apc_bot'){
+    if(!allowOff && myPicks.length>=3 && baseComp.ad>=3 && myOpen.includes('ADC') && !candRoles.includes('ADC') && offRoleKind(c,'ADC').kind==='apc_bot'){
       candRoles = candRoles.concat('ADC');
     }
+    if(!candRoles.length) continue;
+    const nextComp = compInfo(myPicks.concat(c));
     for(const r of candRoles){
-      const nextList = myPicks.concat(c);
-      const nextComp = compInfo(nextList);
+      if(!allowsPair(r,c)) continue;
       let s = champFit(myLu[r], c, r);
       s += (nextComp.score - baseComp.score) * 1.15;
+      s += 2.4 * tacticGain(r,c);
       // 克制对手已亮阵容风格
       if(oppPicks.length>=2){
         s += (styleEdge(nextComp.style, oppComp.style) - styleEdge(baseComp.style, oppComp.style)) * 0.9;
@@ -973,7 +1135,7 @@ function aiChoose(d){
       if(s>bs){ bs=s; best=c; br=r; }
     }
   }
-  return {c:best, role:br, offrole:allowOff};
+  return {c:best, role:br, offrole:!!best && !CH[best].roles.includes(br)};
 }
 
 function autoDraftRest(d){
@@ -1000,6 +1162,7 @@ function coachSuggest(d, side){
   const out = [];
 
   if(cur.kind==='ban'){
+    const tacticGain = d.step>=12 ? draftTacticGain(d.picks[opp],d.picks[side]) : null;
     for(const c of CHAMP_KEYS){
       if(un.has(c)) continue;
       const roles = oppOpen.filter(r=>CH[c].roles.includes(r));
@@ -1008,25 +1171,34 @@ function coachSuggest(d, side){
       for(const r of roles){ const f=champFit(oppLu[r],c,r); if(f>bestF){bestF=f;bestR=r;} }
       let s = bestF*1.1 + ((S.meta[c]||0)>=2?2.2:0);
       let reason = bestF>=5.5 ? `针对 ${playerTag(oppLu[bestR])} 招牌` : (S.meta[c]||0)>=2 ? '版本T0威胁' : `限制对方${ROLE_CN[bestR]}`;
+      if(tacticGain){
+        const gain = Math.max(0, ...roles.map(r=>tacticGain(r,c)));
+        s += 1.6*gain;
+        if(gain>=0.4) reason = '拆解对手技能联动或关键克制';
+      }
       out.push({c, score:s, reason});
     }
   } else {
     const allowOff = !hasAnyOnRoleChamp(d, side);
+    const tacticGain = draftTacticGain(d.picks[side],d.picks[opp]);
+    const allowsPair = draftBotPairFilter(d.picks[side],un);
     for(const c of CHAMP_KEYS){
       if(un.has(c)) continue;
-      const roles = allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r));
+      const roles = (allowOff ? myOpen : myOpen.filter(r=>CH[c].roles.includes(r))).filter(r=>allowsPair(r,c));
       if(!roles.length) continue;
       let bestR = roles[0], bestS = -99, bestReason = '';
+      const nextComp = compInfo(myPicks.concat(c));
+      const compGain = nextComp.score - baseComp.score;
       for(const r of roles){
         const fit = champFit(myLu[r],c,r);
-        const nextComp = compInfo(myPicks.concat(c));
-        const compGain = nextComp.score - baseComp.score;
-        let s = fit + compGain*1.1 + ((S.meta[c]||0)>=2?1.0:0);
+        const gain = tacticGain(r,c);
+        let s = fit + compGain*1.1 + 2.4*gain + ((S.meta[c]||0)>=2?1.0:0);
         if(myPicks.length>=3 && baseComp.ad>=3 && CH[c].dmg==='AP') s+=1.2;
         if(myPicks.length>=3 && baseComp.ap>=3 && CH[c].dmg==='AD') s+=1.2;
         if(s > bestS){
           bestS = s; bestR = r;
           bestReason = fit>=5.5 ? `${playerTag(myLu[r])} 招牌` : (S.meta[c]||0)>=2 ? '版本T0强抢' : compGain>=0.8 ? '极佳阵容搭配' : (CH[c].roles.length>=2&&myPicks.length<3?'优质摇摆位':`适配${ROLE_CN[r]}`);
+          if(gain>=0.28) bestReason = '有利的英雄克制或分路联动';
         }
       }
       out.push({c, role:bestR, score:bestS, reason:bestReason});
@@ -1076,13 +1248,16 @@ function draftPower(d, side){
     det.push({r,p,c,fit,base});
   }
   const tacShare = tacBonus * 0.85 / 5;
+  const notes = [];
+  const tactics = draftTactics(picks,oppPicks,undefined,notes);
+  ci.notes.unshift(...notes);
   const chem = teamChemistry(team);
   const chemB = chem.bonus; // 团队化学反应轻中度加成（满默契约 +2.0，生疏拼凑约 -1.8）
   return {
-    power: s/5 + ci.score + tacShare + chemB,
-    early: earlyP + ci.early*1.1 + tacShare + tacEarly + chemB*0.85,
-    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare + chemB*1.05,
-    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + chemB*1.1,
+    power: s/5 + ci.score + tacShare + chemB + tactics.score,
+    early: earlyP + ci.early*1.1 + tacShare + tacEarly + chemB*0.85 + tactics.early,
+    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare + chemB*1.05 + tactics.mid,
+    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + chemB*1.1 + tactics.late,
     comp: ci, chem, det
   };
 }

@@ -533,7 +533,7 @@ const CloudSync = {
 
 // ================= 云端版本自动更新检测 =================
 window.AppUpdater = {
-  currentVersion: '2.1.0',
+  currentVersion: '2.1.1',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null,

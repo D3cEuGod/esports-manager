@@ -1,7 +1,7 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "date": "2026-11-25",
-  "notes": "团队化学反应、年中与跨区转会控制、动态特质演化、一屏BP与5v5拟真小地图、云端双向自动同步",
+  "notes": "夺冠庆祝动画与音效、转会报价输入不再回溯、观战小地图完整显示、全页面比例自适应",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

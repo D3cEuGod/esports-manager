@@ -251,7 +251,22 @@ function openConflictModal(){
   render();
 }
 
+// 后台重绘（云同步状态、toast 等）时保住正在输入的表单焦点与光标，避免输入被打断
+function focusKey(el){
+  if(!el || el===document.body || !el.closest || !el.closest('#app')) return null;
+  for(const a of ['o','f','d']) if(el.dataset && el.dataset[a]!=null) return `[data-${a}="${el.dataset[a]}"]`;
+  return el.id ? '#'+CSS.escape(el.id) : null;
+}
 function render(){
+  const ae=document.activeElement, fk=focusKey(ae);
+  let sel=null; if(fk){ try{ sel=[ae.selectionStart, ae.selectionEnd]; }catch(x){} }
+  const modalScroll = (document.querySelector('.modal')||{}).scrollTop||0;
+  renderApp();
+  const md=document.querySelector('.modal'); if(md && modalScroll) md.scrollTop=modalScroll;
+  if(fk){ const el=document.querySelector(fk); if(el && el!==document.activeElement){ el.focus({preventScroll:true}); if(sel && sel[0]!=null){ try{ el.setSelectionRange(sel[0],sel[1]); }catch(x){} } } }
+  if(typeof Celebrate!=='undefined') Celebrate.check();
+}
+function renderApp(){
   if(!S){ stopBpClock(); Watch.stop(); $app().innerHTML = startScreen() + (UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:'') + toastHtml(); return; }
   if(UI.replay){ $app().innerHTML = replayScreen() + toastHtml(); Watch.afterRender(); return; }
   if(UI.match){ $app().innerHTML = matchScreen() + toastHtml(); Watch.afterRender(); return; }
@@ -623,21 +638,33 @@ function marketEmbedHtml(limit){
   </div>`;
 }
 VIEWS.market = () => `<section class="card">${marketEmbedHtml(150)}</section>`;
+// 报价评估区：输入转会费/切换交换选手时只局部刷新这一块，避免整页重绘把输入框重置（“回溯”）
+function offerEvalHtml(pid, cash, give){
+  const p=P(pid); if(!p||!p.team) return '';
+  const e = evaluateOffer(pid,cash,give||null);
+  const verdict = e.crossMid
+    ? (e.ratio>=1.45?'<b class="y">高额溢价下有一定机会</b>':'<b class="r">季中跨赛区极难挖角，大概率拒绝</b>')
+    : e.ratio>=1.05?'<b class="g">对方大概率接受</b>':e.ratio>=0.9?'<b class="y">有机会，对方在犹豫</b>':'<b class="r">对方很可能拒绝</b>';
+  return `评估：${verdict}（报价价值 ${fmtMoney(e.offerVal)}）`;
+}
+const offerCashNow = p => UI.offerCash!=null?UI.offerCash:(p.team?askPrice(p, S.user):0);
+function refreshOfferEval(pid){
+  const box=document.getElementById('offer-eval'); if(!box) return;
+  box.innerHTML = offerEvalHtml(pid, offerCashNow(P(pid)), UI.offerGive||'');
+}
 function offerModal(pid){
   return () => { const p=P(pid); const me=T(S.user);
-    const cash = UI.offerCash!=null?UI.offerCash:(p.team?askPrice(p, S.user):0); const give=UI.offerGive||'';
+    const cash = offerCashNow(p); const give=UI.offerGive||'';
+    const cashTxt = UI.offerCashRaw!=null ? UI.offerCashRaw : String(cash);
     const e = p.team? evaluateOffer(pid,cash,give||null):null;
     const chemPv = previewChemWith(S.user, pid, p.role);
-    const verdict = !e? '' : e.crossMid
-      ? (e.ratio>=1.45?'<b class="y">高额溢价下有一定机会</b>':'<b class="r">季中跨赛区极难挖角，大概率拒绝</b>')
-      : e.ratio>=1.05?'<b class="g">对方大概率接受</b>':e.ratio>=0.9?'<b class="y">有机会，对方在犹豫</b>':'<b class="r">对方很可能拒绝</b>';
     return `<h3>${ico('transfer')} ${p.team?'报价':'签约'}：${esc(playerTag(p))} <small>${ROLE_CN[p.role]} · ${p.team?teamTag(p.team):'自由球员'}</small></h3>
      <p>能力 ${ovrBadge(p.rating)} · 潜力 ${p.pot} · ${p.age}岁 · 身价 ${fmtMoney(playerValue(p))} · 预计年薪 ${fmtMoney(Math.max(p.salary,fairSalary(p)))}</p>
      ${chemPv?`<div class="chem-pv">${ico('chem')} 化学反应预计：<b>${chemPv.before.score}</b> → <b class="${chemPv.delta>=0?'g':'r'}">${chemPv.after.score}（${chemPv.delta>=0?'+':''}${chemPv.delta}）</b>${chemPv.keptFriends.length?` · <span class="g">保留老搭档羁绊：${chemPv.keptFriends.map(esc).join(' / ')}</span>`:''}</div>`:''}
      ${e&&e.crossMid?`<p class="warn">${ico('globe')} 当前为年中转会窗，跨赛区俱乐部几乎不愿中途放人，仅极高溢价才有小概率放行；建议等到年底休赛期再运作跨区引援。</p>`:''}
-     ${p.team?`<label>转会费（万）：<input type="number" min="0" step="10" data-o="cash" value="${cash}"></label>
-     <label>附加交换选手：<select data-o="give"><option value="">（不交换）</option>${me.roster.map(P).filter(Boolean).map(x=>`<option value="${esc(x.pid)}" ${give===x.pid?'selected':''}>${esc(playerTag(x))} · ${ROLE_CN[x.role]} · ${x.rating.toFixed(0)} · 身价${fmtMoney(playerValue(x))}</option>`).join('')}</select></label>
-     <p>评估：${verdict}（报价价值 ${fmtMoney(e.offerVal)}）</p>`:'<p>自由球员可直接签约，无需转会费。</p>'}
+     ${p.team?`<label>转会费（万）：<input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-o="cash" data-p="${esc(pid)}" value="${esc(cashTxt)}"></label>
+     <label>附加交换选手：<select data-o="give" data-p="${esc(pid)}"><option value="">（不交换）</option>${me.roster.map(P).filter(Boolean).map(x=>`<option value="${esc(x.pid)}" ${give===x.pid?'selected':''}>${esc(playerTag(x))} · ${ROLE_CN[x.role]} · ${x.rating.toFixed(0)} · 身价${fmtMoney(playerValue(x))}</option>`).join('')}</select></label>
+     <p id="offer-eval">${offerEvalHtml(pid,cash,give)}</p>`:'<p>自由球员可直接签约，无需转会费。</p>'}
      <div class="btns"><button class="btn" data-a="doOffer" data-p="${esc(pid)}">${p.team?'提交报价':'签约'}</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; };
 }
 function sellModal(pid, bids){
@@ -1667,7 +1694,7 @@ const ACT = {
   offTab:d=>{ UI.offTab=d.t; render(); },
   selTrainPid:d=>{ UI.trainPid=d.p; render(); },
   toggleTrain:d=>{ toggleTrainChamp(d.p, d.c); save(); render(); },
-  closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerGive=null; render(); },
+  closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; render(); },
   endWindow:()=>{ curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
   nextEvent:()=>{ advanceEvent(); save(); render(); },
   renew:d=>{ renewPlayer(d.p); save(); render(); },
@@ -1712,8 +1739,8 @@ const ACT = {
   release:d=>{ UI.modal=()=>`<h3>确定与 ${esc(playerTag(P(d.p)))} 解约？</h3><p>需支付半年薪违约金（${fmtMoney(P(d.p).salary*0.5)}），选手将成为自由球员。</p><div class="btns"><button class="btn" data-a="doRelease" data-p="${esc(d.p)}">确定解约</button><button class="btn ghost" data-a="closeModal">取消</button></div>`; render(); },
   doRelease:d=>{ releasePlayer(d.p); UI.modal=null; save(); render(); },
   startEv:()=>{ startEvent(); save(); render(); },
-  offer:d=>{ UI.offerCash=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
-  doOffer:d=>{ const p=P(d.p); const cash=p.team?(UI.offerCash!=null?UI.offerCash:askPrice(p)):0; const r=makeOffer(d.p,cash,UI.offerGive||null); if(r.ok){ UI.modal=null; save(); } toast(r.msg); render(); },
+  offer:d=>{ UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; UI.modal=offerModal(d.p); render(); },
+  doOffer:d=>{ const p=P(d.p); const cash=p.team?offerCashNow(p):0; const r=makeOffer(d.p,cash,UI.offerGive||null); if(r.ok){ UI.modal=null; UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; save(); } toast(r.msg); render(); },
   export:()=>{ UI.modal=()=>`<h3>导出存档</h3><p>复制下面的文本保存到本地文件（.json），以后可用“导入存档”恢复。</p><textarea id="expt" readonly style="width:100%;height:200px">${esc(JSON.stringify(S))}</textarea><div class="btns"><button class="btn" data-a="copyExp">复制</button><button class="btn ghost" data-a="dlExp">下载文件</button><button class="btn ghost" data-a="closeModal">关闭</button></div>`; render(); },
   copyExp:()=>{ const t=document.getElementById('expt'); navigator.clipboard.writeText(t.value).then(()=>toast('已复制'),()=>{ t.select(); toast('请手动复制选中的文本'); }); },
   dlExp:()=>{ try{ const b=new Blob([JSON.stringify(S)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`lol-manager-${S.year}.json`; a.click(); }catch(e){ toast('当前环境不支持下载，请用复制'); } },
@@ -1856,15 +1883,211 @@ document.addEventListener('change', e=>{
   const el=e.target;
   if(el.dataset.f){ UI.mk[el.dataset.f] = el.type==='checkbox'? el.checked : el.value; render(); }
   if(el.dataset.d==='avail' && UI.match){ UI.match.onlyAvail = el.checked; render(); }
-  if(el.dataset.o==='give'){ UI.offerGive=el.value; render(); }
+  if(el.dataset.o==='give'){ UI.offerGive=el.value; refreshOfferEval(el.dataset.p); }
   if(el.id==='imp' && el.files[0]){ el.files[0].text().then(t=>{ try{ S=migrateSave(JSON.parse(t)); save(); render(); toast('导入成功'); }catch(x){ toast('存档格式错误'); } }); }
 });
 document.addEventListener('input', e=>{
   const el=e.target;
   if(el.dataset.f==='q'){ UI.mk.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-f=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },300); }
   if(el.dataset.d==='q' && UI.match){ UI.match.q=el.value; clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-d=q]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },220); }
-  if(el.dataset.o==='cash'){ UI.offerCash=Math.max(0,+el.value||0); clearTimeout(UI._t); UI._t=setTimeout(()=>{ render(); const i=document.querySelector('[data-o=cash]'); if(i){ i.focus(); } },500); }
+  if(el.dataset.o==='cash'){
+    // 只保留数字；不重绘整个弹窗，只刷新评估文字，输入框内容与光标保持原样
+    const digits=el.value.replace(/[^0-9]/g,'');
+    if(digits!==el.value){ const pos=Math.max(0,(el.selectionStart||digits.length)-(el.value.length-digits.length)); el.value=digits; try{ el.setSelectionRange(pos,pos); }catch(x){} }
+    UI.offerCashRaw=digits; UI.offerCash=digits===''?0:Math.max(0,parseInt(digits,10)||0);
+    refreshOfferEval(el.dataset.p);
+  }
 });
+// ================= 夺冠庆祝（全屏庆祝层：光芒 / 奖杯 / 烟花彩带 / 合成音效 / 振动） =================
+// 挂在 body 上独立于 #app，不受 render() 整页重绘影响；每个冠军只庆祝一次（记录在 S.titlesSeen）
+const Celebrate = (()=>{
+  const INFO = {
+    lpl_s1:{name:'LPL 第一赛段', cat:'lpl', short:' LPL ', tier:1},
+    lpl_s2:{name:'LPL 第二赛段', cat:'lpl', short:' LPL ', tier:1},
+    lpl_s3:{name:'LPL 第三赛段', cat:'lpl', short:' LPL ', tier:1},
+    fst:{name:'全球先锋赛', cat:'fst', short:'先锋赛', tier:2},
+    msi:{name:'MSI 季中冠军赛', cat:'msi', short:' MSI ', tier:2},
+    ewc:{name:'电竞世界杯 EWC', cat:'ewc', short:' EWC ', tier:2},
+    worlds:{name:'英雄联盟全球总决赛', cat:'worlds', short:' S 赛', tier:3},
+  };
+  const MUTE_KEY = 'em_celebrate_mute';
+  const reduced = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let open = false, raf = 0, actx = null, timers = [];
+  const keyOf = (ev, i) => `${S.year}-${i}-${ev.type}`;
+  const isMuted = () => { try{ return localStorage.getItem(MUTE_KEY)==='1'; }catch(e){ return false; } };
+
+  function wonKeys(){
+    const out = [];
+    (S.events||[]).forEach((ev,i)=>{ if(ev && ev.done && INFO[ev.type] && ev.res && ev.res.champ===S.user) out.push([keyOf(ev,i), ev]); });
+    return out;
+  }
+  // 按赛事分别统计队史冠军数（历年存档 + 本赛季已完成赛事）
+  function titleCount(cat){
+    let n = 0;
+    for(const h of (S.history||[])){
+      if(h.year === S.year) continue;
+      if(cat==='lpl') n += (h.lpl||[]).filter(k=>k===S.user).length;
+      else if(h[cat]===S.user) n++;
+    }
+    for(const ev of (S.events||[])) if(ev.done && INFO[ev.type] && INFO[ev.type].cat===cat && ev.res && ev.res.champ===S.user) n++;
+    return Math.max(1, n);
+  }
+  function finalMatch(ev){
+    let last = null;
+    for(const st of (ev.stages||[])) for(const m of (st.matches||[])) if(m && m.w && (m.a===S.user || m.b===S.user)) last = m;
+    return last && last.w===S.user ? last : null;
+  }
+
+  function check(){
+    if(!S || open || UI.match || UI.replay) return;
+    const won = wonKeys();
+    if(!Array.isArray(S.titlesSeen)){ S.titlesSeen = won.map(x=>x[0]); return; }   // 老存档：已拿过的冠军不补放
+    const nxt = won.find(([k])=>!S.titlesSeen.includes(k));
+    if(!nxt) return;
+    S.titlesSeen.push(nxt[0]);
+    const inf = INFO[nxt[1].type], n = titleCount(inf.cat);
+    try{ addNews(`🏆 ${teamName(S.user)} 夺得 ${S.year} ${inf.name}冠军！队史第 ${n} 个${inf.short}冠军`); }catch(e){}
+    save();
+    setTimeout(()=>show(nxt[1], n), 60);
+  }
+
+  const TROPHY = `<svg viewBox="0 0 120 140" class="cb-cup" aria-hidden="true"><defs>
+    <linearGradient id="cbg" x1="0" x2="1"><stop offset="0" stop-color="#8a6420"/><stop offset=".35" stop-color="#ffe7a3"/><stop offset=".6" stop-color="#e2b24c"/><stop offset="1" stop-color="#7a561a"/></linearGradient>
+    <linearGradient id="cbg2" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f7d57e"/><stop offset="1" stop-color="#8a6420"/></linearGradient></defs>
+    <path d="M30 14h60v26c0 22-12 38-30 42-18-4-30-20-30-42z" fill="url(#cbg)" stroke="#5c4012" stroke-width="2"/>
+    <path d="M30 22H14c0 20 8 30 20 32M90 22h16c0 20-8 30-20 32" fill="none" stroke="url(#cbg)" stroke-width="7" stroke-linecap="round"/>
+    <rect x="53" y="82" width="14" height="20" fill="url(#cbg2)"/><path d="M36 102h48l6 14H30z" fill="url(#cbg)" stroke="#5c4012" stroke-width="2"/>
+    <rect x="26" y="116" width="68" height="14" rx="2" fill="#3b2a10" stroke="#c89b3c" stroke-width="2"/>
+    <path d="M60 30l5 10 11 1-8 8 2 11-10-5-10 5 2-11-8-8 11-1z" fill="#fff6d6" opacity=".9"/>
+    <path d="M38 20c2 18 6 30 14 38" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+
+  function show(ev, n){
+    const inf = INFO[ev.type]; const tier = inf.tier; const me = T(S.user) || {};
+    const fm = finalMatch(ev);
+    const opp = fm ? (fm.a===S.user ? fm.b : fm.a) : (ev.res.runner||null);
+    const sc = fm && fm.s ? (fm.a===S.user ? `${fm.s[0]} : ${fm.s[1]}` : `${fm.s[1]} : ${fm.s[0]}`) : '';
+    const roster = starters(S.user);
+    const head = tier===3 ? '世界冠军！' : tier===2 ? '国际赛冠军！' : '冠军！';
+    const sub = tier===3 ? `${esc(me.name||me.short||'')} 站上世界之巅` : `${esc(me.name||me.short||'')} 捧起 ${esc(inf.name)}冠军奖杯`;
+    open = true;
+    const el = document.createElement('div');
+    el.id = 'celebrate'; el.className = `cb-wrap tier${tier}`;
+    el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label', `${inf.name}冠军`);
+    el.innerHTML = `<div class="cb-flash"></div><div class="cb-rays"></div><div class="cb-glow"></div><canvas class="cb-fx"></canvas>
+      <button class="cb-mute" type="button" title="音效开关">${isMuted()?'🔇':'🔊'}</button>
+      <div class="cb-card">
+        <div class="cb-eyebrow">${S.year} · ${esc(inf.name)}</div>
+        <div class="cb-cupwrap">${TROPHY}<i class="cb-shine"></i></div>
+        <h1 class="cb-title">${head}</h1>
+        <div class="cb-team">${esc(me.short||'')}</div>
+        <p class="cb-sub">${sub}</p>
+        <div class="cb-count">队史第 <b>${n}</b> 个${esc(inf.short)}冠军</div>
+        ${opp ? `<div class="cb-final">决赛 ${sc?`<b>${esc(sc)}</b> `:''}击败 ${esc((T(opp)||{}).short||opp)}</div>` : ''}
+        ${roster.length ? `<div class="cb-roster">${roster.map((p,i)=>`<span style="--d:${(0.9+i*0.12).toFixed(2)}s"><small>${ROLE_CN[p.role]||''}</small><b>${esc(playerTag(p))}</b></span>`).join('')}</div>` : ''}
+        <button class="cb-go" type="button">继续 ▶</button>
+      </div>`;
+    document.body.appendChild(el);
+    document.body.classList.add('cb-lock');
+    const close = () => {
+      if(!open) return; open = false; cancelAnimationFrame(raf); timers.forEach(clearTimeout); timers = [];
+      document.removeEventListener('keydown', onKey);
+      el.classList.add('out'); document.body.classList.remove('cb-lock');
+      setTimeout(()=>{ el.remove(); check(); }, 380);
+    };
+    const onKey = e => { if(e.key==='Escape' || e.key==='Enter'){ e.preventDefault(); close(); } };
+    document.addEventListener('keydown', onKey);
+    el.querySelector('.cb-go').addEventListener('click', close);
+    el.querySelector('.cb-mute').addEventListener('click', e=>{
+      const m = !isMuted(); try{ localStorage.setItem(MUTE_KEY, m?'1':'0'); }catch(x){}
+      e.currentTarget.textContent = m?'🔇':'🔊'; if(m && actx){ try{ actx.suspend(); }catch(x){} } else if(!m){ if(actx) actx.resume(); else fanfare(tier); }
+    });
+    setTimeout(()=>{ const b = el.querySelector('.cb-go'); if(b) b.focus({preventScroll:true}); }, 50);
+    try{ if(navigator.vibrate) navigator.vibrate(tier===3?[180,80,180,80,500]:[120,60,120,60,300]); }catch(e){}
+    if(!isMuted()) fanfare(tier);
+    if(!reduced()) fireworks(el.querySelector('.cb-fx'), tier);
+  }
+
+  // ---------- 粒子：彩带 + 烟花 ----------
+  function fireworks(cv, tier){
+    const ctx = cv.getContext('2d'); const dpr = Math.min(2, window.devicePixelRatio||1);
+    let w = 0, h = 0;
+    const fit = () => { w = cv.clientWidth; h = cv.clientHeight; cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); };
+    fit();
+    const COLS = ['#ffd76a','#c89b3c','#fff3c4','#0ac8b9','#4aa3ff','#ff5a6e','#ffffff','#f7a8ff'];
+    const parts = [], rockets = [];
+    const rnd = (a,b)=>a+Math.random()*(b-a);
+    const confetti = (count, x0, spread) => { for(let i=0;i<count;i++){ parts.push({k:'c', x:x0!=null?x0:rnd(0,w), y:x0!=null?h*0.62:rnd(-h*0.4,-10), vx:x0!=null?rnd(-spread,spread):rnd(-1,1), vy:x0!=null?rnd(-15,-8):rnd(1,3), r:rnd(0,6.28), vr:rnd(-0.25,0.25), sw:rnd(5,10), sh:rnd(8,15), c:COLS[i%COLS.length], life:1, fade:0 }); } };
+    const burst = (x,y,col) => { const N = tier===3?90:tier===2?70:55; const sp = tier===3?7.5:6;
+      for(let i=0;i<N;i++){ const a = Math.PI*2*i/N + rnd(-0.05,0.05), v = rnd(sp*0.45, sp); parts.push({k:'s', x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, c: Math.random()<0.75?col:'#fff6d6', life:1, fade:rnd(0.010,0.018), tr:[]}); }
+      if(!isMuted()) boom(); };
+    const launch = () => { const col = COLS[Math.floor(Math.random()*COLS.length)]; rockets.push({x:rnd(w*0.12,w*0.88), y:h+10, vx:rnd(-1,1), vy:-rnd(h*0.017+7, h*0.02+9), ty:rnd(h*0.12,h*0.42), c:col}); };
+    // 开场：两侧彩带炮 + 顶部彩带雨
+    confetti(tier===3?140:90, w*0.04, 9); confetti(tier===3?140:90, w*0.96, 9); confetti(tier===3?160:100);
+    const total = tier===3?14000:tier===2?10000:7500; const t0 = performance.now();
+    let nextRocket = 300;
+    let last = t0;
+    const loop = now => {
+      if(!cv.isConnected) return;
+      if(cv.clientWidth !== w || cv.clientHeight !== h) fit();
+      const dt = Math.min(2.5, (now-last)/16.7); last = now; const el = now - t0;
+      if(el > nextRocket && el < total){ launch(); if(tier>=2 && Math.random()<0.45) launch(); nextRocket = el + rnd(tier===3?260:380, tier===3?620:900); }
+      if(el < total && Math.random() < (tier===3?0.5:0.3)*dt) confetti(1);
+      ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+      for(let i=rockets.length-1;i>=0;i--){ const r = rockets[i]; r.x += r.vx*dt; r.y += r.vy*dt; r.vy += 0.12*dt;
+        ctx.fillStyle = '#fff3c4'; ctx.beginPath(); ctx.arc(r.x, r.y, 2.4, 0, 6.28); ctx.fill();
+        ctx.fillStyle = 'rgba(255,215,106,.35)'; ctx.fillRect(r.x-1, r.y, 2, 16);
+        if(r.y <= r.ty || r.vy >= 0){ burst(r.x, r.y, r.c); rockets.splice(i,1); } }
+      ctx.globalCompositeOperation = 'lighter';
+      for(let i=parts.length-1;i>=0;i--){ const p = parts[i];
+        if(p.k==='s'){ p.vx *= Math.pow(0.975,dt); p.vy = p.vy*Math.pow(0.975,dt) + 0.06*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.life -= p.fade*dt;
+          if(p.life<=0){ parts.splice(i,1); continue; }
+          ctx.globalAlpha = Math.max(0,p.life); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, 6.28); ctx.fill(); }
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      for(let i=parts.length-1;i>=0;i--){ const p = parts[i]; if(p.k!=='c') continue;
+        p.vx = p.vx*Math.pow(0.985,dt) + Math.sin((now/400)+p.sw)*0.03*dt; p.vy = Math.min(p.vy + 0.22*dt, 3.2); p.x += p.vx*dt; p.y += p.vy*dt; p.r += p.vr*dt;
+        if(p.y > h+30){ parts.splice(i,1); continue; }
+        ctx.globalAlpha = 1; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.scale(1, Math.cos(now/180+p.sw));
+        ctx.fillStyle = p.c; ctx.fillRect(-p.sw/2, -p.sh/2, p.sw, p.sh); ctx.restore(); }
+      ctx.globalAlpha = 1;
+      if(el < total || parts.length || rockets.length) raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+  }
+
+  // ---------- 合成音效：号角 + 礼炮（Web Audio，无音频文件） ----------
+  function audio(){
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null;
+    if(!actx) actx = new AC(); if(actx.state==='suspended') actx.resume(); return actx;
+  }
+  function horn(ac, freq, t, dur, vol){
+    const o1 = ac.createOscillator(), o2 = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain();
+    o1.type = 'sawtooth'; o2.type = 'square'; o1.frequency.value = freq; o2.frequency.value = freq*1.003;
+    f.type = 'lowpass'; f.frequency.setValueAtTime(900, t); f.frequency.linearRampToValueAtTime(2600, t+0.08); f.frequency.linearRampToValueAtTime(1500, t+dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+0.04); g.gain.setValueAtTime(vol, t+dur*0.7); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o1.connect(f); o2.connect(f); f.connect(g); g.connect(ac.destination);
+    o1.start(t); o2.start(t); o1.stop(t+dur+0.05); o2.stop(t+dur+0.05);
+  }
+  function fanfare(tier){
+    const ac = audio(); if(!ac) return; const t = ac.currentTime + 0.05;
+    const N = [523.25, 659.25, 783.99, 1046.5];   // C5 E5 G5 C6
+    const seq = [[0,0,0.14],[1,0.16,0.14],[2,0.32,0.14],[3,0.5,0.9]];
+    const v = tier===3 ? 0.11 : 0.085;
+    seq.forEach(([i,dt,d])=>{ horn(ac, N[i], t+dt, d, v); horn(ac, N[i]/2, t+dt, d, v*0.6); });
+    if(tier>=2){ horn(ac, 783.99, t+1.5, 0.14, v); horn(ac, 1046.5, t+1.66, 1.0, v); horn(ac, 1318.5, t+1.66, 1.0, v*0.7); horn(ac, 523.25, t+1.66, 1.0, v*0.6); }
+  }
+  function boom(){
+    const ac = audio(); if(!ac) return; const t = ac.currentTime;
+    const len = Math.floor(ac.sampleRate*0.6), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 3);
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = buf; f.type = 'lowpass'; f.frequency.value = 700 + Math.random()*900; g.gain.value = 0.22;
+    s.connect(f); f.connect(g); g.connect(ac.destination); s.start(t);
+  }
+
+  return { check, show, _info: INFO };
+})();
+
 async function bootApp(){
   await StorageBridge.init();
   const raw = await StorageBridge.readSaveText();

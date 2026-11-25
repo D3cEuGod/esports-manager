@@ -1765,19 +1765,20 @@ function simUntilUser(limitAll){
     playAI(it); n++; if(n>2000) break; }
   return null;
 }
-// 模拟当前单轮（常规赛仅推完本轮、瑞士轮仅推完本轮、淘汰赛仅推完本轮对阵），遇到玩家自身比赛立即暂停
+// 模拟当前单轮（常规赛仅推完本轮、瑞士轮仅推完本轮、淘汰赛仅推完本轮对阵），包含玩家本轮的比赛，本轮打完即止
 function simCurrentRound(){
   startEvent();
   const ev = curEvent();
-  if(!ev || ev.done) return { played:0, stoppedForUser:false, item:null };
+  if(!ev || ev.done) return { played:0, userMatches:[] };
   const startSi = ev.si;
   const firstPool = stageMatches(ev);
-  if(!firstPool.length) return { played:0, stoppedForUser:false, item:null };
+  if(!firstPool.length) return { played:0, userMatches:[] };
   const st0 = firstPool[0].st;
   const targetRnd = st0.kind==='rr' ? firstPool[0].m.rnd : st0.kind==='swiss' ? st0.round : null;
   const targetCol = st0.kind==='br' ? Math.min(...firstPool.map(x => x.m.col != null ? x.m.col : 0)) : null;
 
   let played = 0, guard = 0;
+  const userMatches = [];
   while(!ev.done && ev.si === startSi && guard++ < 200){
     const pool = stageMatches(ev).filter(({m, st}) => {
       if(st.kind==='rr') return m.rnd === targetRnd;
@@ -1786,18 +1787,19 @@ function simCurrentRound(){
       return true;
     });
     if(!pool.length) break;
-    // 先把本轮里非玩家的 AI 比赛打完；若只剩玩家自己的比赛，立即暂停把球交回玩家
-    const aiItem = pool.find(x => !userInvolved(x.m));
-    if(aiItem){
-      playAI(aiItem);
-      played++;
-      continue;
+    const it = pool[0];
+    if(userInvolved(it.m)){
+      simSeries(it.m, true);
+      afterMatch(it.st, it.m);
+      const won = it.m.w === S.user;
+      addNews(`${won?'胜':'负'}：${teamName(it.m.a)} ${it.m.s[0]}:${it.m.s[1]} ${teamName(it.m.b)}（${it.m.label}）`);
+      userMatches.push({ a: it.m.a, b: it.m.b, s: it.m.s.slice(), won, label: it.m.label });
+    } else {
+      playAI(it);
     }
-    const myItem = pool.find(x => userInvolved(x.m));
-    if(myItem) return { played, stoppedForUser:true, item:myItem };
-    break;
+    played++;
   }
-  return { played, stoppedForUser:false, item:null };
+  return { played, userMatches };
 }
 function advanceEvent(){
   const ev=curEvent(); if(!ev.done) return;

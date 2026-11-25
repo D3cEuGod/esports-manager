@@ -1691,8 +1691,9 @@ const ACT = {
     if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
     const res = simCurrentRound();
     save(); render();
-    if(res.stoppedForUser){
-      toast('已推进至本轮你的比赛，请点击「进入比赛」亲自出战！');
+    if(res.userMatches && res.userMatches.length){
+      const u = res.userMatches[res.userMatches.length - 1];
+      toast(`本轮模拟完毕：${u.won?'胜':'负'} ${teamName(u.a)} ${u.s[0]}:${u.s[1]} ${teamName(u.b)}（共 ${res.played} 场）`);
     } else if(res.played > 0){
       toast(`本轮 ${res.played} 场比赛模拟完毕`);
     }

@@ -139,6 +139,7 @@ const pickOne = a => a[Math.floor(rnd()*a.length)];
 // =====================================================================
 // 位置 s ∈ [0,1]：0 = A 方防御塔一侧，1 = B 方防御塔一侧；A 塔在 0.06，B 塔在 0.94
 const SOLO_TW = {A:0.06, B:0.94};
+const SOLO_LAST_TICK = 12*60 - 1;
 const XP_LV = [0,0,280,660,1140,1720,2400,3180,4060,5040,6120,7300,8580,9960,11440,13020,14700,16480,18360];
 const lvlOf = xp => { let l=1; while(l<18 && xp>=XP_LV[l+1]) l++; return l; };
 
@@ -257,12 +258,20 @@ function soloStep(g){
   // 缩圈：10:00 之后双方被迫贴脸，并持续掉血
   if(g.t >= 600){
     if(g.ring===0){ g.ring=1; soloLog(g, null, '缩圈', '⏳ 10 分钟到！火圈开始收缩，双方被迫贴身肉搏！', true); }
-    for(const f of [A,B]){ if(f.recall||f.away){ f.recall=0; f.away=0; } f.s += (0.5 - f.s)*0.2; f.hp -= 0.004 + (g.t-600)*0.00006; }
-    // 火圈越小越容易爆发决战：10:00 刚开始缩圈时以拉扯为主，越接近 12:00 越可能强开
-    if(g.t % 5 === 0 && rnd() < 0.1 + (g.t-600)/140) { const r = soloAllIn(g, A.hp*rnd() > B.hp*rnd() ? 'A' : 'B', true); if(r) return; }
-    if(A.hp<=0 || B.hp<=0 || g.t>=720){
+    const elapsed = g.t - 600;
+    for(const f of [A,B]){
+      f.recall = 0; f.away = 0;
+      f.s += (0.5 - f.s)*0.2;
+      f.hp -= 0.004 + elapsed*0.00006;
+    }
+    if(A.hp<=0 || B.hp<=0 || g.t>=SOLO_LAST_TICK){
       const w = A.hp===B.hp ? (rnd()<0.5?'A':'B') : (A.hp>B.hp?'A':'B');
+      g.F[w].hp = Math.max(0, g.F[w].hp);
       return soloEnd(g, w, '决死缩圈击杀', `🔥 火圈收缩终极一战！${g.F[w].tag} 顶住压力完成终结，为 ${teamName(w==='A'?g.teamA:g.teamB)} 赢下选边权！`);
+    }
+    // 火圈越小越容易爆发决战：10:00 刚开始缩圈时以拉扯为主，越接近 12:00 越可能强开
+    if(g.t % 5 === 0 && rnd() < 0.1 + elapsed/140){
+      if(soloAllIn(g, A.hp*rnd() > B.hp*rnd() ? 'A' : 'B', true)) return;
     }
   }
   if(presA && presB && g.ring===0){
@@ -562,12 +571,15 @@ function step5(G){
   encounters(G);
   objectives(G);
   lanesAndTowers(G);
-  if(G.rec){ if(t%3===0) recFrame5(G); if(t%12===0) recStats5(G); }
   if(t%21===0){ const gA = G.champs.filter(c=>c.side==='A').reduce((s,c)=>s+c.tg,0), gB = G.champs.filter(c=>c.side==='B').reduce((s,c)=>s+c.tg,0); G.gs.push([t, Math.round(gA-gB)]); }
   if(G.fx.length && G.fx[0].t < t-4) G.fx = G.fx.filter(f=>f.t>=t-4);
   if(t >= 3600 && !G.over){ // 安全阀：极端拉锯时由经济领先方终结
     const gA = G.champs.filter(c=>c.side==='A').reduce((s,c)=>s+c.tg,0), gB = G.champs.filter(c=>c.side==='B').reduce((s,c)=>s+c.tg,0);
     endGame5(G, gA>=gB?'A':'B');
+  }
+  if(G.rec){
+    recFrame5(G);
+    if(t%12===0 || G.over) recStats5(G);
   }
 }
 
@@ -682,8 +694,12 @@ function tickChamp(G, c){
   const lowHp = c.hp < (t<840 && c.task.k==='lane' ? 0.36 : 0.3);
   const rich = c.gold >= next && t - c.lastBack > 140 && (tk.k==='lane'||tk.k==='jungle'||tk.k==='split') && G.front[tk.lane||'mid'] !== undefined;
   if((lowHp || (rich && rnd()<0.06*DT)) && tk.k!=='obj' && tk.k!=='defend' && !nearEnemy(G, c, 160)){
-    c.recall = 8;
+    startRecall5(c);
   }
+}
+function startRecall5(c){
+  c.recall = 8;
+  c.pw = 0;
 }
 function nearEnemy(G, c, R){ for(const o of G.champs) if(o.side!==c.side && o.alive && hyp(o.x-c.x,o.y-c.y) < R) return true; return false; }
 function nextItemCost(c){
@@ -696,7 +712,13 @@ function nextItemCost(c){
 function shop(G, c){
   const b = c.build;
   const buy = id => { c.items.push(id); if(G.rec) G.evs.push([G.t,'B',c.i,id]); };
-  if(b.sup && !c.supDone && c.tg > 1100){ c.supDone = true; const k = c.items.indexOf(3865); if(k>=0) c.items.splice(k,1); buy(b.sup); }
+  const remove = slot => { c.items.splice(slot,1); if(G.rec) G.evs.push([G.t,'S',c.i,slot]); };
+  if(b.sup && !c.supDone && c.tg > 1100){
+    c.supDone = true;
+    const mapSlot = c.items.indexOf(3865);
+    if(mapSlot>=0) remove(mapSlot);
+    buy(b.sup);
+  }
   let guard = 0;
   while(guard++ < 4){
     if(!c.bootsDone && c.coreIdx>=1){
@@ -709,7 +731,7 @@ function shop(G, c){
     if(c.gold >= cost){
       c.gold -= cost; c.invest += cost; c.partial = 0; c.coreIdx++;
       // 6 格满时卖掉出门装
-      if(c.items.length >= 6){ const s = c.items.findIndex(x=>ITEMS[x][2]==='start'); if(s>=0){ c.items.splice(s,1); if(G.rec) G.evs.push([G.t,'S',c.i,s]); } }
+      if(c.items.length >= 6){ const s = c.items.findIndex(x=>ITEMS[x][2]==='start'); if(s>=0) remove(s); }
       buy(id);
       if(c.coreIdx===2 && (c.role==='MID'||c.role==='ADC') ) feed(G, c.side, '装备成型', `${cname(c)} 两件套成型，输出能力大幅提升。`);
       continue;
@@ -905,7 +927,7 @@ function laneTrades(G){
     // 残血被击杀：单杀 / 二打二
     const dying = L.filter(c=>c.hp < 0.2);
     if(dying.length && rnd() < 0.2 + marg*0.25){
-      resolveFight(G, aWin?a:b, aWin?b:a, 'lane', true);
+      resolveFight(G, a, b, 'lane', true);
     }
   }
 }
@@ -950,7 +972,7 @@ function encounters(G){
       const n = A.length + B.length;
       const escape = ratio < 0.7 ? (defending ? (ratio < 0.55 ? 0.55 : 0) : 0.7 + (weak.some(x=>x.tags.has('protect'))?0.08:0) - (n>=7?0.15:0)) : 0;
       if(rnd() < escape){
-        for(const x of weak){ x.fightCd = 8; x.hp = Math.max(0.1, x.hp-0.1); if(x.hp<0.45) x.recall = 8; else setTask(x, {k:'base'}); }
+        for(const x of weak){ x.fightCd = 8; x.hp = Math.max(0.1, x.hp-0.1); if(x.hp<0.45) startRecall5(x); else setTask(x, {k:'base'}); }
         break;
       }
       const kind = n >= 6 ? 'team' : (A.length===1||B.length===1) && n>=3 ? 'gank' : 'skirm';
@@ -1022,7 +1044,7 @@ function resolveFight(G, A, B, kind, laneFight){
   let killsBy = {A:0, B:0};
   for(const [v, ks] of order){ if(!v.alive) continue; const kset = ks; doKill(v, kset, kset); killsBy[v.side==='A'?'B':'A']++; }
   // 存活者状态
-  for(const c of L) if(c.alive){ c.hp = Math.max(0.06, c.hp*(0.35+rnd()*0.3)); c.fightCd = 15; if(c.hp < 0.45){ setTask(c, {k:'base'}); c.recall = 8; } }
+  for(const c of L) if(c.alive){ c.hp = Math.max(0.06, c.hp*(0.35+rnd()*0.3)); c.fightCd = 15; if(c.hp < 0.45){ setTask(c, {k:'base'}); startRecall5(c); } }
   for(const c of W) if(c.alive){ c.hp = Math.max(0.1, c.hp*(0.55+rnd()*0.35)); c.fightCd = 9; }
   if(!laneFight){ G.planT = t; if(kind!=='gank'){ G.team.A.calmT = t + 75; G.team.B.calmT = t + 75; } }
   // 团灭 / 团战播报
@@ -1039,7 +1061,7 @@ function resolveFight(G, A, B, kind, laneFight){
     if(!ob.up || ob.prog < 0.55) continue;
     const pit = key==='baron' ? MAP5.baron : MAP5.dragon;
     if(hyp(fx-pit[0], fy-pit[1]) > 220) continue;
-    const jg = G.champs.find(c=>c.side===lSide && c.role==='JUG' && c.alive && hyp(c.x-pit[0],c.y-pit[1])<200);
+    const jg = G.champs.find(c=>c.side===lSide && c.role==='JUG' && c.alive && c.recall===0 && hyp(c.x-pit[0],c.y-pit[1])<200);
     if(jg && ob.by===W[0].side && rnd() < 0.18){ takeObj(G, key, lSide, true); }
   }
 }
@@ -1047,6 +1069,7 @@ function resolveFight(G, A, B, kind, laneFight){
 function applyKill(G, killer, victim, assists){
   const t = G.t;
   victim.alive = false; victim.hp = 0; victim.d++;
+  victim.pw = 0;
   const rt = BRW[victim.lvl-1] * (1 + Math.max(0, t/60-15)*0.018);
   victim.rt = Math.round(rt); victim.recall = 0;
   victim.task = TK({k: victim.role==='JUG'?'jungle':'lane', lane: LANE_OF[victim.role]});
@@ -1085,10 +1108,10 @@ function objectives(G){
   const t = G.t, o = G.obj;
   const check = (key, pt, need) => {
     const ob = o[key]; if(!ob.up) return;
-    const a = G.champs.filter(c=>c.side==='A' && c.alive && hyp(c.x-pt[0],c.y-pt[1])<75);
-    const b = G.champs.filter(c=>c.side==='B' && c.alive && hyp(c.x-pt[0],c.y-pt[1])<75);
-    const ea = G.champs.some(c=>c.side==='B' && c.alive && hyp(c.x-pt[0],c.y-pt[1])<150);
-    const eb = G.champs.some(c=>c.side==='A' && c.alive && hyp(c.x-pt[0],c.y-pt[1])<150);
+    const a = G.champs.filter(c=>c.side==='A' && c.alive && c.recall===0 && hyp(c.x-pt[0],c.y-pt[1])<75);
+    const b = G.champs.filter(c=>c.side==='B' && c.alive && c.recall===0 && hyp(c.x-pt[0],c.y-pt[1])<75);
+    const ea = G.champs.some(c=>c.side==='B' && c.alive && c.recall===0 && hyp(c.x-pt[0],c.y-pt[1])<150);
+    const eb = G.champs.some(c=>c.side==='A' && c.alive && c.recall===0 && hyp(c.x-pt[0],c.y-pt[1])<150);
     let side = null, grp = null;
     if(a.length && !ea){ side='A'; grp=a; } else if(b.length && !eb){ side='B'; grp=b; }
     if(!side){ return; }
@@ -1253,7 +1276,6 @@ function endGame5(G, side){
   if(G.over) return;
   G.over = true; G.winner = side;
   feed(G, side, '推平水晶', `🏆 ${G.team[side].name} 攻破主水晶，赢下本局比赛！`, true);
-  if(G.rec){ recFrame5(G); recStats5(G); }
 }
 
 // ---------------- 录像 ----------------
@@ -1313,30 +1335,35 @@ function playGame(d, opts){
   return game5Result(G);
 }
 
-// ================= 回放存档：最近 10 局 + 最多 10 局永久收藏 =================
-const REPLAY_MAX_RECENT = 10, REPLAY_MAX_KEPT = 10;
+// ================= 回放存档：最多 200 条，最近 10 局 + 最多 10 局永久收藏 =================
+const REPLAY_MAX_RECENT = 10, REPLAY_MAX_KEPT = 10, REPLAY_MAX_ENTRIES = 200;
 function replayStore(){ if(!S.replays) S.replays = []; return S.replays; }
 function pushReplay(entry){
   const list = replayStore();
   entry.id = entry.id || ('r' + Date.now().toString(36) + Math.floor(rnd()*1e4).toString(36));
   list.unshift(entry);
-  // 超出 10 局的非收藏回放只保留比分与数据（删除关键帧）
-  let n = 0;
-  for(const r of list){ if(r.kept) continue; n++; if(n > REPLAY_MAX_RECENT && (r.rec || r.solo)){ r.rec = null; r.solo = null; r.trimmed = true; } }
-  // 丢弃已无回放数据且过旧的记录
-  S.replays = list.filter((r,i)=>r.kept || r.rec || i < 40);
+  pushReplayTrim();
   return entry.id;
 }
 function findReplay(id){ return (S.replays||[]).find(r=>r.id===id) || null; }
 function toggleKeepReplay(id){
   const r = findReplay(id); if(!r) return {ok:false, msg:'回放不存在'};
   if(r.kept){ r.kept = false; pushReplayTrim(); return {ok:true, msg:'已取消永久保留'}; }
-  if(!r.rec) return {ok:false, msg:'这局只剩比分数据，无法收藏'};
+  if(!r.rec && !r.solo) return {ok:false, msg:'这局只剩比分数据，无法收藏'};
   const kept = (S.replays||[]).filter(x=>x.kept).length;
   if(kept >= REPLAY_MAX_KEPT) return {ok:false, msg:`永久保留已达上限 ${REPLAY_MAX_KEPT} 局，请先取消一局`};
   r.kept = true; return {ok:true, msg:'已永久保留这局回放'};
 }
 function pushReplayTrim(){
-  let n = 0;
-  for(const r of S.replays||[]){ if(r.kept) continue; n++; if(n > REPLAY_MAX_RECENT && r.rec){ r.rec = null; r.solo = null; r.trimmed = true; } }
+  const list = S.replays || [];
+  let recent = 0;
+  for(const r of list){
+    if(r.kept || (!r.rec && !r.solo)) continue;
+    if(++recent <= REPLAY_MAX_RECENT) continue;
+    r.rec = null; r.solo = null; r.trimmed = true;
+  }
+  for(let i=list.length-1; i>=0 && list.length>REPLAY_MAX_ENTRIES; i--){
+    const r = list[i];
+    if(!r.kept && !r.rec && !r.solo) list.splice(i,1);
+  }
 }

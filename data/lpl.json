@@ -23,7 +23,7 @@
      "role": "JUG",
      "nat": "CN",
      "age": null,
-     "rating": 86,
+     "rating": 85,
      "sub": false
     },
     {
@@ -50,7 +50,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 85,
+     "rating": 88,
      "sub": false
     }
    ]
@@ -67,7 +67,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 87,
+     "rating": 85,
      "sub": false
     },
     {
@@ -76,7 +76,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": null,
-     "rating": 85,
+     "rating": 88,
      "sub": false
     },
     {
@@ -85,7 +85,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 84,
+     "rating": 86,
      "sub": false
     },
     {
@@ -94,7 +94,7 @@
      "role": "ADC",
      "nat": "CN",
      "age": null,
-     "rating": 86,
+     "rating": 81,
      "sub": false
     },
     {
@@ -103,7 +103,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": null,
-     "rating": 84,
+     "rating": 87,
      "sub": false
     },
     {
@@ -112,7 +112,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 80,
+     "rating": 81,
      "sub": true
     }
    ]
@@ -147,7 +147,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 82,
+     "rating": 85,
      "sub": false
     },
     {
@@ -156,7 +156,7 @@
      "role": "ADC",
      "nat": "CN",
      "age": null,
-     "rating": 86,
+     "rating": 88,
      "sub": false
     },
     {
@@ -165,7 +165,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 78,
+     "rating": 79,
      "sub": false
     },
     {
@@ -191,7 +191,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": null,
-     "rating": 84,
+     "rating": 85,
      "sub": false
     },
     {
@@ -200,7 +200,7 @@
      "role": "JUG",
      "nat": "CN",
      "age": null,
-     "rating": 84,
+     "rating": 85,
      "sub": false
     },
     {
@@ -209,7 +209,7 @@
      "role": "MID",
      "nat": "KR",
      "age": null,
-     "rating": 84,
+     "rating": 85,
      "sub": false
     },
     {
@@ -218,7 +218,7 @@
      "role": "ADC",
      "nat": "CN",
      "age": null,
-     "rating": 79,
+     "rating": 80,
      "sub": false
     },
     {
@@ -227,7 +227,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 83,
+     "rating": 84,
      "sub": false
     },
     {
@@ -253,7 +253,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 78,
+     "rating": 80,
      "sub": false
     },
     {
@@ -262,7 +262,7 @@
      "role": "JUG",
      "nat": "TW",
      "age": null,
-     "rating": 82,
+     "rating": 83,
      "sub": false
     },
     {
@@ -306,7 +306,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 80,
+     "rating": 81,
      "sub": false
     },
     {
@@ -315,7 +315,7 @@
      "role": "JUG",
      "nat": "CN",
      "age": null,
-     "rating": 80,
+     "rating": 83,
      "sub": false
     },
     {
@@ -333,7 +333,7 @@
      "role": "ADC",
      "nat": "CN",
      "age": null,
-     "rating": 86,
+     "rating": 89,
      "sub": false
     },
     {
@@ -342,7 +342,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 74,
+     "rating": 76,
      "sub": false
     }
    ]
@@ -359,7 +359,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     },
     {
@@ -377,7 +377,7 @@
      "role": "MID",
      "nat": "KR",
      "age": null,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     },
     {
@@ -386,7 +386,7 @@
      "role": "ADC",
      "nat": "HK",
      "age": null,
-     "rating": 76,
+     "rating": 79,
      "sub": false
     },
     {
@@ -395,7 +395,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 75,
+     "rating": 79,
      "sub": false
     },
     {
@@ -439,7 +439,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     },
     {
@@ -448,7 +448,7 @@
      "role": "JUG",
      "nat": "CN",
      "age": null,
-     "rating": 77,
+     "rating": 80,
      "sub": false
     },
     {
@@ -457,7 +457,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 75,
+     "rating": 77,
      "sub": false
     },
     {
@@ -466,7 +466,7 @@
      "role": "ADC",
      "nat": "CN",
      "age": null,
-     "rating": 74,
+     "rating": 78,
      "sub": false
     },
     {
@@ -475,7 +475,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 73,
+     "rating": 74,
      "sub": false
     }
    ]
@@ -492,7 +492,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     },
     {
@@ -501,7 +501,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": null,
-     "rating": 77,
+     "rating": 78,
      "sub": false
     },
     {
@@ -510,7 +510,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     },
     {
@@ -519,7 +519,7 @@
      "role": "ADC",
      "nat": "CN",
      "age": null,
-     "rating": 76,
+     "rating": 77,
      "sub": false
     },
     {
@@ -528,7 +528,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 73,
+     "rating": 75,
      "sub": false
     }
    ]
@@ -545,7 +545,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 75,
+     "rating": 76,
      "sub": false
     },
     {
@@ -625,7 +625,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": null,
-     "rating": 75,
+     "rating": 77,
      "sub": false
     },
     {
@@ -722,7 +722,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 74,
+     "rating": 76,
      "sub": false
     },
     {
@@ -766,7 +766,7 @@
      "role": "JUG",
      "nat": "CN",
      "age": null,
-     "rating": 71,
+     "rating": 73,
      "sub": false
     },
     {
@@ -775,7 +775,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 70,
+     "rating": 72,
      "sub": false
     },
     {

@@ -240,57 +240,175 @@ function startScreen(){
   </div>`;
 }
 
-// ---------- 主页 / 赛程（精简去冗杂版） ----------
+// ---------- 主页（随当前事件动态切换，单焦点清爽版） ----------
 const VIEWS = {};
+
+function renderOffseasonHome(){
+  const np = ensureNextPatch();
+  const me = T(S.user);
+  const roster = me.roster.map(P).filter(Boolean).sort((a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||b.rating-a.rating);
+  const exp = roster.filter(p=>p.contract<=S.year);
+  const tab = UI.offTab || 'patch';
+  const selPid = (UI.trainPid && P(UI.trainPid) && P(UI.trainPid).team===S.user) ? UI.trainPid : (roster[0] ? roster[0].pid : null);
+  const selPl = selPid ? P(selPid) : null;
+
+  let pane = '';
+  if(tab === 'patch'){
+    pane = `<div class="patch-preview">
+      <div class="pp-intro">新赛季 <b>${esc(np.ver)}</b> 版本改动前瞻已公布！你可以根据下方英雄加强方向，切到「🎯 选手英雄池特训」定向安排冬训。</div>
+      <div class="cols">
+        <div class="pp-col buff">
+          <h4>⬆️ 新版本重点加强英雄</h4>
+          <ul class="pp-list">${np.buffs.map(b=>`<li>
+            ${champAvatar(b.c,'xs')}
+            <div class="pp-txt">
+              <b>${esc(champName(b.c))}</b> <span class="pp-tag up">${b.to>=2?'晋升 T0 🔥':'晋升 T1 ↑'}</span> <small>${CH[b.c].roles.map(r=>ROLE_CN[r]).join('/')}</small>
+              <div class="pp-desc">${esc(b.desc)}</div>
+            </div>
+          </li>`).join('')}</ul>
+        </div>
+        <div class="pp-col nerf">
+          <h4>⬇️ 新版本回调削弱英雄</h4>
+          <ul class="pp-list">${np.nerfs.map(n=>`<li>
+            ${champAvatar(n.c,'xs')}
+            <div class="pp-txt">
+              <b>${esc(champName(n.c))}</b> <span class="pp-tag dn">强度下调</span> <small>${CH[n.c].roles.map(r=>ROLE_CN[r]).join('/')}</small>
+              <div class="pp-desc">${esc(n.desc)}</div>
+            </div>
+          </li>`).join('')}</ul>
+        </div>
+      </div>
+    </div>`;
+  } else if(tab === 'train'){
+    const targets = selPl ? (selPl.trainTargets || []) : [];
+    const candChamps = selPl ? CHAMP_KEYS.slice().sort((a,b)=>{
+      const ar = CH[a].roles.includes(selPl.role)?1:0, br = CH[b].roles.includes(selPl.role)?1:0;
+      if(ar!==br) return br-ar;
+      return (np.meta[b]||0) - (np.meta[a]||0);
+    }) : [];
+    pane = `<div class="train-panel">
+      <p class="muted">为每位选手指定最多 <b>2 名</b> 休赛期重点练习英雄，开启新赛季时对应熟练度将大幅提升（标记 🔥/↑ 的为下版本加强英雄）。</p>
+      <div class="train-layout">
+        <div class="train-roster">${roster.map(p=>{
+          const ts = p.trainTargets || [];
+          return `<button class="tr-pl ${p.pid===selPid?'on':''}" data-a="selTrainPid" data-p="${esc(p.pid)}">
+            <div><small>${ROLE_CN[p.role]}</small> <b>${esc(playerTag(p))}</b></div>
+            <div class="tr-tags">${ts.length ? ts.map(c=>`<span>🎯 ${esc(champName(c))}</span>`).join('') : '<i class="muted">未指定</i>'}</div>
+          </button>`;
+        }).join('')}</div>
+        ${selPl ? `<div class="train-picker">
+          <div class="tp-hd">
+            <b>${esc(playerTag(selPl))}（${ROLE_CN[selPl.role]}）当前英雄池：</b>
+            <div class="pool">${selPl.champs.map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}">${ti.icon?ti.icon+' ':''}${esc(champName(c.c))}·${ti.name}</span>`; }).join('')}</div>
+          </div>
+          <div class="tp-sub">点选冬训目标英雄（已选 ${targets.length}/2）：</div>
+          <div class="train-cgrid">${candChamps.slice(0, 42).map(k=>{
+            const on = targets.includes(k);
+            const m = np.meta[k]||0;
+            const curP = champProfVal(selPl, k);
+            const ti = curP>=25 ? profTier(curP) : null;
+            return `<button class="tc-chip ${on?'on':''}" data-a="toggleTrain" data-p="${esc(selPl.pid)}" data-c="${esc(k)}">
+              ${champAvatar(k,'xs')}
+              <span>${esc(champName(k))}${m>=2?' 🔥':m>=1?' ↑':''}${ti?`<small>${ti.name}</small>`:''}</span>
+            </button>`;
+          }).join('')}</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  } else {
+    pane = `<div class="off-contracts">
+      <h4>合同到期选手（不续约将在新赛季开启时离队）</h4>
+      ${exp.length?`<table class="tbl">${exp.map(p=>`<tr><td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b></td><td>${p.age}岁</td><td>${p.renewed?'✅ 已续约':`<button class="btn sm" data-a="renew" data-p="${esc(p.pid)}">续约2年（年薪约 ${fmtMoney(fairSalary(p)*1.1)}）</button>`}</td></tr>`).join('')}</table>`:'<p class="muted">本队没有合同到期的选手。</p>'}
+      <hr class="sep">
+      ${marketEmbedHtml(35)}
+    </div>`;
+  }
+
+  return `<div class="off-hub">
+    <div class="off-bar">
+      <div class="off-tabs">
+        <a class="${tab==='patch'?'on':''}" data-a="offTab" data-t="patch">📜 下版本更新日志 (${esc(np.ver)})</a>
+        <a class="${tab==='train'?'on':''}" data-a="offTab" data-t="train">🎯 选手英雄池特训</a>
+        <a class="${tab==='contract'?'on':''}" data-a="offTab" data-t="contract">✍️ 续约与转会市场 ${exp.filter(p=>!p.renewed).length?`(${exp.filter(p=>!p.renewed).length})`:''}</a>
+      </div>
+      <button class="btn big" data-a="newSeason">完成休赛期，开启 ${S.year+1} 赛季 ▶</button>
+    </div>
+    ${pane}
+  </div>`;
+}
+
 VIEWS.home = () => {
   const ev=curEvent(), info=EVENT_INFO[ev.type];
-  let body='';
-  if(ev.type==='window'){
-    body=`<p>转会窗口开启中，可前往 <a data-a="view" data-v="market">转会市场</a> 引援，或在 <a data-a="view" data-v="roster">阵容</a> 调整首发。</p>
-      <div class="btns"><button class="btn big" data-a="endWindow">结束转会窗口，继续赛程 ▶</button></div>`;
-  } else if(ev.type==='off'){
-    const exp=T(S.user).roster.map(P).filter(p=>p&&p.contract<=S.year);
-    body=`<p>${S.year} 赛季结束，处理到期合同后开启新赛季。</p>
-      ${exp.length?`<h4>合同到期选手（不续约将离队）</h4><table class="tbl">${exp.map(p=>`<tr><td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b></td><td>${p.age}岁</td><td>${p.renewed?'✅ 已续约':`<button class="btn sm" data-a="renew" data-p="${esc(p.pid)}">续约2年（约 ${fmtMoney(fairSalary(p)*1.1)}）</button>`}</td></tr>`).join('')}</table>`:'<p class="muted">没有合同到期的选手。</p>'}
-      <div class="btns"><button class="btn big" data-a="newSeason">开始 ${S.year+1} 赛季 ▶</button></div>`;
-  } else if(!ev.started){
-    body = `<p class="muted">${ev.type==='lpl_s1'?'开赛前转会窗口开放中，确认首发后即可开赛。':'准备就绪，点击下方开启本项赛事。'}</p>${probs()}
-      <div class="btns"><button class="btn big" data-a="startEv">开始赛事 ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
-  } else {
-    const nxt = nextReadyMatch();
-    const myNext = findMyNext();
-    if(ev.done){
-      body = `<div class="done">✅ 本阶段已结束 ${ev.res.champ?`· 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
-        <div class="btns"><button class="btn big" data-a="nextEvent">进入下一项赛事 ▶</button></div>`;
-    } else {
-      const inEvent = eventHasUser(ev);
-      body = `<div class="stage">当前阶段：<b>${esc(ev.stages[ev.si]?ev.stages[ev.si].name:'')}</b></div>
-       ${myNext?`<div class="nextm"><div class="lbl">${esc(myNext.m.label)} · BO${myNext.m.bo}</div>
-          <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}</div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}</div></div></div>`:
-         `<p class="muted">${inEvent?'等待其他对局完成…':'本队未参与当前阶段，可直接模拟推进。'}</p>`}
-       <div class="btns">
-         ${myNext?`<button class="btn big" data-a="toMyMatch">${nxt&&userInvolved(nxt.m)?'进入比赛（1v1 / BP）':'模拟至我的比赛'} ▶</button>`:''}
-         <button class="btn" data-a="simStage">模拟本阶段</button>
-         <button class="btn ghost" data-a="simEvent">模拟整项赛事</button>
-       </div>
-       ${probs()}`;
-    }
-  }
   const strip = `<div class="season-strip">${S.events.map((e,i)=>{
     const cls = i<S.evIdx||e.done?'past':i===S.evIdx?'now':'';
     return `<span class="ss-item ${cls}">${EVENT_INFO[e.type].name.replace(/LPL |全球总决赛 |MSI |电竞世界杯 /g,'')}</span>`;
   }).join('')}</div>`;
+
+  // 1. 年中转会窗口：直接将转会操作与首发概览放到主页
+  if(ev.type === 'window'){
+    const me = T(S.user);
+    return `<section class="card evcard">
+      ${strip}
+      <div class="evh"><h2>${info.name}</h2><span>预算 ${fmtMoney(me.budget)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</span></div>
+      <div class="win-lineup-bar">
+        ${ROLES.map(r=>{ const p=P(me.lineup[r]); return `<span class="wl-slot"><small>${ROLE_CN[r]}</small><b>${p?esc(playerTag(p)):'空缺'}</b></span>`; }).join('')}
+        <a class="wl-link" data-a="view" data-v="roster">调整首发/出售 →</a>
+        <button class="btn big" style="margin-left:auto" data-a="endWindow">结束转会窗，继续赛程 ▶</button>
+      </div>
+      ${probs()}
+    </section>
+    <section class="card">${marketEmbedHtml(45)}</section>`;
+  }
+
+  // 2. 年底休赛期：版本更新日志 + 选手英雄池特训 + 续约引援一站式清爽标签页
+  if(ev.type === 'off'){
+    return `<section class="card evcard">
+      ${strip}
+      <div class="evh"><h2>${S.year} 休赛期与新赛季筹备</h2><span>预算 ${fmtMoney(T(S.user).budget)}</span></div>
+      ${renderOffseasonHome()}
+    </section>`;
+  }
+
+  // 3. 各项赛事阶段（LPL赛段 / 先锋赛 / MSI / EWC / 世界赛）：直接把当前赛事的实时赛程/积分/对阵图放到主页！
+  let topBody = '';
+  let stageCard = '';
+  if(!ev.started){
+    topBody = `<p class="muted">${ev.type==='lpl_s1'?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
+      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
+  } else if(ev.done){
+    topBody = `<div class="done">✅ ${esc(info.name)}已结束 ${ev.res.champ?`· 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
+      <div class="btns"><button class="btn big" data-a="nextEvent">进入下一阶段 ▶</button></div>`;
+    // 赛段结束后干净展示积分（LPL赛段显示全年积分榜，国际赛可折叠回顾对阵）
+    stageCard = /^lpl_s/.test(ev.type)
+      ? `<section class="card"><h3>LPL 全年世界赛积分榜</h3>${pointsTable()}</section>`
+      : (ev.stages.length ? `<section class="card">${stageView(ev.stages[ev.stages.length-1])}</section>` : '');
+  } else {
+    const nxt = nextReadyMatch();
+    const myNext = findMyNext();
+    const inEvent = eventHasUser(ev);
+    topBody = `<div class="stage">当前阶段：<b>${esc(ev.stages[ev.si]?ev.stages[ev.si].name:'')}</b></div>
+      ${myNext?`<div class="nextm"><div class="lbl">${esc(myNext.m.label)} · BO${myNext.m.bo}</div>
+         <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}</div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}</div></div></div>`:
+        `<p class="muted">${inEvent?'等待本轮其他比赛结果…':'本队未参加此项赛事（或已止步），可模拟观看赛果。'}</p>`}
+      <div class="btns">
+        ${myNext?`<button class="btn big" data-a="toMyMatch">${nxt&&userInvolved(nxt.m)?'进入比赛':'模拟至我的比赛'} ▶</button>`:''}
+        <button class="btn" data-a="simStage">模拟本阶段</button>
+        <button class="btn ghost" data-a="simEvent">模拟整项赛事</button>
+      </div>
+      ${probs()}`;
+    // 直接把当前赛事正在打的小组赛/瑞士轮/淘汰赛对阵放到主页下方
+    const activeIdxs = ev.parallel && ev.si<=Math.max(...ev.parallel) ? ev.parallel : [ev.si];
+    stageCard = `<section class="card">${activeIdxs.map(idx=>ev.stages[idx]?stageView(ev.stages[idx]):'').join('')}</section>`;
+  }
+
   return `
     <section class="card evcard">
       ${strip}
       <div class="evh"><h2>${info.name}</h2><span>${info.date}${info.loc?' · '+info.loc:''}</span></div>
-      ${body}
-      <details class="fmtd"><summary>赛制与全年赛程详情</summary><p class="fmt">${esc(info.fmt)}</p>${seasonTimeline()}</details>
+      ${topBody}
     </section>
-    <div class="cols home-grid">
-      <section class="card"><h3>LPL 全年积分榜</h3>${pointsTable()}</section>
-      <section class="card"><h3>最新动态</h3><ul class="news">${S.news.slice(0,5).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>
-    </div>`;
+    ${stageCard}
+    ${S.news.length?`<section class="card compact-news"><h4>最新赛场动态</h4><ul class="news">${S.news.slice(0,4).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`:''}`;
 };
 function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">⚠️ ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
@@ -326,38 +444,47 @@ VIEWS.roster = () => {
    ${ps.map(p=>{ const st=Object.entries(t.lineup).find(([r,id])=>id===p.pid); return `<tr>
      <td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b><br><small>${esc(p.name)}</small></td><td>${esc(p.nat)}${isForeign(p)?'<small class="fx">外援</small>':''}</td><td>${p.age}</td>
      <td>${ovrBadge(p.rating)}</td><td>${formChip(p,true)}</td><td>${mentalChip(p,true)}</td><td class="trs">${traitChips(p)||'<small class="muted">—</small>'}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${fmtMoney(p.salary)}</td><td>${p.contract}</td>
-     <td class="pool">${p.champs.map(c=>`<span class="${c.p>=5?'sig':''}">${champName(c.c)}</span>`).join('')}</td>
+     <td class="pool">${p.champs.map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}" title="${ti.name}">${ti.icon?ti.icon+' ':''}${champName(c.c)}</span>`; }).join('')}</td>
      <td class="act">${st?`<span class="tagon">首发·${ROLE_CN[st[0]]}</span>`:`<button class="btn sm" data-a="setStarter" data-p="${esc(p.pid)}" data-r="${p.role}">设为${ROLE_CN[p.role]}首发</button>`}
        ${transferOpen()?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}</td></tr>`; }).join('')}
    </table>${transferOpen()?'':'<p class="muted">转会窗口关闭中（季后/休赛期与赛段之间开放），目前只能调整首发。</p>'}</section>`;
 };
 
-// ---------- 转会市场 ----------
-VIEWS.market = () => {
+// ---------- 转会市场（含季中建队非卖品过滤） ----------
+function marketEmbedHtml(limit){
   const f=UI.mk;
+  const midWin = isMidSeasonWindow();
   let ps=Object.values(S.players).filter(p=>!p.retired && p.team!==S.user);
   if(f.fa) ps=ps.filter(p=>!p.team); else ps=ps.filter(p=>p.team);
+  if(midWin && !f.fa && f.hideLock) ps=ps.filter(p=>!isUntouchable(p));
   if(f.region!=='ALL') ps=ps.filter(p=>p.team&&T(p.team).region===f.region);
   if(f.role!=='ALL') ps=ps.filter(p=>p.role===f.role);
   if(f.q) ps=ps.filter(p=>(playerTag(p)+p.name+(p.team||'')).toLowerCase().includes(f.q.toLowerCase()));
   const key={rating:p=>-p.rating, value:p=>-playerValue(p), age:p=>p.age, pot:p=>-p.pot}[f.sort];
   ps.sort((a,b)=>key(a)-key(b));
   const open=transferOpen();
-  return `<section class="card"><h2>转会市场 ${open?'<span class="on">窗口开放</span>':'<span class="off">窗口关闭</span>'}</h2>
-  ${open?'':'<p class="warn">当前不在转会窗口内，可以浏览，但无法报价。窗口在第一赛段开赛前、先锋赛后、EWC后以及休赛期开放。</p>'}
+  const maxShow = limit || 120;
+  return `<div class="mk-wrap">
+  <div class="mk-hd"><h3>转会市场 ${open?'<span class="on">窗口开放</span>':'<span class="off">窗口关闭</span>'}</h3><span class="muted">我的预算 <b>${fmtMoney(T(S.user).budget)}</b></span></div>
+  ${open?'':'<p class="warn">当前不在转会窗口内，仅可浏览名单。窗口在第一赛段开赛前、先锋赛后、EWC后及休赛期开放。</p>'}
   <div class="filters">
     <select data-f="region">${['ALL',...REGIONS].map(r=>`<option ${f.region===r?'selected':''} value="${r}">${r==='ALL'?'全部赛区':r}</option>`).join('')}</select>
     <select data-f="role">${['ALL',...ROLES].map(r=>`<option ${f.role===r?'selected':''} value="${r}">${r==='ALL'?'全部位置':ROLE_CN[r]}</option>`).join('')}</select>
     <select data-f="sort">${[['rating','按能力'],['value','按身价'],['pot','按潜力'],['age','按年龄']].map(([k,n])=>`<option ${f.sort===k?'selected':''} value="${k}">${n}</option>`).join('')}</select>
     <label><input type="checkbox" data-f="fa" ${f.fa?'checked':''}> 只看自由球员/新秀</label>
+    ${midWin&&!f.fa?`<label><input type="checkbox" data-f="hideLock" ${f.hideLock?'checked':''}> 隐藏季中非卖核心</label>`:''}
     <input data-f="q" placeholder="搜索选手/战队" value="${esc(f.q)}">
-    <span class="muted">共 ${ps.length} 人 · 我的预算 ${fmtMoney(T(S.user).budget)}</span>
   </div>
-  <table class="tbl"><tr><th>选手</th><th>战队</th><th>位置</th><th>国籍</th><th>年龄</th><th>能力</th><th>潜力</th><th>身价</th><th>要价</th><th>合同至</th><th></th></tr>
-  ${ps.slice(0,150).map(p=>`<tr><td><b>${esc(playerTag(p))}</b><br><small>${esc(p.name)}</small></td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${esc(p.nat)}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${p.team?fmtMoney(askPrice(p)):'—'}</td><td>${p.contract}</td>
-   <td>${open?`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`:''}</td></tr>`).join('')}</table>
-   ${ps.length>150?'<p class="muted">仅显示前150人，请使用筛选。</p>':''}</section>`;
-};
+  <table class="tbl"><tr><th>选手</th><th>战队</th><th>位置</th><th>年龄</th><th>能力</th><th>潜力</th><th>身价</th><th>要价</th><th>合同至</th><th></th></tr>
+  ${ps.slice(0,maxShow).map(p=>{
+    const locked = isUntouchable(p);
+    return `<tr><td><b>${esc(playerTag(p))}</b>${isForeign(p)?'<small class="fx">外援</small>':''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p)):'—'}</td><td>${p.contract}</td>
+    <td>${!open?'':locked?'<span class="nft-tag">🔒 季中非卖</span>':`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
+  }).join('')}</table>
+  ${ps.length>maxShow?`<p class="muted">共 ${ps.length} 人，当前显示前 ${maxShow} 人，请使用上方筛选缩小范围。</p>`:''}
+  </div>`;
+}
+VIEWS.market = () => `<section class="card">${marketEmbedHtml(150)}</section>`;
 function offerModal(pid){
   return () => { const p=P(pid); const me=T(S.user);
     const cash = UI.offerCash!=null?UI.offerCash:(p.team?askPrice(p):0); const give=UI.offerGive||'';
@@ -552,8 +679,8 @@ VIEWS.replays = () => {
 
 // ================= 比赛（1v1 选边赛 + LoL 海克斯风格 BP）界面 =================
 function needsSolo1v1(M){
-  // 首局开赛前，以及 BO5 第 5 局决胜局（2:2）赛前打 1v1 选边赛
-  return M.games.length === 0 || (M.item.m.bo === 5 && M.wa === 2 && M.wb === 2);
+  // 仅在每个系列赛首局开赛前打 1v1 决定选边；之后 BO3/BO5 每打完一把均由上一局输方直接选边
+  return M.games.length === 0;
 }
 function enterNextGamePhase(M){
   const m = M.item.m, me = M.me, op = me==='A'?'B':'A';
@@ -636,15 +763,18 @@ function champBadgeInfo(d, M, k){
   else if((S.meta[k]||0) === 1) badges.push({ icon:'↑', cls:'t1', text:'版本 T1 热门英雄，版本契合度良好' });
   for(const r of ROLES){
     if(d.picks[M.me][r]) continue;
-    const p = myLu[r];
-    if(p && p.champs.some(x=>x.c===k && x.p>=4)){
-      badges.push({ icon:'👑', cls:'mine', text:`我方 ${ROLE_CN[r]} ${playerTag(p)} 的招牌绝活` });
+    const p = myLu[r]; if(!p) continue;
+    const pv = champProfVal(p, k);
+    const ti = profTier(pv);
+    if(ti.tier >= 2){
+      badges.push({ icon: ti.icon, cls:'mine', text:`我方 ${ROLE_CN[r]} ${playerTag(p)} · ${ti.name}英雄` });
     }
   }
   for(const r of ROLES){
     if(d.picks[opp][r]) continue;
-    const p = oppLu[r];
-    if(p && p.champs.some(x=>x.c===k && x.p>=5)){
+    const p = oppLu[r]; if(!p) continue;
+    const pv = champProfVal(p, k);
+    if(pv >= 80){
       badges.push({ icon:'⚠', cls:'opp', text:`对手 ${ROLE_CN[r]} ${playerTag(p)} 的招牌英雄，建议针对` });
     }
   }
@@ -726,13 +856,13 @@ function renderSideColumn(M, d, side, cur, isBlue){
     const isPreview = !c && isMyPickTurn && r===previewRole;
     const isSwapSrc = isMe && M.swapFrom===r;
     const isSwapTarget = isMe && M.swapFrom && M.swapFrom!==r;
-    const fit = c ? champFit(p, c, r) : null;
+    const pv = c ? champProfVal(p, c) : 0;
+    const ti = c ? profTier(pv) : null;
     const offRole = c && !CH[c].roles.includes(r);
+    const okKind = offRole ? offRoleKind(c, r).kind : 'native';
     const fitTag = !c ? '' : offRole
-      ? `<span class="fit-badge bad">非本位</span>`
-      : fit>=4.5 ? `<span class="fit-badge sig">招牌</span>`
-      : fit>=1.5 ? `<span class="fit-badge ok">熟练</span>`
-      : `<span class="fit-badge low">生疏</span>`;
+      ? (okKind!=='mismatch' ? `<span class="fit-badge flex">奇招·${ti.name}</span>` : `<span class="fit-badge bad">跨位·${ti.name}</span>`)
+      : `<span class="fit-badge ${ti.tier>=4?'sig':ti.tier>=2?'ok':ti.tier===1?'fam':'low'}">${ti.name}</span>`;
     const swapAttr = canSwap && (c || M.swapFrom) ? `data-a="dSwap" data-r="${r}"` : '';
 
     return `<div class="pk-slot ${c?'locked':''} ${isPreview?'picking':''} ${isSwapSrc?'swap-src':''} ${isSwapTarget?'swap-dst':''} ${canSwap&&(c||M.swapFrom)?'swappable':''}" ${swapAttr} title="${canSwap?'点击可与同队其他位置互换摇摆位':''}">
@@ -1028,9 +1158,14 @@ function matchScreen(){
         fitLine = threat ? `敌方威胁：${ROLE_CN[threat.r]} ${esc(playerTag(threat.p))} · ${threat.f>=4.5?'招牌绝活':threat.f>=1.5?'熟练':'一般'}` : '对手该位置已锁定或非常规选位';
       } else {
         const chk = canPickChamp(d, M.me, M.sel);
-        const r = (M.roleSel && chk.openRoles.includes(M.roleSel)) ? M.roleSel : bestRoleFor(d, M.me, M.sel, chk.offrole);
-        const f = r ? champFit(myLu[r], M.sel, r) : -4;
-        fitLine = r ? `分配给 ${ROLE_CN[r]} ${esc(playerTag(myLu[r]))} · ${!ch.roles.includes(r)?'⚠️ 跨位强选':f>=4.5?'👑 招牌英雄':f>=1.5?'熟练度良好':'较生疏'}` : '';
+        const r = (M.roleSel && chk.openRoles.includes(M.roleSel)) ? M.roleSel : bestRoleFor(d, M.me, M.sel, true);
+        const ti = r ? profTier(champProfVal(myLu[r], M.sel)) : null;
+        const ok = r ? offRoleKind(M.sel, r).kind : 'native';
+        const offDesc = !r || ch.roles.includes(r) ? ''
+          : ok==='apc_bot' ? ' · ✨ 法核下路奇招（菜刀队补法伤可获胜率加成）'
+          : ok==='ranged_top' ? ' · ✨ 长手上路奇招（对阵笨重短手前排可获对线压制加成）'
+          : ok!=='mismatch' ? ' · ✨ 战术摇摆选位' : ' · ⚠️ 非常规跨位（存在轻度胜率惩罚）';
+        fitLine = r ? `分配给 ${ROLE_CN[r]} ${esc(playerTag(myLu[r]))} · 熟练档位：${ti.icon?ti.icon+' ':''}${ti.name}${offDesc}` : '';
       }
       selInfoHtml = `<div class="dock-sel">
         ${champAvatar(M.sel,'sm')}
@@ -1069,17 +1204,23 @@ function matchScreen(){
         const cantPick = myTurn && !isBan && !canPickChamp(d, M.me, k).ok;
         const dis = unavail || cantPick;
         const sel = M.sel === k;
-        const mineSig = ROLES.find(r=>!d.picks[M.me][r] && myLu[r] && myLu[r].champs.some(x=>x.c===k && x.p>=4));
-        const oppSig  = ROLES.find(r=>!d.picks[opp][r] && oppLu[r] && oppLu[r].champs.some(x=>x.c===k && x.p>=5));
+        // 计算我方未选位置选手对该英雄的最高熟练度档位（同时展示 👑招牌 / ◆精通 / ✦熟练）
+        let bestMyTier = 0, bestMyIcon = '', bestMyCls = '';
+        for(const r of ROLES){
+          if(d.picks[M.me][r] || !myLu[r]) continue;
+          const ti = profTier(champProfVal(myLu[r], k));
+          if(ti.tier > bestMyTier){ bestMyTier = ti.tier; bestMyIcon = ti.icon; bestMyCls = ti.cls; }
+        }
+        const oppSig = ROLES.find(r=>!d.picks[opp][r] && oppLu[r] && champProfVal(oppLu[r], k)>=80);
         const stamp = isLocked ? `<span class="c-stamp fl">无畏锁</span>`
                     : isBanned ? `<span class="c-stamp bn">已禁</span>`
                     : isPicked ? `<span class="c-stamp pk">已选</span>` : '';
-        return `<div class="ch-card ${dis?'dis':''} ${sel?(isBan?'sel-ban':'sel-pick'):''}" data-ch="${esc(k)}" ${dis||!myTurn?'':`data-a="dSel" data-c="${esc(k)}"`}>
+        return `<div class="ch-card ${dis?'dis':''} ${bestMyTier>=2&&!dis?'my-prof':''} ${sel?(isBan?'sel-ban':'sel-pick'):''}" data-ch="${esc(k)}" ${dis||!myTurn?'':`data-a="dSel" data-c="${esc(k)}"`}>
           <div class="ch-thumb">
             ${champAvatar(k,'grid')}
             ${S.meta[k]>=2?'<span class="meta-dot t0">🔥</span>':S.meta[k]>=1?'<span class="meta-dot t1">↑</span>':''}
-            ${mineSig?`<span class="sig-dot mine">👑</span>`:''}
-            ${oppSig?`<span class="sig-dot opp">⚠</span>`:''}
+            ${bestMyTier>=2?`<span class="sig-dot mine ${bestMyCls}">${bestMyIcon}</span>`:''}
+            ${oppSig?`<span class="sig-dot opp ${bestMyTier>=2?'shift':''}">⚠</span>`:''}
             ${stamp}
             ${sel && isBan ? '<div class="sel-overlay ban"><span>BAN</span></div>' : ''}
             ${sel && !isBan ? '<div class="sel-overlay pick"><span>PICK</span></div>' : ''}
@@ -1216,7 +1357,29 @@ function matchScreen(){
     </section>`;
   }
 
+  // 阶段切换（Ban <-> Pick）LoL 原版风格中心光束过场动画
+  let splashHtml = '';
+  if(M.phase === 'draft' && cur && phIdx >= 0 && phIdx <= 3){
+    if(M._lastPh !== phIdx){
+      M._lastPh = phIdx;
+      M._splashSeq = (M._splashSeq || 0) + 1;
+      M._splashUntil = Date.now() + 1050;
+    }
+    if(M._splashUntil && Date.now() < M._splashUntil){
+      const isBanSplash = cur.kind === 'ban';
+      const roundLbl = phIdx<=1 ? '第一轮' : '第二轮';
+      splashHtml = `<div class="bp-splash ${isBanSplash?'ban':'pick'}" data-seq="${M._splashSeq}">
+        <div class="bps-beam"></div>
+        <div class="bps-core">
+          <span class="bps-sub">${roundLbl} · ${isBanSplash?'BAN PHASE':'PICK PHASE'}</span>
+          <b>${isBanSplash?'⚔ 进入禁用阶段':'✦ 进入英雄选择'}</b>
+        </div>
+      </div>`;
+    }
+  }
+
   return `<div class="match hex ${modeCls}">
+    ${splashHtml}
     ${head}
     ${banBar}
     <div class="draft-lol">
@@ -1351,6 +1514,9 @@ const ACT = {
     if(S) UI.savePreview = makeSaveSummary(S);
     toast(d.c==='cloud'?'已加载云端存档':'已用本地存档更新云端');
   },
+  offTab:d=>{ UI.offTab=d.t; render(); },
+  selTrainPid:d=>{ UI.trainPid=d.p; render(); },
+  toggleTrain:d=>{ toggleTrainChamp(d.p, d.c); save(); render(); },
   closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerGive=null; render(); },
   endWindow:()=>{ curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
   nextEvent:()=>{ advanceEvent(); save(); render(); },
@@ -1503,7 +1669,7 @@ const ACT = {
     const play = d => { const g = playGame(d, {record:true}); storeUserReplay(M, g); endUserGame(g); };
     if(M.phase==='draft'||M.phase==='ready'){ autoDraftRest(M.draft); play(M.draft); }
     while(M.wa<need&&M.wb<need){
-      if(!M.chooser || (m.bo===5 && M.wa===2 && M.wb===2)){ const r = simSolo1v1(m.a, m.b, null, null, {record:true}); M.chooser = r.winner; M.pendingSolo = soloReplayData(r); }
+      if(!M.chooser){ const r = simSolo1v1(m.a, m.b, null, null, {record:true}); M.chooser = r.winner; M.pendingSolo = soloReplayData(r); }
       const other = M.chooser==='A'?'B':'A';
       const sidePick = aiChooseSide(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked);
       const blue = sidePick==='blue' ? M.chooser : other;

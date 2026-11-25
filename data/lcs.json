@@ -14,7 +14,7 @@
      "role": "TOP",
      "nat": "US",
      "age": null,
-     "rating": 66,
+     "rating": 74,
      "sub": false
     },
     {
@@ -23,7 +23,7 @@
      "role": "JUG",
      "nat": "PL",
      "age": 25,
-     "rating": 79,
+     "rating": 83,
      "sub": false
     },
     {
@@ -32,7 +32,7 @@
      "role": "MID",
      "nat": "KR",
      "age": null,
-     "rating": 70,
+     "rating": 76,
      "sub": false
     },
     {
@@ -41,7 +41,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": 24,
-     "rating": 80,
+     "rating": 82,
      "sub": false
     },
     {
@@ -50,7 +50,7 @@
      "role": "SUP",
      "nat": "US",
      "age": null,
-     "rating": 64,
+     "rating": 74,
      "sub": false
     }
    ]
@@ -67,7 +67,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": null,
-     "rating": 68,
+     "rating": 76,
      "sub": false
     },
     {
@@ -76,7 +76,7 @@
      "role": "JUG",
      "nat": "US",
      "age": null,
-     "rating": 72,
+     "rating": 76,
      "sub": false
     },
     {
@@ -85,7 +85,7 @@
      "role": "MID",
      "nat": "KR",
      "age": null,
-     "rating": 70,
+     "rating": 80,
      "sub": false
     },
     {
@@ -94,7 +94,7 @@
      "role": "ADC",
      "nat": "US",
      "age": null,
-     "rating": 68,
+     "rating": 81,
      "sub": false
     },
     {
@@ -103,7 +103,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 29,
-     "rating": 76,
+     "rating": 78,
      "sub": false
     }
    ]
@@ -120,7 +120,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": null,
-     "rating": 68,
+     "rating": 76,
      "sub": false
     },
     {
@@ -129,7 +129,7 @@
      "role": "JUG",
      "nat": "US",
      "age": 27,
-     "rating": 72,
+     "rating": 78,
      "sub": false
     },
     {
@@ -138,7 +138,7 @@
      "role": "MID",
      "nat": "US",
      "age": null,
-     "rating": 69,
+     "rating": 75,
      "sub": false
     },
     {
@@ -147,7 +147,7 @@
      "role": "ADC",
      "nat": "DK",
      "age": 29,
-     "rating": 68,
+     "rating": 75,
      "sub": false
     },
     {
@@ -156,7 +156,7 @@
      "role": "SUP",
      "nat": "CA",
      "age": null,
-     "rating": 66,
+     "rating": 75,
      "sub": false
     },
     {
@@ -182,7 +182,7 @@
      "role": "TOP",
      "nat": "TR",
      "age": null,
-     "rating": 66,
+     "rating": 74,
      "sub": false
     },
     {
@@ -191,7 +191,7 @@
      "role": "JUG",
      "nat": "US",
      "age": null,
-     "rating": 68,
+     "rating": 75,
      "sub": false
     },
     {
@@ -200,7 +200,7 @@
      "role": "MID",
      "nat": "KR",
      "age": null,
-     "rating": 68,
+     "rating": 78,
      "sub": false
     },
     {
@@ -209,7 +209,7 @@
      "role": "ADC",
      "nat": "US",
      "age": null,
-     "rating": 66,
+     "rating": 80,
      "sub": false
     },
     {
@@ -218,7 +218,7 @@
      "role": "SUP",
      "nat": "US",
      "age": null,
-     "rating": 64,
+     "rating": 73,
      "sub": false
     }
    ]
@@ -235,7 +235,7 @@
      "role": "TOP",
      "nat": "US",
      "age": 28,
-     "rating": 68,
+     "rating": 76,
      "sub": false
     },
     {
@@ -262,7 +262,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": null,
-     "rating": 67,
+     "rating": 75,
      "sub": false
     },
     {
@@ -271,7 +271,7 @@
      "role": "SUP",
      "nat": "US",
      "age": null,
-     "rating": 66,
+     "rating": 74,
      "sub": false
     }
    ]
@@ -288,7 +288,7 @@
      "role": "TOP",
      "nat": "AU",
      "age": null,
-     "rating": 66,
+     "rating": 74,
      "sub": false
     },
     {
@@ -297,7 +297,7 @@
      "role": "JUG",
      "nat": "US",
      "age": null,
-     "rating": 66,
+     "rating": 74,
      "sub": false
     },
     {
@@ -315,7 +315,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": null,
-     "rating": 67,
+     "rating": 74,
      "sub": false
     },
     {

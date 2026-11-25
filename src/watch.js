@@ -24,50 +24,142 @@ const Watch = (()=>{
   let W = null;          // 当前观战会话
   let raf = 0, lastTs = 0;
 
-  // ---------------- 峡谷底图（只画一次） ----------------
+  // ---------------- 拟真召唤师峡谷底图（按原版地形比例精细绘制，只画一次） ----------------
   let bgCanvas = null;
   function mapBackground(){
     if(bgCanvas) return bgCanvas;
     const S0 = 1000;
     const cv = document.createElement('canvas'); cv.width = S0; cv.height = S0;
     const g = cv.getContext('2d');
-    // 野区底色
-    const grd = g.createLinearGradient(0,S0,S0,0); grd.addColorStop(0,'#0f2b2a'); grd.addColorStop(0.5,'#14302a'); grd.addColorStop(1,'#2a1f22');
-    g.fillStyle = grd; g.fillRect(0,0,S0,S0);
-    // 野区墙体：随机但固定的深色岩块
-    const rr = srand(20260101);
-    g.fillStyle = 'rgba(4,14,12,0.55)';
-    for(let i=0;i<70;i++){
-      const x = 120 + rr()*760, y = 120 + rr()*760;
-      if(Math.abs(x - y) < 70 || Math.abs(x + y - 1000) < 80) continue; // 留出河道与中路
-      g.beginPath(); g.ellipse(x, y, 18+rr()*36, 12+rr()*26, rr()*3, 0, Math.PI*2); g.fill();
+
+    // 1. 峡谷底土与蓝红半区环境渐变
+    const grd = g.createLinearGradient(0, S0, S0, 0);
+    grd.addColorStop(0, '#122926');
+    grd.addColorStop(0.38, '#17342b');
+    grd.addColorStop(0.50, '#14322d');
+    grd.addColorStop(0.62, '#242d22');
+    grd.addColorStop(1, '#2d1f21');
+    g.fillStyle = grd; g.fillRect(0, 0, S0, S0);
+
+    // 细微草地纹理噪点（固定种子）
+    const rr = srand(20260525);
+    for(let i=0;i<220;i++){
+      const x = rr()*S0, y = rr()*S0;
+      g.fillStyle = rr()>0.5 ? 'rgba(120,185,110,0.045)' : 'rgba(5,16,12,0.08)';
+      g.beginPath(); g.arc(x, y, 8+rr()*22, 0, Math.PI*2); g.fill();
     }
-    // 草丛
-    g.fillStyle = 'rgba(70,140,70,0.28)';
-    for(let i=0;i<46;i++){ const x = 100 + rr()*800, y = 100 + rr()*800; g.beginPath(); g.ellipse(x,y,10+rr()*12,5+rr()*6,rr()*3,0,Math.PI*2); g.fill(); }
-    // 河道
-    g.strokeStyle = 'rgba(40,110,150,0.55)'; g.lineWidth = 64; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(150,150); g.quadraticCurveTo(470,420,500,500); g.quadraticCurveTo(530,580,850,850); g.stroke();
-    g.strokeStyle = 'rgba(90,170,210,0.18)'; g.lineWidth = 20; g.stroke();
-    // 基地
-    const base = (x,y,col) => { const rg = g.createRadialGradient(x,y,10,x,y,230); rg.addColorStop(0,col); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(x-240,y-240,480,480); };
-    base(60,940,'rgba(30,120,255,0.38)'); base(940,60,'rgba(232,64,87,0.32)');
-    // 三路
+
+    // 2. 蓝/红基地高地石砖轮廓（左下蓝方高地、右上红方高地）
+    const drawBase = (isBlue) => {
+      g.save();
+      g.beginPath();
+      if(isBlue){
+        g.moveTo(0, S0); g.lineTo(0, 685); g.quadraticCurveTo(185, 685, 260, 740); g.quadraticCurveTo(315, 815, 315, S0);
+      } else {
+        g.moveTo(S0, 0); g.lineTo(685, 0); g.quadraticCurveTo(685, 185, 740, 260); g.quadraticCurveTo(815, 315, S0, 315);
+      }
+      g.closePath();
+      const rg = isBlue
+        ? g.createRadialGradient(90, 910, 25, 120, 880, 280)
+        : g.createRadialGradient(910, 90, 25, 880, 120, 280);
+      rg.addColorStop(0, isBlue ? '#1c4469' : '#5c202c');
+      rg.addColorStop(0.65, isBlue ? '#173046' : '#3a1d24');
+      rg.addColorStop(1, isBlue ? '#132635' : '#2b191d');
+      g.fillStyle = rg; g.fill();
+      g.strokeStyle = isBlue ? 'rgba(90,190,220,0.45)' : 'rgba(232,90,110,0.42)';
+      g.lineWidth = 6; g.stroke();
+      // 泉水光晕
+      const fx = isBlue ? 52 : 948, fy = isBlue ? 948 : 52;
+      const fg = g.createRadialGradient(fx, fy, 4, fx, fy, 74);
+      fg.addColorStop(0, isBlue ? 'rgba(56,220,255,0.55)' : 'rgba(255,95,120,0.5)');
+      fg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = fg; g.beginPath(); g.arc(fx, fy, 74, 0, Math.PI*2); g.fill();
+      g.restore();
+    };
+    drawBase(true); drawBase(false);
+
+    // 3. 原版对角河道（深浅水层 + 河岸）
+    g.save();
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.beginPath();
+    g.moveTo(118, 122);
+    g.bezierCurveTo(280, 270, 420, 415, 500, 500);
+    g.bezierCurveTo(580, 585, 720, 730, 882, 878);
+    g.strokeStyle = 'rgba(18,52,68,0.85)'; g.lineWidth = 86; g.stroke();
+    g.strokeStyle = 'rgba(32,102,138,0.75)'; g.lineWidth = 64; g.stroke();
+    g.strokeStyle = 'rgba(72,165,204,0.34)'; g.lineWidth = 28; g.stroke();
+    g.restore();
+
+    // 4. 大龙坑 & 小龙坑凹槽地形（原版半月形岩壁开口朝向河道）
+    const drawPit = (pt, angle, rimCol, glowCol) => {
+      g.save(); g.translate(pt[0], pt[1]);
+      const pg = g.createRadialGradient(0, 0, 8, 0, 0, 56);
+      pg.addColorStop(0, glowCol); pg.addColorStop(1, 'rgba(10,22,28,0.85)');
+      g.fillStyle = pg; g.beginPath(); g.arc(0, 0, 50, 0, Math.PI*2); g.fill();
+      g.strokeStyle = '#091412'; g.lineWidth = 14;
+      g.beginPath(); g.arc(0, 0, 52, angle, angle + Math.PI*1.38); g.stroke();
+      g.strokeStyle = rimCol; g.lineWidth = 3;
+      g.beginPath(); g.arc(0, 0, 46, angle, angle + Math.PI*1.38); g.stroke();
+      g.restore();
+    };
+    drawPit(MAP5.baron, Math.PI*0.65, 'rgba(170,110,255,0.55)', 'rgba(110,55,175,0.35)');
+    drawPit(MAP5.dragon, -Math.PI*0.35, 'rgba(255,150,70,0.55)', 'rgba(195,95,35,0.32)');
+
+    // 5. 三路兵线大道（暗边 + 石板路 + 淡金中线）
     for(const k of ['top','mid','bot']){
       const pts = MAP5.lanes[k];
       g.lineCap = 'round'; g.lineJoin = 'round';
-      g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 44;
+      g.strokeStyle = 'rgba(6,14,12,0.72)'; g.lineWidth = 54;
       g.beginPath(); pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y)); g.stroke();
-      g.strokeStyle = '#4a4636'; g.lineWidth = 34; g.stroke();
-      g.strokeStyle = 'rgba(200,155,60,0.22)'; g.lineWidth = 2; g.stroke();
+      g.strokeStyle = '#544e3c'; g.lineWidth = 40; g.stroke();
+      g.strokeStyle = '#686049'; g.lineWidth = 26; g.stroke();
+      g.strokeStyle = 'rgba(220,190,130,0.22)'; g.lineWidth = 2; g.stroke();
     }
-    // 龙坑 / 男爵坑
-    for(const [pt,col] of [[MAP5.dragon,'rgba(255,140,60,0.25)'],[MAP5.baron,'rgba(170,90,255,0.25)']]){
-      g.fillStyle = 'rgba(0,0,0,0.45)'; g.beginPath(); g.arc(pt[0],pt[1],46,0,Math.PI*2); g.fill();
-      g.strokeStyle = col; g.lineWidth = 4; g.stroke();
+
+    // 6. 原版野区岩墙地形块（上下野区对称布局，留出清晰野区通道）
+    const walls = [
+      // 蓝方上半野区 & 蓝区
+      [215, 455, 44, 24, -0.5], [270, 520, 32, 18, 0.3], [195, 585, 36, 20, -0.2], [350, 420, 26, 16, 0.7],
+      // 蓝方下半野区 & 红区
+      [445, 765, 44, 24, 0.45], [530, 705, 34, 20, -0.4], [585, 815, 36, 18, 0.2], [415, 650, 28, 16, -0.6],
+      // 红方上半野区 & 红区
+      [555, 235, 44, 24, 0.45], [470, 295, 34, 20, -0.4], [415, 185, 36, 18, 0.2], [585, 350, 28, 16, -0.6],
+      // 红方下半野区 & 蓝区
+      [785, 545, 44, 24, -0.5], [730, 480, 32, 18, 0.3], [805, 415, 36, 20, -0.2], [650, 580, 26, 16, 0.7],
+      // 中路两侧河道短墙
+      [395, 465, 24, 11, -0.75], [605, 535, 24, 11, -0.75],
+      [465, 605, 24, 11, -0.75], [535, 395, 24, 11, -0.75],
+    ];
+    for(const [x,y,rx,ry,ang] of walls){
+      g.save(); g.translate(x,y); g.rotate(ang);
+      g.fillStyle = 'rgba(4,12,11,0.88)';
+      g.beginPath(); g.ellipse(2, 4, rx+4, ry+4, 0, 0, Math.PI*2); g.fill();
+      g.fillStyle = '#1b2c2a';
+      g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2); g.fill();
+      g.strokeStyle = 'rgba(130,170,150,0.22)'; g.lineWidth = 2; g.stroke();
+      g.restore();
     }
-    // 外框
-    g.strokeStyle = 'rgba(200,155,60,0.65)'; g.lineWidth = 6; g.strokeRect(3,3,S0-6,S0-6);
+
+    // 7. 关键战术草丛（河道点草、三角草、边路三草、中路边草、Buff 草丛）
+    const bushes = [
+      [345,345,14,10,0.7], [655,655,14,10,0.7],             // 河道点草
+      [430,490,22,8,-0.75], [570,510,22,8,-0.75],           // 中路两侧长草
+      [180,255,20,9,0.5], [820,745,20,9,0.5],               // 上下三角草
+      [84,320,10,22,0], [84,210,10,22,0], [220,84,22,10,0], // 上路边草
+      [916,680,10,22,0], [916,790,10,22,0], [780,916,22,10,0], // 下路边草
+      [255,485,16,8,0.4], [485,745,16,8,-0.4],              // 蓝方野区草
+      [745,515,16,8,0.4], [515,255,16,8,-0.4],              // 红方野区草
+    ];
+    for(const [x,y,rx,ry,ang] of bushes){
+      g.save(); g.translate(x,y); g.rotate(ang);
+      g.fillStyle = 'rgba(56,158,76,0.55)';
+      g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2); g.fill();
+      g.strokeStyle = 'rgba(128,230,132,0.35)'; g.lineWidth = 1.5; g.stroke();
+      g.restore();
+    }
+
+    // 8. 外框海克斯金边
+    g.strokeStyle = 'rgba(200,155,60,0.75)'; g.lineWidth = 6; g.strokeRect(3, 3, S0-6, S0-6);
     bgCanvas = cv; return cv;
   }
 
@@ -248,14 +340,60 @@ const Watch = (()=>{
   function scoreHtml(V){
     const L = V.blueSide, R = other(L);
     const tL = V.team[L], tR = V.team[R];
-    const gold = s => V.champs.filter(c=>c.side===s).reduce((a,c)=>a+c.gold,0);
-    const drk = tm => tm.drakes.map(d=>`<i class="dk" style="--c:${DRAKE_COLOR[d]||'#888'}" title="${esc(DRAKE_CN[d]||'')}"></i>`).join('') + (tm.soul?`<b class="soul">龙魂</b>`:'');
-    const buff = tm => (tm.baronT>V.t?'<span class="bf bar">大龙 Buff</span>':'') + (tm.elderT>V.t?'<span class="bf eld">远古龙</span>':'');
-    return `<div class="w5-tm blue"><b class="w5-tn">${esc(tL.name)}</b><span class="w5-k">${tL.kills}</span>
-        <span class="w5-st"><i>💰</i>${kfmt(gold(L))}</span><span class="w5-st"><i>🏰</i>${tL.towers}</span><span class="w5-st"><i>👾</i>${tL.barons}</span><span class="w5-dk">${drk(tL)}</span>${buff(tL)}</div>
-      <div class="w5-clock">${fmtSec(V.t)}</div>
-      <div class="w5-tm red">${buff(tR)}<span class="w5-dk">${drk(tR)}</span><span class="w5-st"><i>👾</i>${tR.barons}</span><span class="w5-st"><i>🏰</i>${tR.towers}</span><span class="w5-st"><i>💰</i>${kfmt(gold(R))}</span>
-        <span class="w5-k">${tR.kills}</span><b class="w5-tn">${esc(tR.name)}</b></div>`;
+    const gL = V.champs.filter(c=>c.side===L).reduce((a,c)=>a+c.gold,0);
+    const gR = V.champs.filter(c=>c.side===R).reduce((a,c)=>a+c.gold,0);
+    const gDiff = gL - gR;
+    const gPctL = clamp(Math.round(50 + clamp(gDiff / 14000, -0.36, 0.36) * 100), 14, 86);
+    const icoFn = typeof ico === 'function' ? ico : () => '';
+    const drk = tm => {
+      const orbs = tm.drakes.map(d=>`<i class="dk" style="--c:${DRAKE_COLOR[d]||'#888'}" title="${esc(DRAKE_CN[d]||'')}"></i>`).join('');
+      const slots = Math.max(0, 4 - tm.drakes.length);
+      return orbs + '<i class="dk emp"></i>'.repeat(slots) + (tm.soul?`<b class="soul">龙魂</b>`:'');
+    };
+    const buff = tm => (tm.baronT>V.t?`<span class="bf bar">${icoFn('baron')}大龙 ${Math.ceil(tm.baronT-V.t)}s</span>`:'') + (tm.elderT>V.t?`<span class="bf eld">${icoFn('dragon')}远古 ${Math.ceil(tm.elderT-V.t)}s</span>`:'');
+    const diffLead = Math.abs(gDiff) < 300
+      ? `<span class="adv-chip even">经济均势</span>`
+      : `<span class="adv-chip ${gDiff>0?'blue':'red'}">${gDiff>0?esc(tL.name):esc(tR.name)} 经济 +${kfmt(Math.abs(gDiff))}</span>`;
+    const tDiff = tL.towers - tR.towers;
+    const dDiff = tL.drakes.length - tR.drakes.length;
+    const advTags = [
+      diffLead,
+      tDiff!==0 ? `<span class="adv-chip ${tDiff>0?'blue':'red'}">${icoFn('tower')} 推塔 ${tL.towers}:${tR.towers}</span>` : `<span class="adv-chip even">${icoFn('tower')} 推塔 ${tL.towers}:${tR.towers}</span>`,
+      dDiff!==0 ? `<span class="adv-chip ${dDiff>0?'blue':'red'}">${icoFn('dragon')} 小龙 ${tL.drakes.length}:${tR.drakes.length}</span>` : `<span class="adv-chip even">${icoFn('dragon')} 小龙 ${tL.drakes.length}:${tR.drakes.length}</span>`,
+      (tL.barons||tR.barons) ? `<span class="adv-chip ${(tL.barons-tR.barons)>=0?'blue':'red'}">${icoFn('baron')} 大龙 ${tL.barons}:${tR.barons}</span>` : ''
+    ].filter(Boolean).join('');
+
+    return `<div class="w5-ob-top">
+      <div class="w5-tm blue">
+        <b class="w5-tn">${esc(tL.name)}</b>
+        <span class="w5-res">
+          <span class="w5-st ${gDiff>800?'lead':''}" title="团队总经济">${icoFn('gold','c-gold')}<b>${kfmt(gL)}</b></span>
+          <span class="w5-st ${tDiff>0?'lead':''}" title="摧毁防御塔">${icoFn('tower')}<b>${tL.towers}</b></span>
+          <span class="w5-st ${tL.barons>tR.barons?'lead':''}" title="纳什男爵">${icoFn('baron','c-bar')}<b>${tL.barons}</b></span>
+          <span class="w5-dk" title="元素亚龙">${icoFn('dragon','c-drk')}${drk(tL)}</span>
+          ${buff(tL)}
+        </span>
+        <span class="w5-k">${tL.kills}</span>
+      </div>
+      <div class="w5-mid-hud">
+        <div class="w5-clock">${fmtSec(V.t)}</div>
+      </div>
+      <div class="w5-tm red">
+        <span class="w5-k">${tR.kills}</span>
+        <span class="w5-res">
+          ${buff(tR)}
+          <span class="w5-dk" title="元素亚龙">${drk(tR)}${icoFn('dragon','c-drk')}</span>
+          <span class="w5-st ${tR.barons>tL.barons?'lead':''}" title="纳什男爵">${icoFn('baron','c-bar')}<b>${tR.barons}</b></span>
+          <span class="w5-st ${tDiff<0?'lead':''}" title="摧毁防御塔">${icoFn('tower')}<b>${tR.towers}</b></span>
+          <span class="w5-st ${gDiff<-800?'lead':''}" title="团队总经济">${icoFn('gold','c-gold')}<b>${kfmt(gR)}</b></span>
+        </span>
+        <b class="w5-tn">${esc(tR.name)}</b>
+      </div>
+    </div>
+    <div class="w5-ob-adv">
+      <div class="w5-tug"><i class="bl" style="width:${gPctL}%"></i><i class="rd" style="width:${100-gPctL}%"></i></div>
+      <div class="w5-adv-tags">${advTags}</div>
+    </div>`;
   }
   function playersHtml(V){
     const col = s => V.champs.filter(c=>c.side===s).map(c=>`<div class="w5-p ${c.alive?'':'dead'}">
@@ -270,7 +408,7 @@ const Watch = (()=>{
     const row = c => `<tr class="${c.blue?'b':'r'}"><td class="tn">${champAvatar(c.c,'xs')}<b>${esc(c.tag)}</b></td><td>${c.lvl}</td><td>${c.k}/${c.d}/${c.a}</td><td>${c.cs}</td>
       <td class="items">${itemsHtml(c.items, c.partial)}</td><td class="gd"><b>${c.cur}</b><small>总 ${kfmt(c.gold)}</small></td></tr>`;
     const L = V.blueSide, R = other(L);
-    return `<div class="w5-tab-hd"><b>装备与经济</b><small>按 Tab 键或点「装备」按钮开关</small></div>
+    return `<div class="w5-tab-hd"><b>装备与经济面板</b><small>PC 按住 Tab 键查看（松开关闭） · 点击按钮或触控可常驻开关</small></div>
       <table class="w5-tbl"><tr><th>选手</th><th>等级</th><th>K/D/A</th><th>补刀</th><th>装备</th><th>金币</th></tr>
       ${V.champs.filter(c=>c.side===L).map(row).join('')}<tr class="sep"><td colspan="6"></td></tr>${V.champs.filter(c=>c.side===R).map(row).join('')}</table>`;
   }
@@ -282,27 +420,35 @@ const Watch = (()=>{
   // ---------------- 外壳 HTML（由 ui.js 的 matchScreen 输出） ----------------
   function ctrlHtml(kind){
     const w = W; const sp = w ? w.speed : 1;
+    const icoFn = typeof ico === 'function' ? ico : () => '';
+    const tabOn = !!(w && (w.tabPin || w.tabHold));
     return `<div class="w-ctrl">
       ${SPEEDS.map(v=>`<button class="spd-btn ${sp===v&&!(w&&w.paused)?'on':''}" data-a="wSpeed" data-v="${v}">${v}x</button>`).join('')}
-      <button class="spd-btn ${w&&w.paused?'on':''}" data-a="wPause">${w&&w.paused?'▶ 继续':'⏸ 暂停'}</button>
-      <button class="spd-btn ${w&&w.tab?'on':''}" data-a="wTab">装备 Tab</button>
+      <button class="spd-btn ${w&&w.paused?'on':''}" data-a="wPause">${icoFn(w&&w.paused?'play':'pause')} ${w&&w.paused?'继续':'暂停'}</button>
+      <button class="spd-btn ${tabOn?'on':''}" data-a="wTab" title="鼠标点一下常驻开关；键盘按住 Tab 实时查看">${icoFn('tab')} 装备 Tab</button>
       ${w && w.replay ? `<input type="range" class="w-seek" id="w-seek" min="0" max="${Math.round(w.dur)}" value="${Math.round(w.t||0)}">
         <button class="spd-btn skip" data-a="wExit">退出回放</button>`
-        : `<button class="spd-btn skip" data-a="wSkip">跳过直看结算 ⏭</button>`}
+        : `<button class="spd-btn skip" data-a="wSkip">${icoFn('skip')} 跳过直看结算</button>`}
     </div>`;
   }
   function shell5(){
+    const tabOn = !!(W && (W.tabPin || W.tabHold));
     return `<div class="watch5 pane-${W?W.pane:'feed'}" id="watch5">
       <div class="w5-score" id="w5-score"></div>
       <div class="w5-mtabs"><button data-a="wPane" data-v="feed" class="${W&&W.pane==='feed'?'on':''}">战报</button><button data-a="wPane" data-v="data" class="${W&&W.pane==='data'?'on':''}">数据</button></div>
       <div class="w5-main">
         <div class="w5-mapbox"><canvas id="w5-map"></canvas><canvas id="w5-gold" class="w5-goldcv"></canvas>
           <div class="w5-banner" id="w5-banner" style="display:none"></div></div>
-        <div class="w5-feed" id="w5-feed"></div>
+        <div class="w5-side">
+          <div class="w5-players" id="w5-players"></div>
+          <div class="w5-feed-wrap">
+            <div class="w5-feed-hd">实时事件播报</div>
+            <div class="w5-feed" id="w5-feed"></div>
+          </div>
+        </div>
       </div>
-      <div class="w5-players" id="w5-players"></div>
       ${ctrlHtml('5')}
-      <div class="w5-tab ${W&&W.tab?'on':''}" id="w5-tab"></div>
+      <div class="w5-tab ${tabOn?'on':''}" id="w5-tab"></div>
     </div>`;
   }
   function shellSolo(){
@@ -394,7 +540,7 @@ const Watch = (()=>{
   }
   function soloTabHtml(V){
     const row = side => { const F = V[side]; return `<tr class="${side==='A'?'b':'r'}"><td class="tn">${champAvatar(F.champ,'xs')}<b>${esc(F.tag)}</b></td><td>${F.lvl}</td><td>${F.cs}</td><td class="items">${itemsHtml(F.items||[], null)}</td><td class="gd"><b>${F.gold}</b></td></tr>`; };
-    return `<div class="w5-tab-hd"><b>装备与经济</b><small>按 Tab 键或点「装备」按钮开关</small></div><table class="w5-tbl"><tr><th>选手</th><th>等级</th><th>补刀</th><th>装备</th><th>金币</th></tr>${row('A')}${row('B')}</table>`;
+    return `<div class="w5-tab-hd"><b>装备与经济面板</b><small>PC 按住 Tab 键查看（松开关闭） · 点击按钮或触控可常驻开关</small></div><table class="w5-tbl"><tr><th>选手</th><th>等级</th><th>补刀</th><th>装备</th><th>金币</th></tr>${row('A')}${row('B')}</table>`;
   }
 
   // ---------------- 主循环 ----------------
@@ -472,9 +618,21 @@ const Watch = (()=>{
   }
   function start(opts){
     stop();
-    W = Object.assign({ speed:1, paused:false, acc:0, t:0, tab:false, pane:'feed', done:false }, opts);
+    W = Object.assign({ speed:1, paused:false, acc:0, t:0, tab:false, tabPin:false, tabHold:false, pane:'feed', done:false }, opts);
     lastTs = 0;
     if(!raf) raf = requestAnimationFrame(frame);
+  }
+  function syncTabState(){
+    if(!W) return;
+    W.tab = !!(W.tabPin || W.tabHold);
+    const id = W.kind==='g5' ? 'w5-tab' : 'w1-tab';
+    const el = document.getElementById(id);
+    if(el){
+      el.classList.toggle('on', W.tab);
+      if(W.tab) paint(true);
+    }
+    const btn = document.querySelector('[data-a="wTab"]');
+    if(btn) btn.classList.toggle('on', W.tab);
   }
   function stop(){ if(raf) cancelAnimationFrame(raf); raf = 0; W = null; }
   function active(){ return W; }
@@ -495,16 +653,31 @@ const Watch = (()=>{
     if(!W) return false;
     if(act==='speed'){ W.speed = +v || 1; W.paused = false; }
     else if(act==='pause'){ W.paused = !W.paused; }
-    else if(act==='tab'){ W.tab = !W.tab; }
+    else if(act==='tab'){ W.tabPin = !W.tabPin; W.tabHold = false; syncTabState(); }
     else if(act==='pane'){ W.pane = v; }
     else if(act==='skip'){ skip(); return true; }
     else if(act==='seek'){ W.t = clamp(+v||0, 0, W.dur); W.done = false; const ban = document.getElementById(W.kind==='g5'?'w5-banner':'w1-banner'); if(ban) ban.style.display='none'; }
     return true;
   }
+  // PC 键盘：按住 Tab 键持续显示，松开即隐藏；鼠标/触控点击「装备 Tab」按钮则常驻切换
   document.addEventListener('keydown', e=>{
     if(!W) return;
-    if(e.key==='Tab'){ e.preventDefault(); W.tab = !W.tab; if(typeof render==='function') render(); }
+    if(e.key==='Tab'){
+      e.preventDefault();
+      if(!W.tabHold){ W.tabHold = true; syncTabState(); }
+    }
     else if(e.key===' ' && e.target===document.body){ e.preventDefault(); W.paused = !W.paused; if(typeof render==='function') render(); }
+  });
+  document.addEventListener('keyup', e=>{
+    if(!W) return;
+    if(e.key==='Tab' && W.tabHold){
+      e.preventDefault();
+      W.tabHold = false;
+      syncTabState();
+    }
+  });
+  window.addEventListener('blur', ()=>{
+    if(W && W.tabHold){ W.tabHold = false; syncTabState(); }
   });
   document.addEventListener('input', e=>{ if(e.target && e.target.id==='w-seek' && W && W.replay){ W.seeking = true; control('seek', e.target.value); paint(true); } });
   document.addEventListener('change', e=>{ if(e.target && e.target.id==='w-seek' && W){ W.seeking = false; } });

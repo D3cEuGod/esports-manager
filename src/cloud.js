@@ -449,5 +449,136 @@ const CloudSync = {
     this.conflict = null;
     if(typeof UI !== 'undefined'){ UI.modal = null; }
     if(typeof render === 'function') render();
+  },
+
+  // 自动双向云同步：切回前台/重连网络/定时静默检查云端更新，切走前台时立即冲刷待上传存档
+  _autoStarted: false,
+  _lastPullCheck: 0,
+  _autoTimer: null,
+  startAutoSync(){
+    if(this._autoStarted) return;
+    this._autoStarted = true;
+    const tryPull = () => {
+      if(!this.isConfigured() || !this.isLoggedIn() || this.conflict) return;
+      if(typeof UI !== 'undefined' && (UI.match || UI.modal || UI.replay)) return;
+      if(typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      if(Date.now() - this._lastPullCheck < 20000) return;
+      this.backgroundPullCheck();
+    };
+    if(typeof document !== 'undefined' && document.addEventListener){
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'hidden'){
+          if(this._pushTimer && S && this.isLoggedIn()){
+            clearTimeout(this._pushTimer); this._pushTimer = null;
+            this.pushSave(S);
+          }
+        } else {
+          tryPull();
+        }
+      });
+    }
+    if(typeof window !== 'undefined' && window.addEventListener){
+      window.addEventListener('focus', tryPull);
+      window.addEventListener('online', ()=>{
+        if(this.isLoggedIn()){
+          if(S && this.status === 'offline') this.pushSave(S);
+          else tryPull();
+        }
+      });
+    }
+    this._autoTimer = setInterval(tryPull, 90000);
+  },
+
+  async backgroundPullCheck(){
+    if(!this.isConfigured() || !this.isLoggedIn() || this.status === 'syncing') return;
+    this._lastPullCheck = Date.now();
+    try{
+      const row = await this.fetchCloudSave();
+      if(!row || !row.save_data) return;
+      const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
+      if(!S){
+        S = migrateSave(row.save_data);
+        await StorageBridge.writeSaveText(JSON.stringify(S));
+        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
+        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '已自动同步云端存档';
+        if(typeof render === 'function') render();
+        return;
+      }
+      const localTs = (S._sync && S._sync.updatedAt) || 0;
+      if(cloudTs <= localTs + 5000) return;
+      // 如果本地在最后一次同步后没有新改动，说明是其他设备推进了进度 -> 无感自动拉新
+      const localDirty = this.lastSyncAt > 0 && localTs > this.lastSyncAt + 2000;
+      if(!localDirty){
+        S = migrateSave(row.save_data);
+        await StorageBridge.writeSaveText(JSON.stringify(S));
+        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
+        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '云端已自动更新';
+        if(typeof toast === 'function') toast('已自动拉取云端最新存档进度');
+        else if(typeof render === 'function') render();
+      } else {
+        this.conflict = {
+          localSave: S,
+          localSummary: makeSaveSummary(S),
+          cloudSave: migrateSave(row.save_data),
+          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
+        };
+        this.statusText = '检测到多端进度差异';
+        if(typeof openConflictModal === 'function') openConflictModal();
+      }
+    }catch(e){
+      // 静默容错，不打扰游玩
+    }
+  }
+};
+
+// ================= 云端版本自动更新检测 =================
+window.AppUpdater = {
+  currentVersion: '2.1.0',
+  manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
+  releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
+  available: null,
+  statusText: '尚未检查',
+  lastCheckedAt: 0,
+
+  isNewer(remote, local){
+    const a = String(remote||'').replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
+    const b = String(local||'').replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
+    for(let i=0;i<Math.max(a.length,b.length);i++){
+      if((a[i]||0) > (b[i]||0)) return true;
+      if((a[i]||0) < (b[i]||0)) return false;
+    }
+    return false;
+  },
+
+  async check(manual){
+    if(!manual && Date.now() - this.lastCheckedAt < 300000) return { hasUpdate: !!this.available };
+    this.lastCheckedAt = Date.now();
+    this.statusText = '正在检查云端版本…';
+    try{
+      let info = null;
+      const r = await fetch(`${this.manifestUrl}?t=${Date.now()}`, { cache:'no-store' });
+      if(r.ok){
+        const j = await r.json();
+        if(j && j.version) info = { version: String(j.version), notes: j.notes || '', url: j.url || 'https://github.com/D3cEuGod/esports-manager/releases', date: j.date || '' };
+      }
+      if(!info){
+        const r2 = await fetch(this.releasesApi, { headers: { Accept:'application/vnd.github+json' } });
+        if(r2.ok){
+          const j2 = await r2.json();
+          if(j2 && j2.tag_name) info = { version: String(j2.tag_name).replace(/^v/i,''), notes: (j2.name||'').slice(0,80), url: j2.html_url || 'https://github.com/D3cEuGod/esports-manager/releases' };
+        }
+      }
+      if(info && this.isNewer(info.version, this.currentVersion)){
+        this.available = info;
+        this.statusText = `发现新版本 v${info.version}`;
+        return { hasUpdate:true, version:info.version, info };
+      }
+      this.available = null;
+      this.statusText = `已是最新版本（v${this.currentVersion}）`;
+      return { hasUpdate:false, msg: this.statusText };
+    }catch(e){
+      this.statusText = '离线模式（暂无法检测版本）';
+      return { hasUpdate:false, msg:'网络暂不可用，稍后再试' };
+    }
   }
 };

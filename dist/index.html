@@ -72,6 +72,33 @@ main{padding:20px max(3vw,16px);max-width:1280px;margin:0 auto}
 .tl li::before{content:counter(t);position:absolute;left:0;font-family:var(--num);font-weight:700;color:var(--ln2);font-size:18px;line-height:1.3}
 .tl li.now{color:var(--ink)}.tl li.now::before{color:var(--ac)}.tl li.now b{color:var(--ac)}.tl li.past b{color:var(--ink)}
 .warn{color:var(--ac);font-weight:500}.muted{color:var(--mu)}
+/* 统一矢量 SVG 图标与语义着色 */
+.ico{width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0}
+.ico.lg{width:22px;height:22px;vertical-align:-4px}
+.ico.gold,.c-gold{color:#e6b84c}.ico.c-t0{color:#ff7b47}.ico.c-t1{color:#0ac8b9}.ico.c-bar{color:#b78cff}.ico.c-drk{color:#ff9f52}.ico.c-red{color:#ff5c72}.ico.c-teal{color:#5ef2e4}.ico.c-ice{color:#9cc4ff}
+/* 主页逐行赛事速报（与最新赛场动态统一风格） */
+.ev-bulletin{list-style:none;padding:0;margin:10px 0 6px;border-top:1px solid var(--ln)}
+.ev-bulletin li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 4px;border-bottom:1px solid var(--ln);font-size:14px}
+.eb-lbl{display:inline-flex;align-items:center;gap:6px;color:var(--mu);font-weight:600}
+.eb-val{font-weight:700}
+/* 团队化学反应与跨赛区提示 */
+.chem-top{display:inline-flex;align-items:center;gap:4px}
+.chem-top.c4,.chem-pill.c4{color:#15803d}.chem-top.c3,.chem-pill.c3{color:#0d9488}.chem-top.c2,.chem-pill.c2{color:#b45309}.chem-top.c1,.chem-pill.c1{color:#c2410c}.chem-top.c0,.chem-pill.c0{color:#dc2626}
+.top .chem-top.c4{color:#4ade80}.top .chem-top.c3{color:#2dd4bf}.top .chem-top.c2{color:#fbbf24}.top .chem-top.c1{color:#fb923c}.top .chem-top.c0{color:#f87171}
+.chem-pill{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border:1px solid var(--ln2);background:#faf9f6;font-size:13px;font-weight:700}
+.chem-bar-row{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;font-size:12px}
+.chem-core{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#eef9f6;border:1px solid #96d8cb;color:#0b6156;font-weight:700}
+.chem-pv{padding:8px 11px;margin:8px 0;background:#f7f5f0;border-left:3px solid var(--ink);font-size:13px}
+.bd-val{font-family:var(--num);font-weight:800;font-size:15px}
+.bd-val.hi{color:var(--gr)}.bd-val.mid{color:#555}.bd-val.lo{color:var(--ac)}
+.cr-tag{display:inline-flex;align-items:center;gap:2px;margin-left:5px;padding:0 5px;font-size:10px;font-weight:700;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;vertical-align:1px}
+.cr-tag .ico{width:11px;height:11px;vertical-align:-1px}
+/* 云端新版本更新提示横幅 */
+.upd-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px max(3vw,16px);background:linear-gradient(90deg,#0c2848,#133d6b);color:#f0e6d2;font-size:13px;border-bottom:2px solid var(--hex-gold)}
+.upd-banner span{display:inline-flex;align-items:center;gap:6px}
+.upd-acts{display:flex;gap:8px;align-items:center}
+.upd-acts .btn.ghost{color:#f0e6d2;border-color:rgba(240,230,210,.45)}
+.chip.t0{border-color:#d9532f;background:#fff4f0}.chip.t1{border-color:#0e8c82;background:#eefbf9}
 /* 开始页 */
 .start{max-width:1180px;margin:0 auto;padding:clamp(28px,5vw,64px) max(3vw,16px)}
 .start h1{font-size:clamp(48px,8vw,96px);margin:0;line-height:1;letter-spacing:8px;display:flex;align-items:center;gap:16px}
@@ -263,37 +290,86 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
     radial-gradient(ellipse at 50% 0%,rgba(18,96,196,.62) 0%,rgba(9,44,102,.78) 40%,#04152e 74%,#010915 100%);
 }
 
-/* LoL 原版风格 Ban <-> Pick 阶段切换加强横幅动画（不挡鼠标点击） */
-@keyframes bpSplashWrap{0%{opacity:0}12%{opacity:1}76%{opacity:1}100%{opacity:0}}
-@keyframes bpBeamExpand{0%{transform:scaleX(.08) scaleY(.5);opacity:0}18%{transform:scaleX(1.05) scaleY(1);opacity:1}82%{transform:scaleX(1) scaleY(1);opacity:.9}100%{transform:scaleX(1.15) scaleY(.25);opacity:0}}
-@keyframes bpCorePop{0%{transform:scale(.82);letter-spacing:8px;opacity:0}20%{transform:scale(1.03);letter-spacing:3px;opacity:1}78%{transform:scale(1);letter-spacing:2.5px;opacity:1}100%{transform:scale(1.08);opacity:0}}
+/* LoL 原版风格 Ban <-> Pick 阶段切换加强横幅动画（独立挂载，严格 1 秒自动消失，绝不挡点击） */
+@keyframes bpSplashWrap{0%{opacity:0}14%{opacity:1}76%{opacity:1}100%{opacity:0}}
+@keyframes bpBeamExpand{0%{transform:scaleX(.05) scaleY(.4);opacity:0}18%{transform:scaleX(1.04) scaleY(1);opacity:1}80%{transform:scaleX(1) scaleY(1);opacity:.92}100%{transform:scaleX(1.16) scaleY(.2);opacity:0}}
+@keyframes bpSlashSweep{0%{transform:translateX(-110%) skewX(-24deg);opacity:0}25%{opacity:.85}85%{opacity:.4}100%{transform:translateX(120%) skewX(-24deg);opacity:0}}
+@keyframes bpCorePop{0%{transform:scale(.76);letter-spacing:9px;opacity:0}20%{transform:scale(1.04);letter-spacing:3px;opacity:1}78%{transform:scale(1);letter-spacing:2.5px;opacity:1}100%{transform:scale(1.1);opacity:0}}
+@keyframes bpLockBurst{0%{opacity:0;transform:scale(.7)}25%{opacity:1;transform:scale(1.03)}80%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.08)}}
 .bp-splash{
-  position:fixed;inset:0;z-index:55;pointer-events:none;
+  position:fixed;inset:0;z-index:70;pointer-events:none;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
-  animation:bpSplashWrap 1.05s cubic-bezier(.16,1,.3,1) forwards
+  animation:bpSplashWrap 1.0s cubic-bezier(.16,1,.3,1) forwards
 }
-.bp-splash.ban{background:radial-gradient(circle at 50% 50%,rgba(232,64,87,.32),rgba(40,4,12,.55) 62%,transparent)}
-.bp-splash.pick{background:radial-gradient(circle at 50% 50%,rgba(30,136,255,.32),rgba(4,18,46,.55) 62%,transparent)}
+.bp-splash.ban{background:radial-gradient(circle at 50% 50%,rgba(232,64,87,.36),rgba(40,4,12,.6) 62%,transparent)}
+.bp-splash.pick{background:radial-gradient(circle at 50% 50%,rgba(30,136,255,.36),rgba(4,18,46,.6) 62%,transparent)}
+.bps-slash{
+  position:absolute;top:50%;left:0;width:45%;height:140px;margin-top:-70px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  animation:bpSlashSweep .95s cubic-bezier(.16,1,.3,1) forwards
+}
 .bps-beam{
-  position:absolute;left:0;right:0;height:112px;
-  animation:bpBeamExpand 1.05s cubic-bezier(.16,1,.3,1) forwards
+  position:absolute;left:0;right:0;height:106px;
+  animation:bpBeamExpand 1.0s cubic-bezier(.16,1,.3,1) forwards
 }
 .bp-splash.ban .bps-beam{
-  background:linear-gradient(90deg,transparent 2%,rgba(176,18,44,.92) 22%,rgba(232,64,87,.96) 50%,rgba(176,18,44,.92) 78%,transparent 98%);
-  border-top:2px solid #ff8fa0;border-bottom:2px solid #ff8fa0;
-  box-shadow:0 0 48px rgba(232,64,87,.85),inset 0 0 28px rgba(255,190,200,.35)
+  background:linear-gradient(90deg,transparent 2%,rgba(176,18,44,.94) 20%,rgba(232,64,87,.98) 50%,rgba(176,18,44,.94) 80%,transparent 98%);
+  border-top:2px solid #ff99a8;border-bottom:2px solid #ff99a8;
+  box-shadow:0 0 54px rgba(232,64,87,.9),inset 0 0 28px rgba(255,190,200,.38)
 }
 .bp-splash.pick .bps-beam{
-  background:linear-gradient(90deg,transparent 2%,rgba(12,68,148,.92) 22%,rgba(18,136,235,.96) 50%,rgba(12,68,148,.92) 78%,transparent 98%);
+  background:linear-gradient(90deg,transparent 2%,rgba(12,68,148,.94) 20%,rgba(22,144,242,.98) 50%,rgba(12,68,148,.94) 80%,transparent 98%);
   border-top:2px solid var(--hex-gold);border-bottom:2px solid var(--hex-blue);
-  box-shadow:0 0 48px rgba(24,148,255,.85),inset 0 0 28px rgba(10,200,185,.4)
+  box-shadow:0 0 54px rgba(24,148,255,.9),inset 0 0 28px rgba(10,200,185,.42)
 }
 .bps-core{
-  position:relative;z-index:1;text-align:center;padding:12px 44px;
-  animation:bpCorePop 1.05s cubic-bezier(.16,1,.3,1) forwards
+  position:relative;z-index:1;text-align:center;padding:10px 44px;
+  animation:bpCorePop 1.0s cubic-bezier(.16,1,.3,1) forwards
 }
 .bps-sub{display:block;font-family:var(--num);font-size:13px;font-weight:800;letter-spacing:3px;color:var(--hex-gold-l);opacity:.92;margin-bottom:2px}
-.bps-core b{font-size:clamp(24px,3.6vw,34px);color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.85)}
+.bps-core b{font-size:clamp(24px,3.6vw,34px);color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.85);display:inline-flex;align-items:center;gap:8px}
+/* Ban / Pick 锁定瞬时打击感反馈 */
+.bp-lock-fx{
+  position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:68;pointer-events:none;
+  animation:bpLockBurst .45s cubic-bezier(.16,1,.3,1) forwards
+}
+.bp-lock-fx .blf-tag{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 20px;font-size:15px;font-weight:900;letter-spacing:1.2px;color:#fff;
+  box-shadow:0 8px 28px rgba(0,0,0,.65)
+}
+.bp-lock-fx.ban .blf-tag{background:linear-gradient(90deg,#9e1329,#e84057,#9e1329);border:1px solid #ff9aa8}
+.bp-lock-fx.pick .blf-tag{background:linear-gradient(90deg,#0c4b7a,#1892e6,#0c4b7a);border:1px solid var(--hex-gold)}
+/* BP 极简状态点与侧栏默契小标 */
+.st-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.st-dot.hot{background:#ff9447;box-shadow:0 0 6px #ff9447}
+.st-dot.cold{background:#66a3ff;box-shadow:0 0 5px #66a3ff}
+.st-dot.tilt{background:#ff4f67;box-shadow:0 0 6px #ff4f67}
+.chem-mini{display:inline-flex;align-items:center;gap:2px;font-family:var(--num);font-size:12px;font-weight:800;padding:1px 5px;border:1px solid rgba(200,155,60,.4);background:rgba(1,10,19,.7);color:var(--hex-gold-l)}
+.chem-mini .ico{width:11px;height:11px}
+.chem-mini.c4{color:#4ade80;border-color:rgba(74,222,128,.5)}.chem-mini.c3{color:#2dd4bf;border-color:rgba(45,212,191,.45)}.chem-mini.c0{color:#ff7285;border-color:rgba(232,64,87,.5)}
+/* 桌面端 BP 全屏单视口适配（全部塞入初始窗口框，不滚动外层页面） */
+@media(min-width:1024px){
+  .match.hex.bp-fit{height:100vh;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:6px 12px 8px}
+  .match.hex.bp-fit .mh-lol{padding:4px 12px;margin-bottom:6px;flex-shrink:0}
+  .match.hex.bp-fit .mh-score{font-size:36px}
+  .match.hex.bp-fit .ban-bar{margin-bottom:6px;flex-shrink:0}
+  .match.hex.bp-fit .ban-side{padding:4px 6px}
+  .match.hex.bp-fit .ban-slot{width:40px;height:40px}
+  .match.hex.bp-fit .phase-banner{padding:5px 12px}
+  .match.hex.bp-fit .pb-msg{font-size:15px}
+  .match.hex.bp-fit #bp-clock-num{font-size:24px}
+  .match.hex.bp-fit .draft-lol{flex:1;min-height:0;align-items:stretch}
+  .match.hex.bp-fit .hex-side{display:flex;flex-direction:column;padding:8px;overflow:hidden}
+  .match.hex.bp-fit .side-head{padding-bottom:5px;margin-bottom:6px}
+  .match.hex.bp-fit .pk-list{gap:5px;flex:1;justify-content:space-between}
+  .match.hex.bp-fit .pk-slot{padding:5px 8px;gap:8px}
+  .match.hex.bp-fit .pk-slot .c-ava.sm{width:40px;height:40px;font-size:13px}
+  .match.hex.bp-fit .side-intel{margin-top:6px;padding-top:6px}
+  .match.hex.bp-fit .hex-center{min-height:0;height:100%;padding:8px 10px;gap:6px;overflow:hidden}
+  .match.hex.bp-fit .cgrid-lol{flex:1;min-height:0;max-height:none;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px}
+  .match.hex.bp-fit .lock-dock{padding-top:6px;flex-shrink:0}
+  .match.hex.bp-fit .ready-stage,.match.hex.bp-fit .result-stage{overflow-y:auto}
+}
 .hex-side.active-pick.blue{border-color:rgba(36,156,255,.85)}
 .hex-center.stage-pick{border-color:rgba(36,156,255,.78);box-shadow:inset 0 0 32px rgba(24,132,255,.16)}
 .phase-banner.is-pick{
@@ -801,55 +877,93 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 @media(max-width:600px){.hinfo{gap:12px}.vs{gap:8px}.card{padding:14px}.tbl{font-size:13px}.cgrid-lol{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-/* ===== 实时观战：5v5 召唤师峡谷（海克斯蓝金转播风） ===== */
+/* ===== 实时观战：5v5 召唤师峡谷（海克斯职业赛事 OB 风 + 桌面端一屏全览） ===== */
 .match.hex.mode-live{background:radial-gradient(ellipse at 50% 0%,#0d2238 0%,#050f1e 50%,#010a13 100%)}
-.watch5{position:relative;max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
-.w5-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:6px 12px;background:linear-gradient(180deg,rgba(9,20,40,.96),rgba(1,10,19,.96));border:1px solid var(--hex-gold-d);border-top:2px solid var(--hex-gold)}
-.w5-tm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.watch5{position:relative;max-width:1460px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.w5-score{
+  display:flex;flex-direction:column;gap:5px;padding:6px 12px;
+  background:linear-gradient(180deg,rgba(9,20,40,.97),rgba(2,11,22,.97));
+  border:1px solid var(--hex-gold-d);border-top:2px solid var(--hex-gold)
+}
+.w5-ob-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.w5-tm{display:flex;align-items:center;gap:10px;min-width:0}
 .w5-tm.blue{justify-content:flex-start}.w5-tm.red{justify-content:flex-end}
-.w5-tn{font-size:15px;color:#fff;letter-spacing:.5px}
+.w5-tn{font-size:16px;color:#fff;letter-spacing:.6px;white-space:nowrap}
 .w5-tm.blue .w5-tn{border-left:3px solid var(--hex-blue);padding-left:7px}.w5-tm.red .w5-tn{border-right:3px solid var(--hex-red);padding-right:7px}
-.w5-k{font-family:var(--num);font-size:30px;font-weight:800;line-height:1;color:#fff;min-width:34px;text-align:center}
-.w5-tm.blue .w5-k{color:#8ff3ea}.w5-tm.red .w5-k{color:#ffb3bf}
-.w5-st{font-family:var(--num);font-size:16px;font-weight:700;color:var(--hex-gold-l);white-space:nowrap}.w5-st i{font-style:normal;font-size:12px;margin-right:2px}
-.w5-dk{display:inline-flex;gap:3px;align-items:center}
-.w5-dk .dk{width:11px;height:11px;transform:rotate(45deg);background:var(--c);border:1px solid rgba(0,0,0,.6);display:inline-block}
-.w5-dk .soul{font-size:11px;color:#ffd27a;margin-left:3px}
-.bf{font-size:11px;font-weight:800;padding:1px 6px;border:1px solid}.bf.bar{color:#c9a2ff;border-color:#7d4bd6;background:rgba(125,75,214,.2)}.bf.eld{color:#ffe7a3;border-color:#b89545;background:rgba(184,149,69,.2)}
+.w5-res{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.w5-k{font-family:var(--num);font-size:32px;font-weight:800;line-height:1;color:#fff;min-width:34px;text-align:center}
+.w5-tm.blue .w5-k{color:#8ff3ea;margin-left:auto}.w5-tm.red .w5-k{color:#ffb3bf;margin-right:auto}
+.w5-st{display:inline-flex;align-items:center;gap:4px;font-family:var(--num);font-size:16px;font-weight:700;color:#b8c4d4;padding:1px 6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);white-space:nowrap}
+.w5-st.lead{color:#fff;border-color:rgba(200,155,60,.6);background:rgba(200,155,60,.14)}
+.w5-st b{font-weight:800}
+.w5-dk{display:inline-flex;gap:4px;align-items:center}
+.w5-dk .dk{width:10px;height:10px;transform:rotate(45deg);background:var(--c);border:1px solid rgba(0,0,0,.65);display:inline-block}
+.w5-dk .dk.emp{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}
+.w5-dk .soul{font-size:10px;font-weight:800;color:#ffd27a;margin-left:2px;padding:0 4px;border:1px solid rgba(200,155,60,.5)}
+.bf{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;padding:1px 6px;border:1px solid}
+.bf.bar{color:#d3b2ff;border-color:#7d4bd6;background:rgba(125,75,214,.25)}
+.bf.eld{color:#ffe7a3;border-color:#b89545;background:rgba(184,149,69,.25)}
 .w5-clock{font-family:var(--num);font-size:26px;font-weight:800;color:#fff;padding:2px 14px;background:#010a13;border:1px solid var(--hex-gold-d);letter-spacing:1px}
+/* 双方经济与资源优势对比进度条 */
+.w5-ob-adv{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.w5-tug{flex:1;min-width:140px;height:6px;display:flex;overflow:hidden;background:#0a1524;border:1px solid rgba(200,155,60,.3)}
+.w5-tug .bl{background:linear-gradient(90deg,#1a72ff,#0ac8b9);transition:width .3s ease}
+.w5-tug .rd{background:linear-gradient(90deg,#e84057,#9e182d);transition:width .3s ease}
+.w5-adv-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adv-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:1px 7px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#c3cedc}
+.adv-chip.blue{border-color:rgba(10,200,185,.55);color:#7bf2e7;background:rgba(10,200,185,.12)}
+.adv-chip.red{border-color:rgba(232,64,87,.55);color:#ff9ba8;background:rgba(232,64,87,.14)}
+.adv-chip.even{color:var(--hex-mu)}
 .w5-mtabs{display:none}
-.w5-main{display:grid;grid-template-columns:minmax(0,min(64vh,640px)) minmax(260px,1fr);gap:8px;align-items:stretch}
-.w5-mapbox{position:relative;aspect-ratio:1/1;width:100%;background:#010a13;border:1px solid var(--hex-gold-d)}
+/* 主舞台：小地图大幅扩容占主导，右侧紧凑侧栏容纳十人数据+精简事件播报 */
+.w5-main{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(320px,1fr);gap:10px;align-items:stretch}
+.w5-mapbox{position:relative;aspect-ratio:1/1;width:100%;max-width:min(76vh,740px);justify-self:center;align-self:center;background:#010a13;border:1px solid var(--hex-gold-d);box-shadow:0 8px 28px rgba(0,0,0,.55)}
 #w5-map{width:100%;height:100%;display:block;touch-action:manipulation}
-.w5-goldcv{position:absolute;left:8px;bottom:8px;width:44%;height:64px;border:1px solid rgba(200,155,60,.4);pointer-events:none}
+.w5-goldcv{position:absolute;left:8px;bottom:8px;width:40%;height:58px;border:1px solid rgba(200,155,60,.45);pointer-events:none}
 .w5-banner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle,rgba(1,10,19,.82),rgba(1,10,19,.45));animation:wban .45s ease}
 .w5-banner b{font-family:var(--num);font-size:46px;letter-spacing:6px;color:var(--hex-gold);text-shadow:0 0 22px rgba(200,155,60,.7)}
 .w5-banner span{font-size:16px;color:#fff}
 @keyframes wban{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}
-.w5-feed{background:rgba(1,10,19,.78);border:1px solid #20324a;padding:8px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:min(64vh,640px)}
-.w5-fl{display:grid;grid-template-columns:42px auto 1fr;gap:6px;align-items:baseline;font-size:13px;padding:5px 7px;border-left:3px solid #354c6b;background:rgba(255,255,255,.02);color:#c9c3b6}
+.w5-side{display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
+.w5-feed-wrap{flex:1;min-height:0;display:flex;flex-direction:column;background:rgba(1,10,19,.78);border:1px solid #20324a}
+.w5-feed-hd{font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--hex-gold);padding:4px 8px;border-bottom:1px solid rgba(200,155,60,.22);background:rgba(9,20,40,.8);flex-shrink:0}
+.w5-feed{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.w5-fl{display:grid;grid-template-columns:38px auto 1fr;gap:5px;align-items:baseline;font-size:12px;padding:4px 6px;border-left:3px solid #354c6b;background:rgba(255,255,255,.02);color:#c9c3b6}
 .w5-fl.b{border-left-color:var(--hex-blue)}.w5-fl.r{border-left-color:var(--hex-red)}
 .w5-fl.hl{background:rgba(200,155,60,.1);color:#f0e6d2}
 .w5-fl.new{animation:wfl .5s ease}
 .w5-fl .t{font-family:var(--num);color:var(--hex-mu)}
-.w5-fl .tg{font-size:11px;font-weight:800;padding:0 5px;color:#091428;background:var(--hex-gold);white-space:nowrap}
+.w5-fl .tg{font-size:10px;font-weight:800;padding:0 5px;color:#091428;background:var(--hex-gold);white-space:nowrap}
 .w5-fl.b .tg{background:var(--hex-blue)}.w5-fl.r .tg{background:var(--hex-red);color:#fff}
 @keyframes wfl{from{background:rgba(200,155,60,.35)}}
-.w5-players{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.w5-pcol{background:rgba(1,10,19,.78);border:1px solid #20324a;padding:4px 6px}
+.w5-players{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex-shrink:0}
+.w5-pcol{background:rgba(1,10,19,.78);border:1px solid #20324a;padding:3px 5px}
 .w5-pcol.blue{border-top:2px solid var(--hex-blue)}.w5-pcol.red{border-top:2px solid var(--hex-red)}
-.w5-ph,.w5-p{display:grid;grid-template-columns:30px 1fr 64px 40px 46px;gap:6px;align-items:center}
-.w5-ph{font-size:11px;color:var(--hex-mu);padding:2px 0;border-bottom:1px solid #1b2b42}.w5-ph span:not(:first-child){text-align:center}.w5-ph span:first-child{grid-column:1/3}
-.w5-p{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
-.w5-ava{display:block;position:relative;width:28px;height:28px}
-.w5-ava .c-ava.xs{width:28px;height:28px}
-.w5-ava .lv{position:absolute;right:-3px;bottom:-3px;font:800 10px var(--num);background:#010a13;color:var(--hex-gold);border:1px solid var(--hex-gold-d);padding:0 2px;line-height:1.2}
-.w5-ava .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);color:#ff8090;font:800 14px var(--num)}
+.w5-ph,.w5-p{display:grid;grid-template-columns:24px 1fr 44px 28px 36px;gap:4px;align-items:center}
+.w5-ph{font-size:10px;color:var(--hex-mu);padding:1px 0;border-bottom:1px solid #1b2b42}.w5-ph span:not(:first-child){text-align:center}.w5-ph span:first-child{grid-column:1/3}
+.w5-p{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.w5-ava{display:block;position:relative;width:24px;height:24px}
+.w5-ava .c-ava.xs{width:24px;height:24px}
+.w5-ava .lv{position:absolute;right:-3px;bottom:-3px;font:800 9px var(--num);background:#010a13;color:var(--hex-gold);border:1px solid var(--hex-gold-d);padding:0 2px;line-height:1.1}
+.w5-ava .rt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.68);color:#ff8090;font:800 12px var(--num)}
 .w5-p.dead .w5-nm{opacity:.5}
-.w5-nm{display:flex;flex-direction:column;line-height:1.15;min-width:0}
-.w5-nm b{color:#fff;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.w5-nm small{font-size:10px}
+.w5-nm{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+.w5-nm b{color:#fff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.w5-nm small{display:none}
 .w5-nm .hpb{display:block;height:3px;background:#1b2636;margin-top:2px}.w5-nm .hpb i{display:block;height:100%;background:#3ddc84}
-.w5-kda,.w5-cs,.w5-g{font-family:var(--num);font-size:15px;font-weight:700;text-align:center;color:var(--hex-gold-l)}
+.w5-kda,.w5-cs,.w5-g{font-family:var(--num);font-size:13px;font-weight:700;text-align:center;color:var(--hex-gold-l)}
+/* 桌面端 5v5 实时观战单屏适配（整个对局画面严丝合缝塞入 100vh 初始框） */
+@media(min-width:960px){
+  .match.hex.mode-live{height:100vh;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:6px 12px 8px}
+  .match.hex.mode-live>.mh-lol{padding:3px 12px;margin-bottom:5px;flex-shrink:0}
+  .match.hex.mode-live>.mh-lol .mh-score{font-size:28px}
+  .match.hex.mode-live>.mh-lol .tt.big b{font-size:22px}
+  .match.hex.mode-live>.mh-lol .fearless-row{display:none}
+  .match.hex.mode-live .watch5{flex:1;min-height:0}
+  .match.hex.mode-live .w5-score,.match.hex.mode-live .w-ctrl{flex-shrink:0}
+  .match.hex.mode-live .w5-main{flex:1;min-height:0}
+  .match.hex.mode-live .w5-mapbox{height:100%;width:auto;max-height:100%;max-width:100%}
+  .match.hex.mode-live .w5-players{grid-template-columns:1fr}
+}
 .w-ctrl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 8px;background:rgba(1,10,19,.92);border:1px solid #2a405e}
 .w-ctrl .spd-btn{min-height:32px;min-width:42px}
 .w-seek{flex:1;min-width:140px;accent-color:var(--hex-gold)}
@@ -947,21 +1061,23 @@ td.trs{max-width:160px}
 .rp-pl .rp-tag{min-width:64px;overflow:hidden;text-overflow:ellipsis}
 .rp-pl .rp-ch{color:var(--mu);flex:1;overflow:hidden;text-overflow:ellipsis}
 
-@media(max-width:860px){
+@media(max-width:959px){
   .w5-main{grid-template-columns:1fr}
   .w5-mapbox{max-width:100%}
   .w5-mtabs{display:flex;gap:4px}
   .w5-mtabs button{flex:1;background:rgba(13,28,51,.9);border:1px solid #354d6e;color:var(--hex-gold-l);padding:7px;font:700 13px var(--sans)}
   .w5-mtabs button.on{background:var(--hex-gold);color:#091428;border-color:var(--hex-gold)}
   .watch5.pane-feed .w5-players{display:none}
-  .watch5.pane-data .w5-feed{display:none}
+  .watch5.pane-data .w5-feed-wrap{display:none}
   .w5-feed{max-height:38vh}
   .w5-players{grid-template-columns:1fr}
   .watch5,.watch1{padding-bottom:58px}
   .watch5>.w-ctrl,.watch1>.w-ctrl,.w-ctrl{position:fixed;left:0;right:0;bottom:0;z-index:8;border-left:0;border-right:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));justify-content:center}
-  .w5-score{grid-template-columns:1fr auto 1fr;padding:4px 6px;gap:4px}
-  .w5-tm{gap:5px;font-size:11px}.w5-tn{font-size:12px}.w5-k{font-size:22px;min-width:22px}.w5-st{font-size:13px}
-  .w5-tm .w5-st:nth-of-type(3),.w5-tm .bf{display:none}
+  .w5-score{padding:4px 6px;gap:4px}
+  .w5-ob-top{gap:4px}
+  .w5-res{gap:4px}
+  .w5-tm{gap:5px;font-size:11px}.w5-tn{font-size:12px}.w5-k{font-size:22px;min-width:22px}.w5-st{font-size:12px;padding:1px 4px}
+  .w5-tm .bf{display:none}
   .w5-clock{font-size:18px;padding:1px 6px}
   .w5-tab{top:44px;width:98%;padding:6px}
   .w5-tbl th:nth-child(2),.w5-tbl td:nth-child(2){display:none}
@@ -1181,12 +1297,33 @@ function migrateChampProf(rawP){
 }
 
 // ================= 存档向下兼容迁移 =================
+function normalizeMetaQuota(meta, oldMeta){
+  const out = {};
+  CHAMP_KEYS.forEach(k => out[k] = 0);
+  const pickedT0 = new Set(), pickedT1 = new Set();
+  for(const role of ROLES){
+    const primary = CHAMP_KEYS.filter(k => CH[k].roles[0] === role);
+    const scored = primary.map(k => {
+      const cur = meta && meta[k] != null ? meta[k] : 0;
+      const prev = oldMeta && oldMeta[k] != null ? oldMeta[k] : 0;
+      const keep = prev >= 2 ? 0.55 : prev >= 1 ? 0.35 : 0;
+      return { k, s: (cur * 0.45) + keep + rnd() * 1.45 };
+    }).sort((a,b) => b.s - a.s);
+    scored.slice(0, 2).forEach(x => { out[x.k] = 2; pickedT0.add(x.k); });
+    scored.slice(2, 5).forEach(x => { out[x.k] = 1; pickedT1.add(x.k); });
+    scored.slice(-5).forEach(x => { if(!pickedT0.has(x.k) && !pickedT1.has(x.k) && rnd() < 0.72) out[x.k] = -1; });
+  }
+  return out;
+}
+
 function migrateSave(s){
   if(!s || typeof s!=='object') return s;
-  s.ver = 3;
+  s.ver = 4;
   s.meta = s.meta || {};
-  for(const k of CHAMP_KEYS){
-    if(s.meta[k]==null){ const x=rnd(); s.meta[k] = x<0.08?2 : x<0.25?1 : x<0.8?0 : -1; }
+  const strongCnt = CHAMP_KEYS.filter(k => (s.meta[k]||0) >= 1).length;
+  const missingCnt = CHAMP_KEYS.filter(k => s.meta[k]==null).length;
+  if(strongCnt > 27 || strongCnt < 16 || missingCnt > 0){
+    s.meta = normalizeMetaQuota(s.meta, s.meta);
   }
   s.log = s.log || {};
   s.news = s.news || [];
@@ -1201,7 +1338,14 @@ function migrateSave(s){
       p.champs = p.champs.filter(x=>x && CH[x.c]).map(x=>({ c:x.c, p:migrateChampProf(x.p) }));
       if(!p.champs.length) genChampPool(p, srand(hash(p.pid)));
       if(!Array.isArray(p.trainTargets)) p.trainTargets = [];
+      if(p.dynTr && typeof p.dynTr !== 'object') delete p.dynTr;
     });
+  }
+  if(!s.bonds || typeof s.bonds !== 'object'){
+    s.bonds = {};
+    const prevS = S; S = s;
+    initTeamBonds();
+    S = prevS;
   }
   return s;
 }
@@ -1219,9 +1363,9 @@ const fmtMoney = w => w>=10000 ? (w/10000).toFixed(2)+'亿' : Math.round(w)+'万
 
 // ================= 初始化 =================
 function newGame(userTeam){
-  S = { ver:2, year:2026, user:userTeam, teams:{}, players:{}, events:[], evIdx:0,
+  S = { ver:4, year:2026, user:userTeam, teams:{}, players:{}, events:[], evIdx:0,
         news:[], honors:[], history:[], points:{}, rr:{}, meta:{}, patchNo:1, uid:1, lplOrder:null,
-        log:{} };
+        log:{}, bonds:{} };
   const order = ['LPL','LCK','LEC','LCS','CBLOL','LCP'];
   for(const reg of order){
     const d = ROSTER[reg]; if(!d) continue;
@@ -1254,6 +1398,7 @@ function newGame(userTeam){
   }
   for(let i=0;i<24;i++) genRookie(2026);
   Object.values(S.teams).forEach(t=>autoLineup(t.key));
+  initTeamBonds();
   newPatch();
   // LPL 2026 第一赛段分组（官方：按2025排名）
   S.lplOrder = ['BLG','AL','TES','IG','JDG','WBG','NIP','WE','EDG','TT','LGD','UP','LNG','OMG'].filter(k=>S.teams[k]);
@@ -1304,8 +1449,8 @@ function describeChampBuff(k, isBuff){
 }
 
 function generatePatchData(oldMeta, nextVerLabel){
-  const meta = {};
-  for(const k of CHAMP_KEYS){ const x=rnd(); meta[k] = x<0.09?2 : x<0.27?1 : x<0.80?0 : -1; }
+  // 严格分位置定额制：每条主路固定 2 名 T0 + 3 名 T1（全版本恒定 10 T0 / 15 T1），杜绝越玩越多
+  const meta = normalizeMetaQuota(null, oldMeta);
   const buffs = [], nerfs = [];
   for(const k of CHAMP_KEYS){
     const prev = oldMeta && oldMeta[k]!=null ? oldMeta[k] : 0;
@@ -1366,26 +1511,295 @@ function stepTier(oldV, newV){
   if(nt < ot-1) return TIER_LO[String(ot-1)];
   return nv;
 }
+// ================= 团队化学反应（基于选手两两搭档磨合，支持双子星/铁三角/整队保留羁绊） =================
+const REAL_CORES_2026 = [
+  // [players, baseBond] 现实中合作多年的老搭档/双子星/核心班底
+  [['Faker','Oner','Keria'], 92],
+  [['Faker','Oner','Keria','Doran'], 74],
+  [['Bin','knight','ON'], 88],
+  [['Bin','knight','ON','XUN'], 82],
+  [['Kiin','Canyon','Chovy'], 86],
+  [['Kiin','Canyon','Chovy','Ruler','Duro'], 78],
+  [['Flandre','Tarzan','Shanks','Kael','Hope'], 80],
+  [['369','Creme','JackeyLove'], 84],
+  [['Zeus','Zeka','Viper','Delight'], 76],
+  [['Caps','BrokenBlade','Hans Sama'], 86],
+  [['TheShy','Rookie'], 90],
+  [['GALA','Meiko'], 74],
+  [['Xiaohu','Crisp'], 78],
+  [['Bdd','Cuzz'], 82],
+  [['Lucid','ShowMaker'], 78],
+  [['Elyoya','Myrwn','Alvaro','Supa'], 82],
+  [['Inspired','Bwipo','Quad','Massu','Busio'], 78],
+  [['CoreJJ','Impact','APA','Yeon'], 80],
+  [['Blaber','Zven'], 76],
+];
+function pairKey(a, b){ return a < b ? a + '|' + b : b + '|' + a; }
+function getBond(a, b){
+  if(!S || !S.bonds || !a || !b || a===b) return 0;
+  return S.bonds[pairKey(a, b)] || 0;
+}
+function setBond(a, b, v){
+  if(!S || !a || !b || a===b) return;
+  if(!S.bonds) S.bonds = {};
+  const k = pairKey(a, b);
+  const nv = Math.round(clamp(v, 0, 100) * 10) / 10;
+  if(nv < 4) delete S.bonds[k]; else S.bonds[k] = nv;
+}
+function initTeamBonds(){
+  if(!S) return;
+  S.bonds = S.bonds || {};
+  // 同队初始默契基线（新磨合队伍 40~52，强队默契略高）
+  Object.values(S.teams).forEach(t=>{
+    const ids = t.roster.filter(id => P(id));
+    const base = t.tier <= 2 ? 52 : t.tier <= 5 ? 46 : 40;
+    for(let i=0;i<ids.length;i++){
+      for(let j=i+1;j<ids.length;j++){
+        const r = srand(hash('bd:'+pairKey(ids[i], ids[j])));
+        const isSub = P(ids[i]).sub || P(ids[j]).sub;
+        setBond(ids[i], ids[j], base + (isSub ? -12 : 0) + (r()-0.5)*10);
+      }
+    }
+  });
+  // 注入现实中配合多年的双子星 / 铁三角 / 原班核（仅对真实在档案中的选手生效）
+  const byTag = {};
+  Object.values(S.players).forEach(p=>{ const k = (p.tag||p.pid).toLowerCase(); (byTag[k]=byTag[k]||[]).push(p); });
+  REAL_CORES_2026.forEach(([tags, bond])=>{
+    const matched = tags.map(tg => (byTag[tg.toLowerCase()]||[])[0]).filter(Boolean);
+    for(let i=0;i<matched.length;i++){
+      for(let j=i+1;j<matched.length;j++){
+        if(getBond(matched[i].pid, matched[j].pid) < bond){
+          setBond(matched[i].pid, matched[j].pid, bond);
+        }
+      }
+    }
+  });
+}
+function chemTierInfo(score){
+  if(score >= 86) return { tier:4, label:'心有灵犀', cls:'c4' };
+  if(score >= 70) return { tier:3, label:'默契十足', cls:'c3' };
+  if(score >= 52) return { tier:2, label:'配合娴熟', cls:'c2' };
+  if(score >= 34) return { tier:1, label:'磨合之中', cls:'c1' };
+  return { tier:0, label:'生疏拼凑', cls:'c0' };
+}
+function calcLineupChemistry(pids){
+  const list = (pids||[]).filter(Boolean);
+  if(list.length < 2) return { score:0, ...chemTierInfo(0), bonus:0, cores:[], strongPairs:0 };
+  let sum = 0, cnt = 0, strongPairs = 0;
+  const adj = {};
+  list.forEach(id => adj[id] = []);
+  for(let i=0;i<list.length;i++){
+    for(let j=i+1;j<list.length;j++){
+      const b = getBond(list[i], list[j]);
+      sum += b; cnt++;
+      if(b >= 72){ strongPairs++; adj[list[i]].push(list[j]); adj[list[j]].push(list[i]); }
+    }
+  }
+  const score = Math.round(sum / cnt);
+  // 找出高默契羁绊核心（整队/铁三角/双子星）
+  const visited = new Set(), cores = [];
+  for(const id of list){
+    if(visited.has(id) || !adj[id].length) continue;
+    const comp = [], q = [id]; visited.add(id);
+    while(q.length){ const u = q.shift(); comp.push(u); for(const v of adj[u]) if(!visited.has(v)){ visited.add(v); q.push(v); } }
+    if(comp.length >= 2){
+      const lbl = comp.length >= 5 ? '原班五人组' : comp.length === 4 ? '四人铁核' : comp.length === 3 ? '铁三角' : '双子星';
+      cores.push({ label:lbl, members:comp.map(x=>playerTag(P(x))) });
+    }
+  }
+  // 轻中度战力影响：以 55 为中性线，满默契约 +2.0，全生疏约 -1.8（不盖过硬实力与 BP）
+  const bonus = Math.round(clamp((score - 55) / 22, -1.8, 2.0) * 100) / 100;
+  return { score, ...chemTierInfo(score), bonus, cores, strongPairs };
+}
+function teamChemistry(teamKey){
+  const t = T(teamKey); if(!t) return calcLineupChemistry([]);
+  return calcLineupChemistry(ROLES.map(r => t.lineup[r]).filter(Boolean));
+}
+function previewChemWith(teamKey, incomingPid, replaceRole){
+  const t = T(teamKey); if(!t) return null;
+  const before = teamChemistry(teamKey);
+  const role = replaceRole || (P(incomingPid) && P(incomingPid).role);
+  const pids = ROLES.map(r => r===role ? incomingPid : t.lineup[r]).filter(Boolean);
+  const after = calcLineupChemistry(pids);
+  const keptFriends = pids.filter(id => id!==incomingPid && getBond(incomingPid, id)>=60).map(id => playerTag(P(id)));
+  return { before, after, delta: after.score - before.score, keptFriends };
+}
+function playerTeamBond(p){
+  if(!p || !p.team) return 0;
+  const st = starters(p.team).filter(x => x.pid !== p.pid);
+  if(!st.length) return 0;
+  return Math.round(st.reduce((s,x)=>s+getBond(p.pid, x.pid), 0) / st.length);
+}
+function growSeriesBonds(m, games){
+  if(!S || !m) return;
+  const gCnt = Math.max(1, (games&&games.length) || 1);
+  for(const [key, won] of [[m.w,true],[m.l,false]]){
+    const t = T(key); if(!t) continue;
+    const pids = ROLES.map(r => t.lineup[r]).filter(Boolean);
+    const step = (won ? 0.85 : 0.45) * Math.min(3, gCnt * 0.55);
+    for(let i=0;i<pids.length;i++){
+      for(let j=i+1;j<pids.length;j++){
+        const cur = getBond(pids[i], pids[j]);
+        // 80 以上递减成长，需要多年并肩才可达到 95+
+        const gain = cur >= 85 ? step * 0.35 : cur >= 70 ? step * 0.65 : step;
+        setBond(pids[i], pids[j], cur + gain);
+      }
+    }
+  }
+}
+function evolveTeamBonds(isOffseason){
+  if(!S || !S.bonds) return;
+  const sameTeamPairs = new Set();
+  Object.values(S.teams).forEach(t=>{
+    const ids = t.roster.filter(id => P(id));
+    for(let i=0;i<ids.length;i++){
+      for(let j=i+1;j<ids.length;j++){
+        const pk = pairKey(ids[i], ids[j]);
+        sameTeamPairs.add(pk);
+        const cur = S.bonds[pk] || 0;
+        const bothSt = Object.values(t.lineup).includes(ids[i]) && Object.values(t.lineup).includes(ids[j]);
+        const add = (isOffseason ? 7.5 : 5.0) * (bothSt ? 1 : 0.55) * (cur >= 84 ? 0.4 : cur >= 68 ? 0.72 : 1);
+        setBond(ids[i], ids[j], cur + add);
+      }
+    }
+  });
+  // 已分道扬镳的旧搭档缓慢自然衰退（保留绝大部分旧羁绊，未来重聚仍能快速磨合）
+  const decayRate = isOffseason ? 0.90 : 0.96;
+  for(const pk of Object.keys(S.bonds)){
+    if(!sameTeamPairs.has(pk)){
+      const nv = Math.round(S.bonds[pk] * decayRate * 10) / 10;
+      if(nv < 4) delete S.bonds[pk]; else S.bonds[pk] = nv;
+    }
+  }
+}
+
 // 隐藏特质：stab 稳定性（波动倍率，越低越稳）、big 大赛系数、ko 淘汰赛系数（能力点）、res 抗压（心态韧性倍率）、base 历来表现基线
+// 开档沿用 Leaguepedia 现实数据，随后根据游戏内多年夺冠/高光或长期低迷缓慢演化
 const _trCache = {};
+function invalidateTraitCache(p){ if(p){ delete _trCache[p.pid]; delete _trCache[p.tag||p.pid]; } }
 function playerTraits(p){
   if(!p) return {stab:1,big:0,ko:0,res:1,base:0,tags:[],src:'none'};
-  const key = p.tag || p.pid;
-  if(_trCache[key]) return _trCache[key];
-  const T0 = (typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[key] || TRAITS[String(key).toLowerCase()]) : null;
+  const dyn = p.dynTr;
+  const ver = dyn ? (dyn.v || 0) : 0;
+  const cacheKey = p.pid;
+  const hit = _trCache[cacheKey];
+  if(hit && hit._v === ver) return hit;
+  const tagKey = p.tag || p.pid;
+  const T0 = (typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null;
   let tr;
   if(T0){ tr = {stab:T0.stab, big:T0.big, ko:T0.ko, res:T0.res, base:T0.base||0, n:T0.n||0, src:'data'}; }
   else {
     // 数据不足：按年龄与能力给保守默认值（不同选手仍略有差异，但不打标签）
-    const r = srand(hash('tr:'+key));
+    const r = srand(hash('tr:'+tagKey));
     const age = p.age||21;
     tr = { stab: Math.round((1.08 - Math.min(6,Math.max(0,age-18))*0.025 + (r()-0.5)*0.1)*100)/100,
            big: 0, ko: 0, res: Math.round((0.95 + Math.min(6,Math.max(0,age-18))*0.015 + (r()-0.5)*0.1)*100)/100,
            base: 0, n:0, src:'default' };
   }
+  if(dyn){
+    tr.big  = Math.round(clamp(tr.big  + (dyn.dBig||0),  -2.6, 2.8)*100)/100;
+    tr.ko   = Math.round(clamp(tr.ko   + (dyn.dKo||0),   -2.6, 2.8)*100)/100;
+    tr.stab = Math.round(clamp(tr.stab + (dyn.dStab||0),  0.62, 1.42)*100)/100;
+    tr.res  = Math.round(clamp(tr.res  + (dyn.dRes||0),   0.65, 1.45)*100)/100;
+    if(tr.src !== 'data' && ((dyn.koG||0) >= 16 || (dyn.intlG||0) >= 10 || (dyn.titles||0) >= 2 || (dyn.bigTitles||0) >= 1 || (dyn.flops||0) >= 3)){
+      tr.src = 'data';
+    }
+  }
   tr.tags = traitTags(tr);
-  _trCache[key] = tr;
+  tr._v = ver;
+  _trCache[cacheKey] = tr;
   return tr;
+}
+function ensureDynTr(p){
+  if(!p.dynTr) p.dynTr = { v:0, koG:0, koW:0, intlG:0, intlW:0, titles:0, bigTitles:0, flops:0, dBig:0, dKo:0, dStab:0, dRes:0 };
+  return p.dynTr;
+}
+function commitTraitDelta(p, reason){
+  if(!p || !p.dynTr) return;
+  const before = playerTraits(p).tags.map(x=>x.t);
+  p.dynTr.v = (p.dynTr.v || 0) + 1;
+  invalidateTraitCache(p);
+  const after = playerTraits(p).tags.map(x=>x.t);
+  const gained = after.filter(t => !before.includes(t));
+  const lost = before.filter(t => !after.includes(t));
+  if((gained.length || lost.length) && (p.team === S.user || p.rating >= 84)){
+    const msg = gained.length ? `获得「${gained.join(' / ')}」标签` : `褪去「${lost.join(' / ')}」标签`;
+    addNews(`特质演变：${playerTag(p)}${p.team?`（${teamName(p.team)}）`:''}${reason?reason+'，':''}${msg}。`);
+  }
+}
+function updateTraitsFromSeries(m, games){
+  const ctx = m.ctx || findMatchCtx(m) || {};
+  if(!ctx.ko && !ctx.intl) return;
+  const gCnt = Math.max(1, (games&&games.length) || 1);
+  for(const [key, won] of [[m.w,true],[m.l,false]]){
+    const t = T(key); if(!t) continue;
+    for(const pid of Object.values(t.lineup)){
+      const p = P(pid); if(!p) continue;
+      const d = ensureDynTr(p);
+      // 检查本系列赛个人 MVP 与稳定性表现
+      let mvpCnt = 0, goodG = 0, badG = 0;
+      for(const g of (games||[])){
+        if(g.mvp === pid) mvpCnt++;
+        const row = [...(g.sa||[]), ...(g.sb||[])].find(x=>x.pid===pid);
+        if(row){
+          const kda = (row.k + row.a * 0.7) / Math.max(1, row.d);
+          if(kda >= 4.2) goodG++; else if(kda <= 1.2) badG++;
+        }
+      }
+      const perf = (mvpCnt * 0.03) + (goodG - badG) * 0.012;
+      if(ctx.ko){
+        d.koG += gCnt; if(won) d.koW += gCnt;
+        // 慢速演化：单次 BO5 仅变动 ±0.05~0.10，需跨赛段多次硬仗才改变标签
+        d.dKo = clamp(d.dKo + (won ? 0.055 : -0.045) + perf, -1.8, 1.8);
+      }
+      if(ctx.intl){
+        d.intlG += gCnt; if(won) d.intlW += gCnt;
+        d.dBig = clamp(d.dBig + (won ? 0.065 : -0.05) + perf, -1.8, 1.8);
+      }
+      if(goodG >= 2 && badG === 0) d.dStab = clamp(d.dStab - 0.015, -0.28, 0.28);
+      else if(badG >= 2) d.dStab = clamp(d.dStab + 0.018, -0.28, 0.28);
+      if(won && gCnt >= 5) d.dRes = clamp(d.dRes + 0.025, -0.28, 0.28);
+      else if(!won && gCnt >= 5) d.dRes = clamp(d.dRes - 0.015, -0.28, 0.28);
+      commitTraitDelta(p, ctx.intl ? '凭借长期国际赛征战积累' : '历经多场淘汰赛硬仗洗礼');
+    }
+  }
+}
+function awardEventTraits(kind, champKey, lowKeys){
+  if(champKey && T(champKey)){
+    const isMajor = kind === 'worlds' || kind === 'msi';
+    const reason = kind==='worlds'?'夺得全球总决赛冠军':kind==='msi'?'捧起 MSI 冠军奖杯':'屡次夺得重磅赛事冠军';
+    for(const pid of Object.values(T(champKey).lineup)){
+      const p = P(pid); if(!p) continue;
+      const d = ensureDynTr(p);
+      if(isMajor){
+        d.bigTitles++;
+        d.dBig = clamp(d.dBig + (kind==='worlds'?0.42:0.30), -1.8, 2.0);
+        d.dKo  = clamp(d.dKo  + (kind==='worlds'?0.34:0.24), -1.8, 2.0);
+        d.dRes = clamp(d.dRes + 0.06, -0.28, 0.30);
+      } else {
+        d.titles++;
+        d.dBig = clamp(d.dBig + 0.14, -1.8, 2.0);
+        d.dKo  = clamp(d.dKo  + 0.16, -1.8, 2.0);
+        d.dRes = clamp(d.dRes + 0.03, -0.28, 0.30);
+      }
+      commitTraitDelta(p, reason);
+    }
+  }
+  for(const k of (lowKeys||[])){
+    if(!k || !T(k)) continue;
+    for(const pid of Object.values(T(k).lineup)){
+      const p = P(pid); if(!p) continue;
+      const d = ensureDynTr(p);
+      d.flops++;
+      // 只有多次低排名/早早出局才会逐步削弱声望（单次低谷不变脸）
+      if(d.flops >= 2){
+        d.dBig = clamp(d.dBig - 0.16, -1.8, 2.0);
+        d.dKo  = clamp(d.dKo  - 0.14, -1.8, 2.0);
+        d.dRes = clamp(d.dRes - 0.035, -0.28, 0.30);
+        commitTraitDelta(p, '因连续多个赛段战绩低迷');
+      }
+    }
+  }
 }
 function traitTags(tr){
   if(!tr || tr.src!=='data') return [];
@@ -1917,12 +2331,14 @@ function draftPower(d, side){
     det.push({r,p,c,fit,base});
   }
   const tacShare = tacBonus * 0.85 / 5;
+  const chem = teamChemistry(team);
+  const chemB = chem.bonus; // 团队化学反应轻中度加成（满默契约 +2.0，生疏拼凑约 -1.8）
   return {
-    power: s/5 + ci.score + tacShare,
-    early: earlyP + ci.early*1.1 + tacShare + tacEarly,
-    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare,
-    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8,
-    comp: ci, det
+    power: s/5 + ci.score + tacShare + chemB,
+    early: earlyP + ci.early*1.1 + tacShare + tacEarly + chemB*0.85,
+    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare + chemB*1.05,
+    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + chemB*1.1,
+    comp: ci, chem, det
   };
 }
 
@@ -2030,6 +2446,8 @@ function simSeries(m, keepGames){
 function finishSeries(m, wa, wb, games, keep){
   m.s=[wa,wb]; m.w = wa>wb? m.a : m.b; m.l = wa>wb? m.b : m.a;
   settleSeriesMental(m, games);
+  growSeriesBonds(m, games);
+  updateTraitsFromSeries(m, games);
   if(keep) m.gm = games.map(g=>({
     w:g.w, dur:g.dur, kA:g.kA, kB:g.kB,
     turA:g.turA, turB:g.turB, dragA:g.dragA, dragB:g.dragB, baronA:g.baronA, baronB:g.baronB, goldDiff:g.goldDiff,
@@ -2347,6 +2765,7 @@ EV.fst = {
       ev.stages.push(mkBR('淘汰赛',k.nodes,k.places));
     } else { const pl=brPlaces(ev.stages[2]); ev.res.champ=pl[0]; ev.res.runner=pl[1]; ev.done=true;
       addNews(`🏆 ${teamName(pl[0])}（${T(pl[0]).region}）夺得全球先锋赛冠军！${T(pl[0]).region}赛区获得MSI额外直通名额。`);
+      awardEventTraits('fst', pl[0], []);
       intlPrize(pl,[600,300,150,150]); }
   }
 };
@@ -2375,6 +2794,7 @@ EV.msi = {
     } else { const pl=brPlaces(ev.stages[1]); ev.res.champ=pl[0]; ev.res.runner=pl[1]; ev.res.order=pl; ev.done=true;
       const r1=T(pl[0]).region; const r2Team=pl.find(t=>t&&T(t).region!==r1); const r2=r2Team?T(r2Team).region:(r1==='LCK'?'LPL':'LCK');
       addNews(`🏆 ${teamName(pl[0])} 夺得MSI冠军！${r1}与${r2}赛区获得额外世界赛名额。`);
+      awardEventTraits('msi', pl[0], pl.slice(-2));
       intlPrize(pl,[1000,500,250,200,100,100,60,60]); }
   }
 };
@@ -2402,6 +2822,7 @@ EV.ewc = {
       ev.stages.push(mkBR('淘汰赛',k.nodes,k.places));
     } else { const pl=brPlaces(ev.stages[4]); ev.res.champ=pl[0]; ev.done=true; S.ewcDefending=pl[0];
       addNews(`🏆 ${teamName(pl[0])} 夺得电竞世界杯（EWC）英雄联盟项目冠军！`);
+      awardEventTraits('ewc', pl[0], []);
       intlPrize(pl,[1200,600,300,300,150,150,150,150]); }
   }
 };
@@ -2436,6 +2857,7 @@ EV.worlds = {
       ev.stages.push(mkBR('淘汰赛（八强-决赛）',k.nodes,k.places));
     } else { const pl=brPlaces(ev.stages[2]); ev.res.champ=pl[0]; ev.res.runner=pl[1]; ev.done=true;
       addNews(`🏆🏆 ${teamName(pl[0])} 在纽约巴克莱中心捧起召唤师杯，成为${S.year}全球总决赛冠军！`);
+      awardEventTraits('worlds', pl[0], []);
       intlPrize(pl,[3000,1500,700,700,350,350,350,350]);
       S.honors.push({year:S.year, worlds:pl[0], runner:pl[1]}); }
   }
@@ -2539,6 +2961,8 @@ function splitEnd(split, order){
     const pay = t.roster.map(P).filter(Boolean).reduce((s,p)=>s+p.salary,0)/3; t.budget -= Math.round(pay);
     if(k===S.user) addNews(`💼 赛段结算：收入 ${fmtMoney(income)}，支付薪资 ${fmtMoney(pay)}，余额 ${fmtMoney(t.budget)}。`); });
   Object.values(S.teams).filter(t=>t.region!=='LPL').forEach(t=>{ t.budget += 400 - Math.round(t.roster.map(P).filter(Boolean).reduce((s,p)=>s+p.salary,0)/3*0.6); });
+  evolveTeamBonds(false);
+  awardEventTraits('lpl', order[0], order.slice(-4));
   newPatch();
   // 成长、状态回正与赛段间英雄池小幅流转
   Object.values(S.players).forEach(p=>{ if(p.retired) return;
@@ -2596,6 +3020,40 @@ function simUntilUser(limitAll){
     playAI(it); n++; if(n>2000) break; }
   return null;
 }
+// 模拟当前单轮（常规赛仅推完本轮、瑞士轮仅推完本轮、淘汰赛仅推完本轮对阵），遇到玩家自身比赛立即暂停
+function simCurrentRound(){
+  startEvent();
+  const ev = curEvent();
+  if(!ev || ev.done) return { played:0, stoppedForUser:false, item:null };
+  const startSi = ev.si;
+  const firstPool = stageMatches(ev);
+  if(!firstPool.length) return { played:0, stoppedForUser:false, item:null };
+  const st0 = firstPool[0].st;
+  const targetRnd = st0.kind==='rr' ? firstPool[0].m.rnd : st0.kind==='swiss' ? st0.round : null;
+  const targetCol = st0.kind==='br' ? Math.min(...firstPool.map(x => x.m.col != null ? x.m.col : 0)) : null;
+
+  let played = 0, guard = 0;
+  while(!ev.done && ev.si === startSi && guard++ < 200){
+    const pool = stageMatches(ev).filter(({m, st}) => {
+      if(st.kind==='rr') return m.rnd === targetRnd;
+      if(st.kind==='swiss') return st.round === targetRnd;
+      if(st.kind==='br') return (m.col != null ? m.col : 0) === targetCol;
+      return true;
+    });
+    if(!pool.length) break;
+    // 先把本轮里非玩家的 AI 比赛打完；若只剩玩家自己的比赛，立即暂停把球交回玩家
+    const aiItem = pool.find(x => !userInvolved(x.m));
+    if(aiItem){
+      playAI(aiItem);
+      played++;
+      continue;
+    }
+    const myItem = pool.find(x => userInvolved(x.m));
+    if(myItem) return { played, stoppedForUser:true, item:myItem };
+    break;
+  }
+  return { played, stoppedForUser:false, item:null };
+}
 function advanceEvent(){
   const ev=curEvent(); if(!ev.done) return;
   S.evIdx++;
@@ -2605,12 +3063,21 @@ function advanceEvent(){
 }
 function addNews(t){ S.news.unshift({y:S.year, ev:curEvent()?EVENT_INFO[curEvent().type].name:'', t}); if(S.news.length>300) S.news.length=300; }
 
-// ================= 转会（含季中建队非卖品保护） =================
+// ================= 转会（含季中建队非卖品保护、化学反应成本、跨赛区年内极稀有机制） =================
 function isMidSeasonWindow(){
   const ev = curEvent();
   return !!(ev && ev.type === 'window');
 }
-// 季中转会窗口期间：各队顶级明星（>=86）以及合同未到期的队内头号核心为非卖品，不上货架
+function isOffseasonWindow(){
+  const ev = curEvent();
+  return !!(ev && ev.type === 'off');
+}
+function isCrossRegionFor(p, buyerKey){
+  if(!p || !p.team || !buyerKey) return false;
+  const fromT = T(p.team), toT = T(buyerKey);
+  return !!(fromT && toT && fromT.region !== toT.region);
+}
+// 季中转会窗口期间：各队顶级明星（>=86）、合同未到期的队内头号核心、以及高默契原班主力（默契>=72且>=80分）不轻易挂牌
 function isUntouchable(p){
   if(!p || !p.team || !isMidSeasonWindow()) return false;
   const t = T(p.team); if(!t) return false;
@@ -2621,15 +3088,26 @@ function isUntouchable(p){
     const topStarter = starters(t.key).slice().sort((a,b)=>b.rating - a.rating)[0];
     if(topStarter && topStarter.pid === p.pid) return true;
   }
+  if(p.contract > S.year && p.rating >= 80 && playerTeamBond(p) >= 72) return true;
   return false;
 }
 
-function askPrice(p){
+function askPrice(p, buyerKey){
   const t=T(p.team); let f=1.0;
   if(t && Object.values(t.lineup).includes(p.pid)) f+=0.35;
   if(t && t.tier<=2) f+=0.15;
   if(p.rating>=88) f+=0.25;
-  if(p.contract<=S.year) f*=0.7;
+  if(p.contract<=S.year) f*=0.72;
+  // 队内高默契核心拆队溢价
+  if(t && playerTeamBond(p) >= 68) f += 0.18;
+  // 年中转会打乱化学反应，所有在约选手身价上浮；跨赛区年中挖人更需天价溢价
+  const buyer = buyerKey || S.user;
+  const cross = isCrossRegionFor(p, buyer);
+  if(isMidSeasonWindow()){
+    f *= cross ? 1.85 : 1.32;
+  } else if(cross){
+    f *= 1.18;
+  }
   return Math.round(playerValue(p)*f);
 }
 function canTeamFitForeign(team, incomingPlayer){
@@ -2641,34 +3119,51 @@ function canTeamFitForeign(team, incomingPlayer){
   return (curAtRole && isForeign(curAtRole)) ? curF <= maxF : curF < maxF;
 }
 function evaluateOffer(pid, cash, givePid){
-  const p=P(pid); const ask=askPrice(p);
+  const p=P(pid); const ask=askPrice(p, S.user);
   let offerVal=cash; let gp=null;
   if(givePid){ gp=P(givePid); offerVal += playerValue(gp)*(gp.role===p.role?0.95:0.7); }
   const ratio=offerVal/ask;
-  return {ask, offerVal, ratio, accept: ratio>=1, chance: clamp((ratio-0.85)/0.3,0,1)};
+  const crossMid = isMidSeasonWindow() && isCrossRegionFor(p, S.user);
+  // 年中跨赛区转会极度稀有：必须给出极高溢价才存在成交可能
+  const chance = crossMid
+    ? clamp((ratio - 1.18) / 0.45, 0, 0.55)
+    : clamp((ratio - 0.85) / 0.3, 0, 1);
+  return {ask, offerVal, ratio, crossMid, accept: crossMid ? ratio>=1.35 : ratio>=1, chance};
 }
 function makeOffer(pid, cash, givePid){
   const p=P(pid), me=T(S.user);
   if(cash>me.budget) return {ok:false,msg:'预算不足'};
   if(!p.team){
     signPlayer(pid,S.user,Math.round(p.salary*1.1),S.year+2); me.budget-=cash;
-    addNews(`✍️ ${teamName(S.user)} 签下自由球员 ${playerTag(p)}（${ROLE_CN[p.role]}）。`); return {ok:true,msg:`签约成功！${playerTag(p)} 加盟。`};
+    addNews(`签约：${teamName(S.user)} 签下自由球员 ${playerTag(p)}（${ROLE_CN[p.role]}）。`); return {ok:true,msg:`签约成功！${playerTag(p)} 加盟。`};
   }
-  if(isUntouchable(p)) return {ok:false,msg:`${teamName(p.team)} 将 ${playerTag(p)} 视为季中非卖核心，拒绝在赛段间出售。`};
+  if(isUntouchable(p)) return {ok:false,msg:`${teamName(p.team)} 将 ${playerTag(p)} 视为季中非卖核心，拒绝在赛段间拆散默契班底。`};
   const e=evaluateOffer(pid,cash,givePid);
-  const accept = e.ratio>=1.05 || (e.ratio>=0.9 && rnd()<e.chance);
-  if(!accept) return {ok:false,msg:`${teamName(p.team)} 拒绝了报价（对方心理价位约 ${fmtMoney(e.ask)}）。`};
+  const accept = e.crossMid
+    ? (e.ratio >= 1.45 || (e.ratio >= 1.2 && rnd() < e.chance))
+    : (e.ratio >= 1.05 || (e.ratio >= 0.9 && rnd() < e.chance));
+  if(!accept){
+    return {ok:false, msg: e.crossMid
+      ? `${teamName(p.team)} 拒绝了季中跨赛区挖角（跨区转会通常仅在年底休赛期发生，心理底价约 ${fmtMoney(e.ask)}）。`
+      : `${teamName(p.team)} 拒绝了报价（对方心理价位约 ${fmtMoney(e.ask)}）。`};
+  }
   const seller=p.team;
   me.budget-=cash; T(seller).budget+=cash;
   signPlayer(pid,S.user,Math.max(p.salary,Math.round(fairSalary(p)*1.05)),S.year+2);
   if(givePid){ signPlayer(givePid,seller,P(givePid).salary,P(givePid).contract); }
   ensureRoster(seller);
-  addNews(`🔁 转会：${playerTag(p)} 从 ${teamName(seller)} 加盟 ${teamName(S.user)}${cash?`，转会费 ${fmtMoney(cash)}`:''}${givePid?`，${playerTag(P(givePid))} 反向加盟 ${teamName(seller)}`:''}。`);
+  addNews(`转会：${playerTag(p)} 从 ${teamName(seller)} 加盟 ${teamName(S.user)}${cash?`，转会费 ${fmtMoney(cash)}`:''}${givePid?`，${playerTag(P(givePid))} 反向加盟 ${teamName(seller)}`:''}。`);
   return {ok:true,msg:'交易达成！'};
 }
 function bidsFor(pid){
   const p=P(pid), v=playerValue(p);
-  return Object.values(S.teams).filter(t=>t.key!==S.user && t.budget>v*0.8 && canTeamFitForeign(t, p))
+  const mid = isMidSeasonWindow();
+  return Object.values(S.teams).filter(t=>{
+    if(t.key===S.user || t.budget<=v*0.8 || !canTeamFitForeign(t, p)) return false;
+    // 年中窗口外赛区几乎不主动报价求购
+    if(mid && t.region !== T(S.user).region && rnd() > 0.08) return false;
+    return true;
+  })
     .map(t=>{ const cur=P(t.lineup[p.role]); const need = cur? (p.rating-cur.rating) : 10; return {t:t.key, need, price: Math.round(v*(0.75+rnd()*0.35+Math.max(0,need)*0.02))}; })
     .filter(b=>b.need>-2 && b.price<=T(b.t).budget).sort((a,b)=>b.price-a.price).slice(0,3);
 }
@@ -2676,20 +3171,34 @@ function sellPlayer(pid, buyer, price){
   const p=P(pid); const me=T(S.user);
   me.budget+=price; T(buyer).budget-=price;
   signPlayer(pid,buyer,p.salary,Math.max(p.contract,S.year+1)); autoLineup(buyer);
-  addNews(`💸 ${teamName(S.user)} 将 ${playerTag(p)} 以 ${fmtMoney(price)} 出售给 ${teamName(buyer)}。`);
+  addNews(`转会：${teamName(S.user)} 将 ${playerTag(p)} 以 ${fmtMoney(price)} 出售给 ${teamName(buyer)}。`);
 }
-function releasePlayer(pid){ const p=P(pid); const t=T(p.team); const pay=Math.round(p.salary*0.5); t.budget-=pay; t.roster=t.roster.filter(x=>x!==pid); for(const r of ROLES) if(t.lineup[r]===pid) delete t.lineup[r]; p.team=null; addNews(`📤 ${teamName(S.user)} 与 ${playerTag(p)} 解约（支付违约金 ${fmtMoney(pay)}）。`); }
+function releasePlayer(pid){ const p=P(pid); const t=T(p.team); const pay=Math.round(p.salary*0.5); t.budget-=pay; t.roster=t.roster.filter(x=>x!==pid); for(const r of ROLES) if(t.lineup[r]===pid) delete t.lineup[r]; p.team=null; addNews(`解约：${teamName(S.user)} 与 ${playerTag(p)} 解约（支付违约金 ${fmtMoney(pay)}）。`); }
 function aiTransfers(n){
+  const mid = isMidSeasonWindow();
+  // 年中转会窗：AI 几乎不主动拆队（避免破坏化学反应），仅极少次数补强短板
+  const attempts = mid ? (rnd() < 0.35 ? 1 : 0) : n;
   const ts=Object.values(S.teams).filter(t=>t.key!==S.user);
-  for(let i=0;i<n;i++){
+  for(let i=0;i<attempts;i++){
     const buyer=pick(ts); const role=pick(ROLES); const cur=P(buyer.lineup[role]); if(!cur) continue;
-    const cands=Object.values(S.players).filter(p=>p.role===role && p.team && p.team!==buyer.key && p.team!==S.user && !isUntouchable(p) && p.rating>cur.rating+2 && askPrice(p)<buyer.budget*0.6 && canTeamFitForeign(buyer, p));
+    const curBond = playerTeamBond(cur);
+    // 队内默契高时不轻易换人（除非升级幅度显著）
+    const minGain = mid ? (curBond >= 60 ? 6 : 4) : (curBond >= 72 ? 4 : 2.5);
+    const allowCross = mid ? (rnd() < 0.03) : (rnd() < 0.16);
+    const cands=Object.values(S.players).filter(p=>{
+      if(p.role!==role || !p.team || p.team===buyer.key || p.team===S.user) return false;
+      if(isUntouchable(p)) return false;
+      const cross = T(p.team).region !== buyer.region;
+      if(cross && !allowCross) return false;
+      return p.rating > cur.rating + minGain && askPrice(p, buyer.key) < buyer.budget*0.55 && canTeamFitForeign(buyer, p);
+    });
     if(!cands.length) continue;
-    const p=pick(cands.slice(0,40)); const price=askPrice(p); const from=p.team;
+    const p=pick(cands.slice(0,30)); const price=askPrice(p, buyer.key); const from=p.team;
+    const crossTag = T(from).region !== buyer.region ? '【重磅跨赛区转会】' : '';
     buyer.budget-=price; T(from).budget+=price;
     signPlayer(p.pid,buyer.key,fairSalary(p),S.year+2);
     autoLineup(buyer.key); ensureRoster(from);
-    addNews(`🔁 ${playerTag(p)} 以 ${fmtMoney(price)} 从 ${teamName(from)} 转会至 ${teamName(buyer.key)}。`);
+    addNews(`${crossTag}${playerTag(p)} 以 ${fmtMoney(price)} 从 ${teamName(from)} 转会至 ${teamName(buyer.key)}。`);
   }
 }
 // ================= 休赛期 / 新赛季 =================
@@ -2697,16 +3206,17 @@ function finishOffseason(){
   const y=S.year;
   const np = ensureNextPatch();
   Object.values(S.players).forEach(p=>{ if(!p.team || p.contract>y) return;
-    if(p.team===S.user){ if(!p.renewed){ const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; addNews(`📤 ${playerTag(p)} 合同到期离队，成为自由球员。`);} }
+    if(p.team===S.user){ if(!p.renewed){ const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; addNews(`离队：${playerTag(p)} 合同到期离队，成为自由球员。`);} }
     else if(rnd()<0.8 || T(p.team).roster.length<=5){ p.contract=y+1+Math.floor(rnd()*2); p.salary=fairSalary(p); }
     else { const t=T(p.team); t.roster=t.roster.filter(x=>x!==p.pid); for(const r of ROLES) if(t.lineup[r]===p.pid) delete t.lineup[r]; p.team=null; }
     p.renewed=false; });
   Object.values(S.players).forEach(p=>{ if(!p.team && !p.retired && p.age>=29 && rnd()<0.5){ p.retired=true; } p.age++; });
-  // 兑现新赛季版本 & 结算全员年度英雄池流转与定向冬训
+  // 兑现新赛季版本 & 结算全员年度英雄池流转、定向冬训与团队化学反应
   S.year = y + 1;
   S.patchNo = 0;
   newPatch(np);
   S.nextPatch = null;
+  evolveTeamBonds(true);
   const userTrainLogs = [];
   Object.values(S.players).forEach(p=>{
     if(p.retired) return;
@@ -4549,6 +5059,137 @@ const CloudSync = {
     this.conflict = null;
     if(typeof UI !== 'undefined'){ UI.modal = null; }
     if(typeof render === 'function') render();
+  },
+
+  // 自动双向云同步：切回前台/重连网络/定时静默检查云端更新，切走前台时立即冲刷待上传存档
+  _autoStarted: false,
+  _lastPullCheck: 0,
+  _autoTimer: null,
+  startAutoSync(){
+    if(this._autoStarted) return;
+    this._autoStarted = true;
+    const tryPull = () => {
+      if(!this.isConfigured() || !this.isLoggedIn() || this.conflict) return;
+      if(typeof UI !== 'undefined' && (UI.match || UI.modal || UI.replay)) return;
+      if(typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      if(Date.now() - this._lastPullCheck < 20000) return;
+      this.backgroundPullCheck();
+    };
+    if(typeof document !== 'undefined' && document.addEventListener){
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'hidden'){
+          if(this._pushTimer && S && this.isLoggedIn()){
+            clearTimeout(this._pushTimer); this._pushTimer = null;
+            this.pushSave(S);
+          }
+        } else {
+          tryPull();
+        }
+      });
+    }
+    if(typeof window !== 'undefined' && window.addEventListener){
+      window.addEventListener('focus', tryPull);
+      window.addEventListener('online', ()=>{
+        if(this.isLoggedIn()){
+          if(S && this.status === 'offline') this.pushSave(S);
+          else tryPull();
+        }
+      });
+    }
+    this._autoTimer = setInterval(tryPull, 90000);
+  },
+
+  async backgroundPullCheck(){
+    if(!this.isConfigured() || !this.isLoggedIn() || this.status === 'syncing') return;
+    this._lastPullCheck = Date.now();
+    try{
+      const row = await this.fetchCloudSave();
+      if(!row || !row.save_data) return;
+      const cloudTs = (row.save_data._sync && row.save_data._sync.updatedAt) || Date.parse(row.updated_at || '') || 0;
+      if(!S){
+        S = migrateSave(row.save_data);
+        await StorageBridge.writeSaveText(JSON.stringify(S));
+        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
+        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '已自动同步云端存档';
+        if(typeof render === 'function') render();
+        return;
+      }
+      const localTs = (S._sync && S._sync.updatedAt) || 0;
+      if(cloudTs <= localTs + 5000) return;
+      // 如果本地在最后一次同步后没有新改动，说明是其他设备推进了进度 -> 无感自动拉新
+      const localDirty = this.lastSyncAt > 0 && localTs > this.lastSyncAt + 2000;
+      if(!localDirty){
+        S = migrateSave(row.save_data);
+        await StorageBridge.writeSaveText(JSON.stringify(S));
+        if(typeof UI !== 'undefined'){ UI.hasSave = true; UI.savePreview = makeSaveSummary(S); }
+        this.status = 'synced'; this.lastSyncAt = Date.now(); this.statusText = '云端已自动更新';
+        if(typeof toast === 'function') toast('已自动拉取云端最新存档进度');
+        else if(typeof render === 'function') render();
+      } else {
+        this.conflict = {
+          localSave: S,
+          localSummary: makeSaveSummary(S),
+          cloudSave: migrateSave(row.save_data),
+          cloudSummary: Object.assign(makeSaveSummary(row.save_data), row.summary || {}, { updatedAt: cloudTs })
+        };
+        this.statusText = '检测到多端进度差异';
+        if(typeof openConflictModal === 'function') openConflictModal();
+      }
+    }catch(e){
+      // 静默容错，不打扰游玩
+    }
+  }
+};
+
+// ================= 云端版本自动更新检测 =================
+window.AppUpdater = {
+  currentVersion: '2.1.0',
+  manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
+  releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
+  available: null,
+  statusText: '尚未检查',
+  lastCheckedAt: 0,
+
+  isNewer(remote, local){
+    const a = String(remote||'').replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
+    const b = String(local||'').replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
+    for(let i=0;i<Math.max(a.length,b.length);i++){
+      if((a[i]||0) > (b[i]||0)) return true;
+      if((a[i]||0) < (b[i]||0)) return false;
+    }
+    return false;
+  },
+
+  async check(manual){
+    if(!manual && Date.now() - this.lastCheckedAt < 300000) return { hasUpdate: !!this.available };
+    this.lastCheckedAt = Date.now();
+    this.statusText = '正在检查云端版本…';
+    try{
+      let info = null;
+      const r = await fetch(`${this.manifestUrl}?t=${Date.now()}`, { cache:'no-store' });
+      if(r.ok){
+        const j = await r.json();
+        if(j && j.version) info = { version: String(j.version), notes: j.notes || '', url: j.url || 'https://github.com/D3cEuGod/esports-manager/releases', date: j.date || '' };
+      }
+      if(!info){
+        const r2 = await fetch(this.releasesApi, { headers: { Accept:'application/vnd.github+json' } });
+        if(r2.ok){
+          const j2 = await r2.json();
+          if(j2 && j2.tag_name) info = { version: String(j2.tag_name).replace(/^v/i,''), notes: (j2.name||'').slice(0,80), url: j2.html_url || 'https://github.com/D3cEuGod/esports-manager/releases' };
+        }
+      }
+      if(info && this.isNewer(info.version, this.currentVersion)){
+        this.available = info;
+        this.statusText = `发现新版本 v${info.version}`;
+        return { hasUpdate:true, version:info.version, info };
+      }
+      this.available = null;
+      this.statusText = `已是最新版本（v${this.currentVersion}）`;
+      return { hasUpdate:false, msg: this.statusText };
+    }catch(e){
+      this.statusText = '离线模式（暂无法检测版本）';
+      return { hasUpdate:false, msg:'网络暂不可用，稍后再试' };
+    }
   }
 };
 </script>
@@ -4578,50 +5219,142 @@ const Watch = (()=>{
   let W = null;          // 当前观战会话
   let raf = 0, lastTs = 0;
 
-  // ---------------- 峡谷底图（只画一次） ----------------
+  // ---------------- 拟真召唤师峡谷底图（按原版地形比例精细绘制，只画一次） ----------------
   let bgCanvas = null;
   function mapBackground(){
     if(bgCanvas) return bgCanvas;
     const S0 = 1000;
     const cv = document.createElement('canvas'); cv.width = S0; cv.height = S0;
     const g = cv.getContext('2d');
-    // 野区底色
-    const grd = g.createLinearGradient(0,S0,S0,0); grd.addColorStop(0,'#0f2b2a'); grd.addColorStop(0.5,'#14302a'); grd.addColorStop(1,'#2a1f22');
-    g.fillStyle = grd; g.fillRect(0,0,S0,S0);
-    // 野区墙体：随机但固定的深色岩块
-    const rr = srand(20260101);
-    g.fillStyle = 'rgba(4,14,12,0.55)';
-    for(let i=0;i<70;i++){
-      const x = 120 + rr()*760, y = 120 + rr()*760;
-      if(Math.abs(x - y) < 70 || Math.abs(x + y - 1000) < 80) continue; // 留出河道与中路
-      g.beginPath(); g.ellipse(x, y, 18+rr()*36, 12+rr()*26, rr()*3, 0, Math.PI*2); g.fill();
+
+    // 1. 峡谷底土与蓝红半区环境渐变
+    const grd = g.createLinearGradient(0, S0, S0, 0);
+    grd.addColorStop(0, '#122926');
+    grd.addColorStop(0.38, '#17342b');
+    grd.addColorStop(0.50, '#14322d');
+    grd.addColorStop(0.62, '#242d22');
+    grd.addColorStop(1, '#2d1f21');
+    g.fillStyle = grd; g.fillRect(0, 0, S0, S0);
+
+    // 细微草地纹理噪点（固定种子）
+    const rr = srand(20260525);
+    for(let i=0;i<220;i++){
+      const x = rr()*S0, y = rr()*S0;
+      g.fillStyle = rr()>0.5 ? 'rgba(120,185,110,0.045)' : 'rgba(5,16,12,0.08)';
+      g.beginPath(); g.arc(x, y, 8+rr()*22, 0, Math.PI*2); g.fill();
     }
-    // 草丛
-    g.fillStyle = 'rgba(70,140,70,0.28)';
-    for(let i=0;i<46;i++){ const x = 100 + rr()*800, y = 100 + rr()*800; g.beginPath(); g.ellipse(x,y,10+rr()*12,5+rr()*6,rr()*3,0,Math.PI*2); g.fill(); }
-    // 河道
-    g.strokeStyle = 'rgba(40,110,150,0.55)'; g.lineWidth = 64; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(150,150); g.quadraticCurveTo(470,420,500,500); g.quadraticCurveTo(530,580,850,850); g.stroke();
-    g.strokeStyle = 'rgba(90,170,210,0.18)'; g.lineWidth = 20; g.stroke();
-    // 基地
-    const base = (x,y,col) => { const rg = g.createRadialGradient(x,y,10,x,y,230); rg.addColorStop(0,col); rg.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(x-240,y-240,480,480); };
-    base(60,940,'rgba(30,120,255,0.38)'); base(940,60,'rgba(232,64,87,0.32)');
-    // 三路
+
+    // 2. 蓝/红基地高地石砖轮廓（左下蓝方高地、右上红方高地）
+    const drawBase = (isBlue) => {
+      g.save();
+      g.beginPath();
+      if(isBlue){
+        g.moveTo(0, S0); g.lineTo(0, 685); g.quadraticCurveTo(185, 685, 260, 740); g.quadraticCurveTo(315, 815, 315, S0);
+      } else {
+        g.moveTo(S0, 0); g.lineTo(685, 0); g.quadraticCurveTo(685, 185, 740, 260); g.quadraticCurveTo(815, 315, S0, 315);
+      }
+      g.closePath();
+      const rg = isBlue
+        ? g.createRadialGradient(90, 910, 25, 120, 880, 280)
+        : g.createRadialGradient(910, 90, 25, 880, 120, 280);
+      rg.addColorStop(0, isBlue ? '#1c4469' : '#5c202c');
+      rg.addColorStop(0.65, isBlue ? '#173046' : '#3a1d24');
+      rg.addColorStop(1, isBlue ? '#132635' : '#2b191d');
+      g.fillStyle = rg; g.fill();
+      g.strokeStyle = isBlue ? 'rgba(90,190,220,0.45)' : 'rgba(232,90,110,0.42)';
+      g.lineWidth = 6; g.stroke();
+      // 泉水光晕
+      const fx = isBlue ? 52 : 948, fy = isBlue ? 948 : 52;
+      const fg = g.createRadialGradient(fx, fy, 4, fx, fy, 74);
+      fg.addColorStop(0, isBlue ? 'rgba(56,220,255,0.55)' : 'rgba(255,95,120,0.5)');
+      fg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = fg; g.beginPath(); g.arc(fx, fy, 74, 0, Math.PI*2); g.fill();
+      g.restore();
+    };
+    drawBase(true); drawBase(false);
+
+    // 3. 原版对角河道（深浅水层 + 河岸）
+    g.save();
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.beginPath();
+    g.moveTo(118, 122);
+    g.bezierCurveTo(280, 270, 420, 415, 500, 500);
+    g.bezierCurveTo(580, 585, 720, 730, 882, 878);
+    g.strokeStyle = 'rgba(18,52,68,0.85)'; g.lineWidth = 86; g.stroke();
+    g.strokeStyle = 'rgba(32,102,138,0.75)'; g.lineWidth = 64; g.stroke();
+    g.strokeStyle = 'rgba(72,165,204,0.34)'; g.lineWidth = 28; g.stroke();
+    g.restore();
+
+    // 4. 大龙坑 & 小龙坑凹槽地形（原版半月形岩壁开口朝向河道）
+    const drawPit = (pt, angle, rimCol, glowCol) => {
+      g.save(); g.translate(pt[0], pt[1]);
+      const pg = g.createRadialGradient(0, 0, 8, 0, 0, 56);
+      pg.addColorStop(0, glowCol); pg.addColorStop(1, 'rgba(10,22,28,0.85)');
+      g.fillStyle = pg; g.beginPath(); g.arc(0, 0, 50, 0, Math.PI*2); g.fill();
+      g.strokeStyle = '#091412'; g.lineWidth = 14;
+      g.beginPath(); g.arc(0, 0, 52, angle, angle + Math.PI*1.38); g.stroke();
+      g.strokeStyle = rimCol; g.lineWidth = 3;
+      g.beginPath(); g.arc(0, 0, 46, angle, angle + Math.PI*1.38); g.stroke();
+      g.restore();
+    };
+    drawPit(MAP5.baron, Math.PI*0.65, 'rgba(170,110,255,0.55)', 'rgba(110,55,175,0.35)');
+    drawPit(MAP5.dragon, -Math.PI*0.35, 'rgba(255,150,70,0.55)', 'rgba(195,95,35,0.32)');
+
+    // 5. 三路兵线大道（暗边 + 石板路 + 淡金中线）
     for(const k of ['top','mid','bot']){
       const pts = MAP5.lanes[k];
       g.lineCap = 'round'; g.lineJoin = 'round';
-      g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 44;
+      g.strokeStyle = 'rgba(6,14,12,0.72)'; g.lineWidth = 54;
       g.beginPath(); pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y)); g.stroke();
-      g.strokeStyle = '#4a4636'; g.lineWidth = 34; g.stroke();
-      g.strokeStyle = 'rgba(200,155,60,0.22)'; g.lineWidth = 2; g.stroke();
+      g.strokeStyle = '#544e3c'; g.lineWidth = 40; g.stroke();
+      g.strokeStyle = '#686049'; g.lineWidth = 26; g.stroke();
+      g.strokeStyle = 'rgba(220,190,130,0.22)'; g.lineWidth = 2; g.stroke();
     }
-    // 龙坑 / 男爵坑
-    for(const [pt,col] of [[MAP5.dragon,'rgba(255,140,60,0.25)'],[MAP5.baron,'rgba(170,90,255,0.25)']]){
-      g.fillStyle = 'rgba(0,0,0,0.45)'; g.beginPath(); g.arc(pt[0],pt[1],46,0,Math.PI*2); g.fill();
-      g.strokeStyle = col; g.lineWidth = 4; g.stroke();
+
+    // 6. 原版野区岩墙地形块（上下野区对称布局，留出清晰野区通道）
+    const walls = [
+      // 蓝方上半野区 & 蓝区
+      [215, 455, 44, 24, -0.5], [270, 520, 32, 18, 0.3], [195, 585, 36, 20, -0.2], [350, 420, 26, 16, 0.7],
+      // 蓝方下半野区 & 红区
+      [445, 765, 44, 24, 0.45], [530, 705, 34, 20, -0.4], [585, 815, 36, 18, 0.2], [415, 650, 28, 16, -0.6],
+      // 红方上半野区 & 红区
+      [555, 235, 44, 24, 0.45], [470, 295, 34, 20, -0.4], [415, 185, 36, 18, 0.2], [585, 350, 28, 16, -0.6],
+      // 红方下半野区 & 蓝区
+      [785, 545, 44, 24, -0.5], [730, 480, 32, 18, 0.3], [805, 415, 36, 20, -0.2], [650, 580, 26, 16, 0.7],
+      // 中路两侧河道短墙
+      [395, 465, 24, 11, -0.75], [605, 535, 24, 11, -0.75],
+      [465, 605, 24, 11, -0.75], [535, 395, 24, 11, -0.75],
+    ];
+    for(const [x,y,rx,ry,ang] of walls){
+      g.save(); g.translate(x,y); g.rotate(ang);
+      g.fillStyle = 'rgba(4,12,11,0.88)';
+      g.beginPath(); g.ellipse(2, 4, rx+4, ry+4, 0, 0, Math.PI*2); g.fill();
+      g.fillStyle = '#1b2c2a';
+      g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2); g.fill();
+      g.strokeStyle = 'rgba(130,170,150,0.22)'; g.lineWidth = 2; g.stroke();
+      g.restore();
     }
-    // 外框
-    g.strokeStyle = 'rgba(200,155,60,0.65)'; g.lineWidth = 6; g.strokeRect(3,3,S0-6,S0-6);
+
+    // 7. 关键战术草丛（河道点草、三角草、边路三草、中路边草、Buff 草丛）
+    const bushes = [
+      [345,345,14,10,0.7], [655,655,14,10,0.7],             // 河道点草
+      [430,490,22,8,-0.75], [570,510,22,8,-0.75],           // 中路两侧长草
+      [180,255,20,9,0.5], [820,745,20,9,0.5],               // 上下三角草
+      [84,320,10,22,0], [84,210,10,22,0], [220,84,22,10,0], // 上路边草
+      [916,680,10,22,0], [916,790,10,22,0], [780,916,22,10,0], // 下路边草
+      [255,485,16,8,0.4], [485,745,16,8,-0.4],              // 蓝方野区草
+      [745,515,16,8,0.4], [515,255,16,8,-0.4],              // 红方野区草
+    ];
+    for(const [x,y,rx,ry,ang] of bushes){
+      g.save(); g.translate(x,y); g.rotate(ang);
+      g.fillStyle = 'rgba(56,158,76,0.55)';
+      g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2); g.fill();
+      g.strokeStyle = 'rgba(128,230,132,0.35)'; g.lineWidth = 1.5; g.stroke();
+      g.restore();
+    }
+
+    // 8. 外框海克斯金边
+    g.strokeStyle = 'rgba(200,155,60,0.75)'; g.lineWidth = 6; g.strokeRect(3, 3, S0-6, S0-6);
     bgCanvas = cv; return cv;
   }
 
@@ -4802,14 +5535,60 @@ const Watch = (()=>{
   function scoreHtml(V){
     const L = V.blueSide, R = other(L);
     const tL = V.team[L], tR = V.team[R];
-    const gold = s => V.champs.filter(c=>c.side===s).reduce((a,c)=>a+c.gold,0);
-    const drk = tm => tm.drakes.map(d=>`<i class="dk" style="--c:${DRAKE_COLOR[d]||'#888'}" title="${esc(DRAKE_CN[d]||'')}"></i>`).join('') + (tm.soul?`<b class="soul">龙魂</b>`:'');
-    const buff = tm => (tm.baronT>V.t?'<span class="bf bar">大龙 Buff</span>':'') + (tm.elderT>V.t?'<span class="bf eld">远古龙</span>':'');
-    return `<div class="w5-tm blue"><b class="w5-tn">${esc(tL.name)}</b><span class="w5-k">${tL.kills}</span>
-        <span class="w5-st"><i>💰</i>${kfmt(gold(L))}</span><span class="w5-st"><i>🏰</i>${tL.towers}</span><span class="w5-st"><i>👾</i>${tL.barons}</span><span class="w5-dk">${drk(tL)}</span>${buff(tL)}</div>
-      <div class="w5-clock">${fmtSec(V.t)}</div>
-      <div class="w5-tm red">${buff(tR)}<span class="w5-dk">${drk(tR)}</span><span class="w5-st"><i>👾</i>${tR.barons}</span><span class="w5-st"><i>🏰</i>${tR.towers}</span><span class="w5-st"><i>💰</i>${kfmt(gold(R))}</span>
-        <span class="w5-k">${tR.kills}</span><b class="w5-tn">${esc(tR.name)}</b></div>`;
+    const gL = V.champs.filter(c=>c.side===L).reduce((a,c)=>a+c.gold,0);
+    const gR = V.champs.filter(c=>c.side===R).reduce((a,c)=>a+c.gold,0);
+    const gDiff = gL - gR;
+    const gPctL = clamp(Math.round(50 + clamp(gDiff / 14000, -0.36, 0.36) * 100), 14, 86);
+    const icoFn = typeof ico === 'function' ? ico : () => '';
+    const drk = tm => {
+      const orbs = tm.drakes.map(d=>`<i class="dk" style="--c:${DRAKE_COLOR[d]||'#888'}" title="${esc(DRAKE_CN[d]||'')}"></i>`).join('');
+      const slots = Math.max(0, 4 - tm.drakes.length);
+      return orbs + '<i class="dk emp"></i>'.repeat(slots) + (tm.soul?`<b class="soul">龙魂</b>`:'');
+    };
+    const buff = tm => (tm.baronT>V.t?`<span class="bf bar">${icoFn('baron')}大龙 ${Math.ceil(tm.baronT-V.t)}s</span>`:'') + (tm.elderT>V.t?`<span class="bf eld">${icoFn('dragon')}远古 ${Math.ceil(tm.elderT-V.t)}s</span>`:'');
+    const diffLead = Math.abs(gDiff) < 300
+      ? `<span class="adv-chip even">经济均势</span>`
+      : `<span class="adv-chip ${gDiff>0?'blue':'red'}">${gDiff>0?esc(tL.name):esc(tR.name)} 经济 +${kfmt(Math.abs(gDiff))}</span>`;
+    const tDiff = tL.towers - tR.towers;
+    const dDiff = tL.drakes.length - tR.drakes.length;
+    const advTags = [
+      diffLead,
+      tDiff!==0 ? `<span class="adv-chip ${tDiff>0?'blue':'red'}">${icoFn('tower')} 推塔 ${tL.towers}:${tR.towers}</span>` : `<span class="adv-chip even">${icoFn('tower')} 推塔 ${tL.towers}:${tR.towers}</span>`,
+      dDiff!==0 ? `<span class="adv-chip ${dDiff>0?'blue':'red'}">${icoFn('dragon')} 小龙 ${tL.drakes.length}:${tR.drakes.length}</span>` : `<span class="adv-chip even">${icoFn('dragon')} 小龙 ${tL.drakes.length}:${tR.drakes.length}</span>`,
+      (tL.barons||tR.barons) ? `<span class="adv-chip ${(tL.barons-tR.barons)>=0?'blue':'red'}">${icoFn('baron')} 大龙 ${tL.barons}:${tR.barons}</span>` : ''
+    ].filter(Boolean).join('');
+
+    return `<div class="w5-ob-top">
+      <div class="w5-tm blue">
+        <b class="w5-tn">${esc(tL.name)}</b>
+        <span class="w5-res">
+          <span class="w5-st ${gDiff>800?'lead':''}" title="团队总经济">${icoFn('gold','c-gold')}<b>${kfmt(gL)}</b></span>
+          <span class="w5-st ${tDiff>0?'lead':''}" title="摧毁防御塔">${icoFn('tower')}<b>${tL.towers}</b></span>
+          <span class="w5-st ${tL.barons>tR.barons?'lead':''}" title="纳什男爵">${icoFn('baron','c-bar')}<b>${tL.barons}</b></span>
+          <span class="w5-dk" title="元素亚龙">${icoFn('dragon','c-drk')}${drk(tL)}</span>
+          ${buff(tL)}
+        </span>
+        <span class="w5-k">${tL.kills}</span>
+      </div>
+      <div class="w5-mid-hud">
+        <div class="w5-clock">${fmtSec(V.t)}</div>
+      </div>
+      <div class="w5-tm red">
+        <span class="w5-k">${tR.kills}</span>
+        <span class="w5-res">
+          ${buff(tR)}
+          <span class="w5-dk" title="元素亚龙">${drk(tR)}${icoFn('dragon','c-drk')}</span>
+          <span class="w5-st ${tR.barons>tL.barons?'lead':''}" title="纳什男爵">${icoFn('baron','c-bar')}<b>${tR.barons}</b></span>
+          <span class="w5-st ${tDiff<0?'lead':''}" title="摧毁防御塔">${icoFn('tower')}<b>${tR.towers}</b></span>
+          <span class="w5-st ${gDiff<-800?'lead':''}" title="团队总经济">${icoFn('gold','c-gold')}<b>${kfmt(gR)}</b></span>
+        </span>
+        <b class="w5-tn">${esc(tR.name)}</b>
+      </div>
+    </div>
+    <div class="w5-ob-adv">
+      <div class="w5-tug"><i class="bl" style="width:${gPctL}%"></i><i class="rd" style="width:${100-gPctL}%"></i></div>
+      <div class="w5-adv-tags">${advTags}</div>
+    </div>`;
   }
   function playersHtml(V){
     const col = s => V.champs.filter(c=>c.side===s).map(c=>`<div class="w5-p ${c.alive?'':'dead'}">
@@ -4824,7 +5603,7 @@ const Watch = (()=>{
     const row = c => `<tr class="${c.blue?'b':'r'}"><td class="tn">${champAvatar(c.c,'xs')}<b>${esc(c.tag)}</b></td><td>${c.lvl}</td><td>${c.k}/${c.d}/${c.a}</td><td>${c.cs}</td>
       <td class="items">${itemsHtml(c.items, c.partial)}</td><td class="gd"><b>${c.cur}</b><small>总 ${kfmt(c.gold)}</small></td></tr>`;
     const L = V.blueSide, R = other(L);
-    return `<div class="w5-tab-hd"><b>装备与经济</b><small>按 Tab 键或点「装备」按钮开关</small></div>
+    return `<div class="w5-tab-hd"><b>装备与经济面板</b><small>PC 按住 Tab 键查看（松开关闭） · 点击按钮或触控可常驻开关</small></div>
       <table class="w5-tbl"><tr><th>选手</th><th>等级</th><th>K/D/A</th><th>补刀</th><th>装备</th><th>金币</th></tr>
       ${V.champs.filter(c=>c.side===L).map(row).join('')}<tr class="sep"><td colspan="6"></td></tr>${V.champs.filter(c=>c.side===R).map(row).join('')}</table>`;
   }
@@ -4836,27 +5615,35 @@ const Watch = (()=>{
   // ---------------- 外壳 HTML（由 ui.js 的 matchScreen 输出） ----------------
   function ctrlHtml(kind){
     const w = W; const sp = w ? w.speed : 1;
+    const icoFn = typeof ico === 'function' ? ico : () => '';
+    const tabOn = !!(w && (w.tabPin || w.tabHold));
     return `<div class="w-ctrl">
       ${SPEEDS.map(v=>`<button class="spd-btn ${sp===v&&!(w&&w.paused)?'on':''}" data-a="wSpeed" data-v="${v}">${v}x</button>`).join('')}
-      <button class="spd-btn ${w&&w.paused?'on':''}" data-a="wPause">${w&&w.paused?'▶ 继续':'⏸ 暂停'}</button>
-      <button class="spd-btn ${w&&w.tab?'on':''}" data-a="wTab">装备 Tab</button>
+      <button class="spd-btn ${w&&w.paused?'on':''}" data-a="wPause">${icoFn(w&&w.paused?'play':'pause')} ${w&&w.paused?'继续':'暂停'}</button>
+      <button class="spd-btn ${tabOn?'on':''}" data-a="wTab" title="鼠标点一下常驻开关；键盘按住 Tab 实时查看">${icoFn('tab')} 装备 Tab</button>
       ${w && w.replay ? `<input type="range" class="w-seek" id="w-seek" min="0" max="${Math.round(w.dur)}" value="${Math.round(w.t||0)}">
         <button class="spd-btn skip" data-a="wExit">退出回放</button>`
-        : `<button class="spd-btn skip" data-a="wSkip">跳过直看结算 ⏭</button>`}
+        : `<button class="spd-btn skip" data-a="wSkip">${icoFn('skip')} 跳过直看结算</button>`}
     </div>`;
   }
   function shell5(){
+    const tabOn = !!(W && (W.tabPin || W.tabHold));
     return `<div class="watch5 pane-${W?W.pane:'feed'}" id="watch5">
       <div class="w5-score" id="w5-score"></div>
       <div class="w5-mtabs"><button data-a="wPane" data-v="feed" class="${W&&W.pane==='feed'?'on':''}">战报</button><button data-a="wPane" data-v="data" class="${W&&W.pane==='data'?'on':''}">数据</button></div>
       <div class="w5-main">
         <div class="w5-mapbox"><canvas id="w5-map"></canvas><canvas id="w5-gold" class="w5-goldcv"></canvas>
           <div class="w5-banner" id="w5-banner" style="display:none"></div></div>
-        <div class="w5-feed" id="w5-feed"></div>
+        <div class="w5-side">
+          <div class="w5-players" id="w5-players"></div>
+          <div class="w5-feed-wrap">
+            <div class="w5-feed-hd">实时事件播报</div>
+            <div class="w5-feed" id="w5-feed"></div>
+          </div>
+        </div>
       </div>
-      <div class="w5-players" id="w5-players"></div>
       ${ctrlHtml('5')}
-      <div class="w5-tab ${W&&W.tab?'on':''}" id="w5-tab"></div>
+      <div class="w5-tab ${tabOn?'on':''}" id="w5-tab"></div>
     </div>`;
   }
   function shellSolo(){
@@ -4948,7 +5735,7 @@ const Watch = (()=>{
   }
   function soloTabHtml(V){
     const row = side => { const F = V[side]; return `<tr class="${side==='A'?'b':'r'}"><td class="tn">${champAvatar(F.champ,'xs')}<b>${esc(F.tag)}</b></td><td>${F.lvl}</td><td>${F.cs}</td><td class="items">${itemsHtml(F.items||[], null)}</td><td class="gd"><b>${F.gold}</b></td></tr>`; };
-    return `<div class="w5-tab-hd"><b>装备与经济</b><small>按 Tab 键或点「装备」按钮开关</small></div><table class="w5-tbl"><tr><th>选手</th><th>等级</th><th>补刀</th><th>装备</th><th>金币</th></tr>${row('A')}${row('B')}</table>`;
+    return `<div class="w5-tab-hd"><b>装备与经济面板</b><small>PC 按住 Tab 键查看（松开关闭） · 点击按钮或触控可常驻开关</small></div><table class="w5-tbl"><tr><th>选手</th><th>等级</th><th>补刀</th><th>装备</th><th>金币</th></tr>${row('A')}${row('B')}</table>`;
   }
 
   // ---------------- 主循环 ----------------
@@ -5026,9 +5813,21 @@ const Watch = (()=>{
   }
   function start(opts){
     stop();
-    W = Object.assign({ speed:1, paused:false, acc:0, t:0, tab:false, pane:'feed', done:false }, opts);
+    W = Object.assign({ speed:1, paused:false, acc:0, t:0, tab:false, tabPin:false, tabHold:false, pane:'feed', done:false }, opts);
     lastTs = 0;
     if(!raf) raf = requestAnimationFrame(frame);
+  }
+  function syncTabState(){
+    if(!W) return;
+    W.tab = !!(W.tabPin || W.tabHold);
+    const id = W.kind==='g5' ? 'w5-tab' : 'w1-tab';
+    const el = document.getElementById(id);
+    if(el){
+      el.classList.toggle('on', W.tab);
+      if(W.tab) paint(true);
+    }
+    const btn = document.querySelector('[data-a="wTab"]');
+    if(btn) btn.classList.toggle('on', W.tab);
   }
   function stop(){ if(raf) cancelAnimationFrame(raf); raf = 0; W = null; }
   function active(){ return W; }
@@ -5049,16 +5848,31 @@ const Watch = (()=>{
     if(!W) return false;
     if(act==='speed'){ W.speed = +v || 1; W.paused = false; }
     else if(act==='pause'){ W.paused = !W.paused; }
-    else if(act==='tab'){ W.tab = !W.tab; }
+    else if(act==='tab'){ W.tabPin = !W.tabPin; W.tabHold = false; syncTabState(); }
     else if(act==='pane'){ W.pane = v; }
     else if(act==='skip'){ skip(); return true; }
     else if(act==='seek'){ W.t = clamp(+v||0, 0, W.dur); W.done = false; const ban = document.getElementById(W.kind==='g5'?'w5-banner':'w1-banner'); if(ban) ban.style.display='none'; }
     return true;
   }
+  // PC 键盘：按住 Tab 键持续显示，松开即隐藏；鼠标/触控点击「装备 Tab」按钮则常驻切换
   document.addEventListener('keydown', e=>{
     if(!W) return;
-    if(e.key==='Tab'){ e.preventDefault(); W.tab = !W.tab; if(typeof render==='function') render(); }
+    if(e.key==='Tab'){
+      e.preventDefault();
+      if(!W.tabHold){ W.tabHold = true; syncTabState(); }
+    }
     else if(e.key===' ' && e.target===document.body){ e.preventDefault(); W.paused = !W.paused; if(typeof render==='function') render(); }
+  });
+  document.addEventListener('keyup', e=>{
+    if(!W) return;
+    if(e.key==='Tab' && W.tabHold){
+      e.preventDefault();
+      W.tabHold = false;
+      syncTabState();
+    }
+  });
+  window.addEventListener('blur', ()=>{
+    if(W && W.tabHold){ W.tabHold = false; syncTabState(); }
   });
   document.addEventListener('input', e=>{ if(e.target && e.target.id==='w-seek' && W && W.replay){ W.seeking = true; control('seek', e.target.value); paint(true); } });
   document.addEventListener('change', e=>{ if(e.target && e.target.id==='w-seek' && W){ W.seeking = false; } });
@@ -5126,6 +5940,82 @@ const ROLE_SVG = {
   SUP:`<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4 15 9h5l-4 4 1.5 5L12 15.5 6.5 18 8 13 4 9h5z"/></svg>`
 };
 
+// 统一矢量 SVG 图标库（全站提示 / 对局资源 / 化学反应 / 赛事状态，替代生硬 emoji）
+window.ICONS = {
+  gold:     `<path fill="currentColor" d="M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm0 2c3.31 0 6 1.12 6 2s-2.69 2-6 2-6-1.12-6-2 2.69-2 6-2zm0 14c-3.31 0-6-1.12-6-2v-2.2c1.46.97 3.63 1.5 6 1.5s4.54-.53 6-1.5V17c0 .88-2.69 2-6 2zm0-5c-3.31 0-6-1.12-6-2V9.8c1.46.97 3.63 1.5 6 1.5s4.54-.53 6-1.5V12c0 .88-2.69 2-6 2z"/>`,
+  tower:    `<path fill="currentColor" d="M5 3h3v3h2V3h4v3h2V3h3v6l-2 2v8h2v2H5v-2h2v-8L5 9V3zm5 16h4v-5h-4v5z"/>`,
+  dragon:   `<path fill="currentColor" d="M21 5c-2.6.5-4.7 1.8-6.2 3.7L12 6l-2.8 2.7C7.7 6.8 5.6 5.5 3 5c.6 3.2 2.3 5.7 5 7.2L6.5 19l5.5-2.8L17.5 19 16 12.2c2.7-1.5 4.4-4 5-7.2z"/>`,
+  baron:    `<path fill="currentColor" d="M4 17l-2-9 5 4 5-7 5 7 5-4-2 9H4zm2 2h12v2H6v-2z"/>`,
+  grub:     `<path fill="currentColor" d="M12 3a4 4 0 0 1 4 4v1.5l3 1.5-1 2-2-.8v1.8l2.5 1.3-1 2L15 15.2A4 4 0 0 1 9 15.2l-2.5 1.1-1-2L8 13v-1.8l-2 .8-1-2 3-1.5V7a4 4 0 0 1 4-4z"/>`,
+  sword:    `<path fill="currentColor" d="M19.5 3.5L20.5 4.5 13 12l2.5 2.5-1.5 1.5-2.5-2.5-3.2 3.2 1.2 1.2-1.5 1.5-2.2-2.2-1.8 1.8-1-1 1.8-1.8-2.2-2.2 1.5-1.5 1.2 1.2 3.2-3.2L7 8l1.5-1.5L11 9l7.5-7.5z"/>`,
+  shield:   `<path fill="currentColor" d="M12 2L4 5v6c0 5.2 3.4 9.9 8 11 4.6-1.1 8-5.8 8-11V5l-8-3z"/>`,
+  chem:     `<path fill="currentColor" d="M9.5 6A3.5 3.5 0 1 0 9.5 13a3.4 3.4 0 0 0 2.02-.67l1.82 1.82A3.4 3.4 0 0 0 12.5 16.5a3.5 3.5 0 1 0 3.5-3.5 3.4 3.4 0 0 0-1.45.32l-1.88-1.88A3.46 3.46 0 0 0 13 9.5a3.5 3.5 0 0 0-.32-1.45l2.3-2.3A2.5 2.5 0 1 0 13.7 4.4l-2.25 2.25A3.46 3.46 0 0 0 9.5 6zm0 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm6.5 7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>`,
+  crown:    `<path fill="currentColor" d="M3 18h18v2H3v-2zm0-2L5 7l4.5 4L12 5l2.5 6L19 7l2 9H3z"/>`,
+  flame:    `<path fill="currentColor" d="M13.5 2.5c.4 2.8-1.6 4.7-1.6 6.8 0 1.2.8 2.1 1.9 2.1 1.5 0 2.4-1.5 2.5-3.3 2.1 1.7 3.2 4.1 3.2 6.6A7.5 7.5 0 0 1 12 22a7.5 7.5 0 0 1-7.5-7.5c0-4.4 3.5-7.4 9-12z"/>`,
+  bolt:     `<path fill="currentColor" d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>`,
+  lock:     `<path fill="currentColor" d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-7-2a2 2 0 0 1 4 0v2h-4V7z"/>`,
+  globe:    `<path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.9 9h-3.1a15 15 0 0 0-1.2-5 8 8 0 0 1 4.3 5zM12 4.1c1 1.3 1.8 3.6 2 6.9h-4c.2-3.3 1-5.6 2-6.9zM9.4 6A15 15 0 0 0 8.2 11H5.1a8 8 0 0 1 4.3-5zM5.1 13h3.1a15 15 0 0 0 1.2 5 8 8 0 0 1-4.3-5zm6.9 6.9c-1-1.3-1.8-3.6-2-6.9h4c-.2 3.3-1 5.6-2 6.9zm2.6-1.9a15 15 0 0 0 1.2-5h3.1a8 8 0 0 1-4.3 5z"/>`,
+  transfer: `<path fill="currentColor" d="M7 7h10l-3-3 1.4-1.4L20.8 8l-5.4 5.4L14 12l3-3H7V7zm10 10H7l3 3-1.4 1.4L3.2 16l5.4-5.4L10 12l-3 3h10v2z"/>`,
+  trophy:   `<path fill="currentColor" d="M18 4V2H6v2H2v4c0 2.5 1.8 4.6 4.2 5 .6 1.5 1.9 2.7 3.8 3v3H7v2h10v-2h-3v-3c1.9-.3 3.2-1.5 3.8-3 2.4-.4 4.2-2.5 4.2-5V4h-4zM4 8V6h2v4.8C4.8 10.4 4 9.3 4 8zm16 0c0 1.3-.8 2.4-2 2.8V6h2v2z"/>`,
+  target:   `<path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm0-13a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>`,
+  patch:    `<path fill="currentColor" d="M19.4 7.3l-2.7-2.7-1.8 1.8L12 3.5 9.5 6l2.9 2.9-7.9 7.9 2.7 2.7 7.9-7.9L18 14.5l2.5-2.5-2.9-2.9 1.8-1.8z"/>`,
+  news:     `<path fill="currentColor" d="M4 4h14v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4zm2 2v12h10V6H6zm2 2h6v2H8V8zm0 4h6v2H8v-2zm0 4h4v2H8v-2zm12-9h2v11a2 2 0 0 1-2 2v-13z"/>`,
+  cloud:    `<path fill="currentColor" d="M19.3 10.1A7 7 0 0 0 6 8.2 5 5 0 0 0 6 18h13a4 4 0 0 0 .3-7.9z"/>`,
+  update:   `<path fill="currentColor" d="M12 3v10l4-4 1.4 1.4L12 15.8 6.6 10.4 8 9l4 4V3h0zM5 18h14v2H5v-2z"/>`,
+  warn:     `<path fill="currentColor" d="M12 3L2 20h20L12 3zm-1 6h2v5h-2V9zm0 7h2v2h-2v-2z"/>`,
+  check:    `<path fill="currentColor" d="M9.5 16.6L4.8 12l1.4-1.4 3.3 3.2 8.3-8.3 1.4 1.4-9.7 9.7z"/>`,
+  ban:      `<path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 6.3 3.1L7.1 18.3A8 8 0 0 1 12 4zm0 16a8 8 0 0 1-6.3-3.1L16.9 5.7A8 8 0 0 1 12 20z"/>`,
+  pick:     `<path fill="currentColor" d="M12 2l3.2 6.8L22 12l-6.8 3.2L12 22l-3.2-6.8L2 12l6.8-3.2L12 2z"/>`,
+  chain:    `<path fill="currentColor" d="M10.6 13.4a3.5 3.5 0 0 1 0-5l2.5-2.5a3.5 3.5 0 0 1 5 5l-1.4 1.4-1.4-1.4 1.4-1.4a1.5 1.5 0 0 0-2.1-2.1L12 10a1.5 1.5 0 0 0 0 2.1l-1.4 1.3zm2.8-2.8a3.5 3.5 0 0 1 0 5l-2.5 2.5a3.5 3.5 0 0 1-5-5l1.4-1.4 1.4 1.4-1.4 1.4a1.5 1.5 0 0 0 2.1 2.1L12 14a1.5 1.5 0 0 0 0-2.1l1.4-1.3z"/>`,
+  play:     `<path fill="currentColor" d="M8 5v14l11-7z"/>`,
+  pause:    `<path fill="currentColor" d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/>`,
+  skip:     `<path fill="currentColor" d="M4 5l9 7-9 7V5zm10 0l7 5.5V5h2v14h-2v-5.5L14 19V5z"/>`,
+  tab:      `<path fill="currentColor" d="M3 4h18v16H3V4zm2 4v10h14V8H5zm2 2h4v2H7v-2zm6 0h4v2h-4v-2zm-6 4h4v2H7v-2zm6 0h4v2h-4v-2z"/>`,
+  up:       `<path fill="currentColor" d="M12 4l7 7h-4v9H9v-9H5l7-7z"/>`,
+  down:     `<path fill="currentColor" d="M12 20l-7-7h4V4h6v9h4l-7 7z"/>`,
+  user:     `<path fill="currentColor" d="M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 10c4.4 0 8 2 8 4.5V20H4v-1.5C4 16 7.6 14 12 14z"/>`,
+  clock:    `<path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 11H8v-2h3V6h2v7z"/>`,
+};
+window.ico = (name, cls='') => ICONS[name] ? `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>` : '';
+
+// LoL 原版风格独立过场动画层（直接挂载在 body，严格 1 秒后强制销毁，绝不因重绘卡住）
+let _splashTimer = null;
+function clearBpSplash(){
+  if(_splashTimer){ clearTimeout(_splashTimer); _splashTimer = null; }
+  if(typeof document !== 'undefined' && document.getElementById){
+    const old = document.getElementById('bp-splash-layer');
+    if(old && old.remove) old.remove();
+  }
+}
+function triggerBpSplash(kind, phIdx){
+  if(typeof document === 'undefined' || !document.body || !document.createElement) return;
+  clearBpSplash();
+  const isBan = kind === 'ban';
+  const roundLbl = phIdx <= 1 ? '第一轮' : '第二轮';
+  const el = document.createElement('div');
+  el.id = 'bp-splash-layer';
+  el.className = `bp-splash ${isBan ? 'ban' : 'pick'}`;
+  el.innerHTML = `<div class="bps-slash"></div><div class="bps-beam"></div><div class="bps-core">
+    <span class="bps-sub">${roundLbl} · ${isBan ? 'BAN PHASE' : 'PICK PHASE'}</span>
+    <b>${ico(isBan ? 'ban' : 'pick', 'lg')} ${isBan ? '进入禁用阶段' : '进入英雄选择'}</b>
+  </div>`;
+  document.body.appendChild(el);
+  _splashTimer = setTimeout(clearBpSplash, 1020);
+}
+// Ban / Pick 锁定瞬时打击感闪光（0.45 秒自动销毁）
+function triggerLockFlash(kind, champKey){
+  if(typeof document === 'undefined' || !document.body || !document.createElement) return;
+  const old = document.getElementById('bp-lock-fx');
+  if(old && old.remove) old.remove();
+  const el = document.createElement('div');
+  el.id = 'bp-lock-fx';
+  el.className = `bp-lock-fx ${kind === 'ban' ? 'ban' : 'pick'}`;
+  const cn = champName(champKey);
+  el.innerHTML = `<div class="blf-ring"></div><div class="blf-tag">${ico(kind==='ban'?'ban':'pick')} ${kind==='ban'?'已禁用':'已锁定'} · ${esc(cn)}</div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>{ if(el && el.remove) el.remove(); }, 460);
+}
+
 // 英雄头像（Riot Data Dragon CDN + 离线/失败无缝降级为海克斯首字徽章）
 function champAvatar(c, cls=''){
   if(!c || !CH[c]) return `<div class="c-ava empty ${cls}"><span>?</span></div>`;
@@ -5138,8 +6028,42 @@ function champAvatar(c, cls=''){
   </div>`;
 }
 
-// BP 视觉倒计时器（氛围用，不强制超时乱选）
+// BP 倒计时器：归零时自动采用已预选或教练推荐首选项，不再停在 00 秒
 let _bpTimer = null;
+function autoLockOnTimeout(M){
+  if(!M || M.phase!=='draft' || !M.draft) return;
+  const d = M.draft, cur = draftSide(d);
+  if(!cur || cur.side !== M.me) return;
+  const un = unavailable(d);
+  let pickC = null, pickR = null, allowOff = false;
+  if(M.sel && CH[M.sel] && !un.has(M.sel)){
+    if(cur.kind === 'ban'){ pickC = M.sel; }
+    else {
+      const chk = canPickChamp(d, M.me, M.sel);
+      if(chk.ok){
+        pickC = M.sel; allowOff = chk.offrole;
+        pickR = M.roleSel && chk.openRoles.includes(M.roleSel) ? M.roleSel : bestRoleFor(d, M.me, M.sel, allowOff);
+      }
+    }
+  }
+  if(!pickC){
+    const sug = coachSuggest(d, M.me);
+    if(sug && sug.length){
+      pickC = sug[0].c; pickR = sug[0].role || null;
+      allowOff = cur.kind==='pick' ? canPickChamp(d, M.me, pickC).offrole : false;
+    } else {
+      const ai = aiChoose(d);
+      pickC = ai.c; pickR = ai.role || null; allowOff = !!ai.offrole;
+    }
+  }
+  if(pickC && draftAct(d, pickC, pickR, allowOff)){
+    M.sel = null; M.roleSel = null; M.swapFrom = null;
+    triggerLockFlash(cur.kind, pickC);
+    toast(`倒计时结束，已自动${cur.kind==='ban'?'禁用':'选择'}推荐英雄「${champName(pickC)}」`);
+    render();
+    queueAI();
+  }
+}
 function resetBpClock(){
   if(_bpTimer){ clearInterval(_bpTimer); _bpTimer = null; }
   const M = UI.match;
@@ -5153,18 +6077,33 @@ function resetBpClock(){
       const bar = document.getElementById('bp-clock-fill');
       if(num){ num.textContent = String(M.clock).padStart(2,'0'); num.classList.toggle('urgent', M.clock<=5); }
       if(bar){ bar.style.width = (M.clock/30*100)+'%'; }
+      if(M.clock === 0){
+        clearInterval(_bpTimer); _bpTimer = null;
+        autoLockOnTimeout(M);
+      }
     }
   }, 1000);
 }
-function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } }
+function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } clearBpSplash(); }
 
 function cloudPillHtml(){
   const st = CloudSync.status;
   if(CloudSync.isLoggedIn()){
-    const label = st==='syncing' ? '同步中…' : st==='offline' ? '离线(已存本地)' : '已同步';
-    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">☁️ <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small>${label}</small></button>`;
+    const label = st==='syncing' ? '同步中…' : st==='offline' ? '离线(已存本地)' : '云端已同步';
+    return `<button class="cloud-pill ${st}" data-a="openAccount" title="${esc(CloudSync.auth.user.email)} · ${label}">${ico('cloud')} <b>${esc(CloudSync.auth.user.email.split('@')[0])}</b><small>${label}</small></button>`;
   }
-  return `<button class="cloud-pill guest" data-a="openAccount" title="登录账号以开启多平台进度云同步">👤 <b>游客模式</b><small>云同步</small></button>`;
+  return `<button class="cloud-pill guest" data-a="openAccount" title="登录账号以开启多平台进度云同步">${ico('user')} <b>游客模式</b><small>云同步</small></button>`;
+}
+function updateBannerHtml(){
+  const u = typeof AppUpdater !== 'undefined' && AppUpdater.available;
+  if(!u || UI.hideUpdateBanner) return '';
+  return `<div class="upd-banner">
+    <span>${ico('update')} 发现云端新版本 <b>v${esc(u.version)}</b>${u.notes ? ` · ${esc(u.notes)}` : ''}</span>
+    <div class="upd-acts">
+      <a class="btn sm" href="${esc(u.url)}" target="_blank" rel="noopener">前往下载更新</a>
+      <button class="btn sm ghost" data-a="dismissUpdate">稍后提醒</button>
+    </div>
+  </div>`;
 }
 
 function openConflictModal(){
@@ -5200,11 +6139,13 @@ function render(){
   stopBpClock(); Watch.stop();
   const me=T(S.user);
   const ev=curEvent();
+  const chem = teamChemistry(S.user);
   $app().innerHTML = `
   <header class="top">
     <div class="brand">峡谷经理人</div>
-    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div>${cloudPillHtml()}</div>
+    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>默契</small><b class="chem-top ${chem.cls}">${ico('chem')} ${chem.score}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div>${cloudPillHtml()}</div>
   </header>
+  ${updateBannerHtml()}
   <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['replays','回放'],['news','资讯'],['rules','规则'],['sys','账号与存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
   <main>${VIEWS[UI.view]()}</main>
   ${UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:''}
@@ -5394,11 +6335,11 @@ function renderOffseasonHome(){
   return `<div class="off-hub">
     <div class="off-bar">
       <div class="off-tabs">
-        <a class="${tab==='patch'?'on':''}" data-a="offTab" data-t="patch">📜 下版本更新日志 (${esc(np.ver)})</a>
-        <a class="${tab==='train'?'on':''}" data-a="offTab" data-t="train">🎯 选手英雄池特训</a>
-        <a class="${tab==='contract'?'on':''}" data-a="offTab" data-t="contract">✍️ 续约与转会市场 ${exp.filter(p=>!p.renewed).length?`(${exp.filter(p=>!p.renewed).length})`:''}</a>
+        <a class="${tab==='patch'?'on':''}" data-a="offTab" data-t="patch">${ico('patch')} 下版本更新日志 (${esc(np.ver)})</a>
+        <a class="${tab==='train'?'on':''}" data-a="offTab" data-t="train">${ico('target')} 选手英雄池特训</a>
+        <a class="${tab==='contract'?'on':''}" data-a="offTab" data-t="contract">${ico('transfer')} 续约与转会市场 ${exp.filter(p=>!p.renewed).length?`(${exp.filter(p=>!p.renewed).length})`:''}</a>
       </div>
-      <button class="btn big" data-a="newSeason">完成休赛期，开启 ${S.year+1} 赛季 ▶</button>
+      <button class="btn big" data-a="newSeason">完成休赛期，开启 ${S.year+1} 赛季 ${ico('play')}</button>
     </div>
     ${pane}
   </div>`;
@@ -5443,8 +6384,8 @@ VIEWS.home = () => {
     topBody = `<p class="muted">${ev.type==='lpl_s1'?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
       <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
   } else if(ev.done){
-    topBody = `<div class="done">✅ ${esc(info.name)}已结束 ${ev.res.champ?`· 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
-      <div class="btns"><button class="btn big" data-a="nextEvent">进入下一阶段 ▶</button></div>`;
+    topBody = `<div class="done">${ico('check','g')} ${esc(info.name)}已结束 ${ev.res.champ?`· ${ico('trophy','gold')} 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
+      <div class="btns"><button class="btn big" data-a="nextEvent">进入下一阶段 ${ico('play')}</button></div>`;
     // 赛段结束后干净展示积分（LPL赛段显示全年积分榜，国际赛可折叠回顾对阵）
     stageCard = /^lpl_s/.test(ev.type)
       ? `<section class="card"><h3>LPL 全年世界赛积分榜</h3>${pointsTable()}</section>`
@@ -5458,8 +6399,8 @@ VIEWS.home = () => {
          <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}</div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}</div></div></div>`:
         `<p class="muted">${inEvent?'等待本轮其他比赛结果…':'本队未参加此项赛事（或已止步），可模拟观看赛果。'}</p>`}
       <div class="btns">
-        ${myNext?`<button class="btn big" data-a="toMyMatch">${nxt&&userInvolved(nxt.m)?'进入比赛':'模拟至我的比赛'} ▶</button>`:''}
-        <button class="btn" data-a="simStage">模拟本阶段</button>
+        ${myNext?`<button class="btn big" data-a="toMyMatch">${ico('play')} ${nxt&&userInvolved(nxt.m)?'进入比赛':'模拟至我的比赛'}</button>`:''}
+        <button class="btn" data-a="simStage">${ico('skip')} 模拟本轮</button>
         <button class="btn ghost" data-a="simEvent">模拟整项赛事</button>
       </div>
       ${probs()}`;
@@ -5475,9 +6416,9 @@ VIEWS.home = () => {
       ${topBody}
     </section>
     ${stageCard}
-    ${S.news.length?`<section class="card compact-news"><h4>最新赛场动态</h4><ul class="news">${S.news.slice(0,4).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`:''}`;
+    ${S.news.length?`<section class="card compact-news"><h4>${ico('news')} 最新赛场动态</h4><ul class="news">${S.news.slice(0,5).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`:''}`;
 };
-function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">⚠️ ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
+function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">${ico('warn')} ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
 function findMyNext(){ const ev=curEvent(); if(!ev.started||ev.done) return null; for(const st of ev.stages){ if(st.kind==='br') resolveBR(st); const m=st.matches.find(m=>!m.w&&userInvolved(m)&&m.a&&m.b); if(m) return {m,st}; } return null; }
 function seasonTimeline(){
@@ -5490,27 +6431,37 @@ function pointsTable(){
   return `<table class="tbl"><tr><th>#</th><th>战队</th><th>积分</th></tr>${rows.map((k,i)=>`<tr class="${k===S.user?'me':''}"><td>${i+1}</td><td>${teamTag(k)}</td><td><b>${S.points[k]||0}</b></td></tr>`).join('')}</table>`;
 }
 function eventSummary(ev){
-  const r=ev.res; let h='';
-  if(r.champ) h+=`<p>🏆 冠军：${teamTag(r.champ)}</p>`;
-  if(r.final) h+=`<p>最终排名：${r.final.slice(0,8).map((t,i)=>`${i+1}. ${teamTag(t)}`).join(' ')}</p>`;
-  if(r.seeds && Array.isArray(r.seeds)) h+=`<p>LPL世界赛代表：${r.seeds.map((t,i)=>`${i+1}号种子 ${teamTag(t)}`).join(' ')}</p>`;
-  if(r.runner) h+=`<p>亚军：${teamTag(r.runner)}</p>`;
-  return h;
+  const r=ev.res || {};
+  const lines = [];
+  if(r.champ) lines.push(`<li><span class="eb-lbl">${ico('trophy','gold')} 冠军</span><span class="eb-val">${teamTag(r.champ)}</span></li>`);
+  if(r.runner) lines.push(`<li><span class="eb-lbl">${ico('shield')} 亚军</span><span class="eb-val">${teamTag(r.runner)}</span></li>`);
+  if(r.seeds && Array.isArray(r.seeds)){
+    r.seeds.forEach((t,i)=>lines.push(`<li><span class="eb-lbl">${ico('globe')} LPL ${i+1}号种子</span><span class="eb-val">${teamTag(t)}</span></li>`));
+  }
+  if(r.final && r.final.length){
+    r.final.slice(0,8).forEach((t,i)=>lines.push(`<li><span class="eb-lbl">第 ${i+1} 名</span><span class="eb-val">${teamTag(t)}</span></li>`));
+  }
+  return lines.length ? `<ul class="ev-bulletin">${lines.join('')}</ul>` : '';
 }
 
 // ---------- 阵容 ----------
 VIEWS.roster = () => {
   const t=T(S.user); const ps=t.roster.map(P).filter(Boolean).sort((a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||b.rating-a.rating);
   const sal=ps.reduce((s,p)=>s+p.salary,0);
+  const chem = teamChemistry(S.user);
+  const coresHtml = chem.cores.length
+    ? chem.cores.map(c=>`<span class="chem-core">${ico('chem')} ${c.label}：${c.members.map(esc).join(' · ')}</span>`).join('')
+    : '<span class="muted">暂无长期老搭档核心，多赛段同队出战将逐步形成羁绊</span>';
   return `<section class="card"><h2>${esc(t.name)} ${t.cn?`<small>${esc(t.cn)}</small>`:''}</h2>
-   <p>战力 ${ovrBadge(teamOvr(S.user))} · 预算 ${fmtMoney(t.budget)} · 年薪总额 ${fmtMoney(sal)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</p>
+   <p>战力 ${ovrBadge(teamOvr(S.user))} · 团队化学反应 <span class="chem-pill ${chem.cls}">${ico('chem')} <b>${chem.score}</b> ${chem.label}</span> · 预算 ${fmtMoney(t.budget)} · 年薪总额 ${fmtMoney(sal)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</p>
+   <div class="chem-bar-row">${coresHtml}</div>
    ${probs()}
    <div class="lineup">${ROLES.map(r=>{ const p=P(t.lineup[r]); return `<div class="slot"><div class="r">${ROLE_CN[r]}</div>${p?`<b>${esc(playerTag(p))}</b>${ovrBadge(Math.round(effRating(p,r)))}${p.role!==r?'<em>非本位</em>':''}`:'<em>空缺</em>'}</div>`; }).join('')}</div>
    <button class="btn sm ghost" data-a="autoLineup">自动最佳合规阵容</button>
-   <table class="tbl roster"><tr><th>位置</th><th>选手</th><th>国籍</th><th>年龄</th><th>能力</th><th>状态</th><th>心态</th><th>特质</th><th>潜力</th><th>身价</th><th>年薪</th><th>合同至</th><th>英雄池</th><th></th></tr>
-   ${ps.map(p=>{ const st=Object.entries(t.lineup).find(([r,id])=>id===p.pid); return `<tr>
+   <table class="tbl roster"><tr><th>位置</th><th>选手</th><th>国籍</th><th>年龄</th><th>能力</th><th>默契</th><th>状态</th><th>心态</th><th>特质</th><th>潜力</th><th>身价</th><th>年薪</th><th>合同至</th><th>英雄池</th><th></th></tr>
+   ${ps.map(p=>{ const st=Object.entries(t.lineup).find(([r,id])=>id===p.pid); const bd=playerTeamBond(p); return `<tr>
      <td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b><br><small>${esc(p.name)}</small></td><td>${esc(p.nat)}${isForeign(p)?'<small class="fx">外援</small>':''}</td><td>${p.age}</td>
-     <td>${ovrBadge(p.rating)}</td><td>${formChip(p,true)}</td><td>${mentalChip(p,true)}</td><td class="trs">${traitChips(p)||'<small class="muted">—</small>'}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${fmtMoney(p.salary)}</td><td>${p.contract}</td>
+     <td>${ovrBadge(p.rating)}</td><td><span class="bd-val ${bd>=72?'hi':bd>=50?'mid':'lo'}">${bd}</span></td><td>${formChip(p,true)}</td><td>${mentalChip(p,true)}</td><td class="trs">${traitChips(p)||'<small class="muted">—</small>'}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${fmtMoney(p.salary)}</td><td>${p.contract}</td>
      <td class="pool">${p.champs.map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}" title="${ti.name}">${ti.icon?ti.icon+' ':''}${champName(c.c)}</span>`; }).join('')}</td>
      <td class="act">${st?`<span class="tagon">首发·${ROLE_CN[st[0]]}</span>`:`<button class="btn sm" data-a="setStarter" data-p="${esc(p.pid)}" data-r="${p.role}">设为${ROLE_CN[p.role]}首发</button>`}
        ${transferOpen()?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}</td></tr>`; }).join('')}
@@ -5545,8 +6496,9 @@ function marketEmbedHtml(limit){
   <table class="tbl"><tr><th>选手</th><th>战队</th><th>位置</th><th>年龄</th><th>能力</th><th>潜力</th><th>身价</th><th>要价</th><th>合同至</th><th></th></tr>
   ${ps.slice(0,maxShow).map(p=>{
     const locked = isUntouchable(p);
-    return `<tr><td><b>${esc(playerTag(p))}</b>${isForeign(p)?'<small class="fx">外援</small>':''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p)):'—'}</td><td>${p.contract}</td>
-    <td>${!open?'':locked?'<span class="nft-tag">🔒 季中非卖</span>':`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
+    const crossMid = midWin && isCrossRegionFor(p, S.user);
+    return `<tr><td><b>${esc(playerTag(p))}</b>${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
+    <td>${!open?'':locked?`<span class="nft-tag">${ico('lock')} 季中非卖</span>`:`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
   }).join('')}</table>
   ${ps.length>maxShow?`<p class="muted">共 ${ps.length} 人，当前显示前 ${maxShow} 人，请使用上方筛选缩小范围。</p>`:''}
   </div>`;
@@ -5554,11 +6506,16 @@ function marketEmbedHtml(limit){
 VIEWS.market = () => `<section class="card">${marketEmbedHtml(150)}</section>`;
 function offerModal(pid){
   return () => { const p=P(pid); const me=T(S.user);
-    const cash = UI.offerCash!=null?UI.offerCash:(p.team?askPrice(p):0); const give=UI.offerGive||'';
+    const cash = UI.offerCash!=null?UI.offerCash:(p.team?askPrice(p, S.user):0); const give=UI.offerGive||'';
     const e = p.team? evaluateOffer(pid,cash,give||null):null;
-    const verdict = !e? '' : e.ratio>=1.05?'<b class="g">对方大概率接受</b>':e.ratio>=0.9?'<b class="y">有机会，对方在犹豫</b>':'<b class="r">对方很可能拒绝</b>';
-    return `<h3>${p.team?'报价':'签约'}：${esc(playerTag(p))} <small>${ROLE_CN[p.role]} · ${p.team?teamTag(p.team):'自由球员'}</small></h3>
+    const chemPv = previewChemWith(S.user, pid, p.role);
+    const verdict = !e? '' : e.crossMid
+      ? (e.ratio>=1.45?'<b class="y">高额溢价下有一定机会</b>':'<b class="r">季中跨赛区极难挖角，大概率拒绝</b>')
+      : e.ratio>=1.05?'<b class="g">对方大概率接受</b>':e.ratio>=0.9?'<b class="y">有机会，对方在犹豫</b>':'<b class="r">对方很可能拒绝</b>';
+    return `<h3>${ico('transfer')} ${p.team?'报价':'签约'}：${esc(playerTag(p))} <small>${ROLE_CN[p.role]} · ${p.team?teamTag(p.team):'自由球员'}</small></h3>
      <p>能力 ${ovrBadge(p.rating)} · 潜力 ${p.pot} · ${p.age}岁 · 身价 ${fmtMoney(playerValue(p))} · 预计年薪 ${fmtMoney(Math.max(p.salary,fairSalary(p)))}</p>
+     ${chemPv?`<div class="chem-pv">${ico('chem')} 化学反应预计：<b>${chemPv.before.score}</b> → <b class="${chemPv.delta>=0?'g':'r'}">${chemPv.after.score}（${chemPv.delta>=0?'+':''}${chemPv.delta}）</b>${chemPv.keptFriends.length?` · <span class="g">保留老搭档羁绊：${chemPv.keptFriends.map(esc).join(' / ')}</span>`:''}</div>`:''}
+     ${e&&e.crossMid?`<p class="warn">${ico('globe')} 当前为年中转会窗，跨赛区俱乐部几乎不愿中途放人，仅极高溢价才有小概率放行；建议等到年底休赛期再运作跨区引援。</p>`:''}
      ${p.team?`<label>转会费（万）：<input type="number" min="0" step="10" data-o="cash" value="${cash}"></label>
      <label>附加交换选手：<select data-o="give"><option value="">（不交换）</option>${me.roster.map(P).filter(Boolean).map(x=>`<option value="${esc(x.pid)}" ${give===x.pid?'selected':''}>${esc(playerTag(x))} · ${ROLE_CN[x.role]} · ${x.rating.toFixed(0)} · 身价${fmtMoney(playerValue(x))}</option>`).join('')}</select></label>
      <p>评估：${verdict}（报价价值 ${fmtMoney(e.offerVal)}）</p>`:'<p>自由球员可直接签约，无需转会费。</p>'}
@@ -5615,9 +6572,10 @@ function matchDetail(mid){
 // ---------- 版本 ----------
 VIEWS.meta = () => {
   const strong=CHAMP_KEYS.filter(k=>S.meta[k]>=1).sort((a,b)=>S.meta[b]-S.meta[a]);
+  const t0Cnt = strong.filter(k=>S.meta[k]>=2).length, t1Cnt = strong.length - t0Cnt;
   const st=Object.entries(S.log).map(([c,v])=>({c,...v})).sort((a,b)=>(b.p+b.b)-(a.p+a.b)).slice(0,30);
-  return `<section class="card"><h2>当前版本 ${S.year%100}.${S.patchNo}</h2><p>版本强势英雄（🔥=T0，↑=T1）：</p>
-   <div class="chips">${strong.map(k=>`<span class="chip">${S.meta[k]>=2?'🔥':'↑'} ${CH[k].cn} <small>${CH[k].roles.map(r=>ROLE_CN[r]).join('/')}</small></span>`).join('')}</div>
+  return `<section class="card"><h2>${ico('patch')} 当前版本 ${S.year%100}.${S.patchNo} <small>T0 ${t0Cnt} 名 · T1 ${t1Cnt} 名（分位置严格定额）</small></h2><p>版本强势英雄（${ico('flame','c-t0')} T0，${ico('up','c-t1')} T1）：</p>
+   <div class="chips">${strong.map(k=>`<span class="chip ${S.meta[k]>=2?'t0':'t1'}">${S.meta[k]>=2?ico('flame','c-t0'):ico('up','c-t1')} ${CH[k].cn} <small>${CH[k].roles.map(r=>ROLE_CN[r]).join('/')}</small></span>`).join('')}</div>
    <h3>本赛季英雄数据（全部赛区）</h3><table class="tbl"><tr><th>英雄</th><th>登场</th><th>禁用</th><th>胜率</th></tr>${st.map(x=>`<tr><td>${CH[x.c]?CH[x.c].cn:x.c}</td><td>${x.p}</td><td>${x.b}</td><td>${x.p?Math.round(x.w/x.p*100)+'%':'-'}</td></tr>`).join('')}</table></section>`;
 };
 VIEWS.news = () => `<section class="card"><h2>新闻</h2><ul class="news">${S.news.map(n=>`<li><small>${n.y} · ${esc(n.ev)}</small> ${esc(n.t)}</li>`).join('')}</ul>
@@ -5670,13 +6628,23 @@ function accountPanelHtml(){
   </div>`;
 }
 
-VIEWS.sys = () => `<section class="card">
+VIEWS.sys = () => {
+  const upd = typeof AppUpdater !== 'undefined' ? AppUpdater : null;
+  return `<section class="card">
   ${accountPanelHtml()}
   <hr class="sep">
-  <h3>💾 本地存档管理</h3>
+  <h3>${ico('update')} 云端版本自动更新</h3>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.0')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <div class="btns">
+    <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
+    ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
+  </div>
+  <hr class="sep">
+  <h3>${ico('shield')} 本地存档管理</h3>
   <p>存储方式：<b>${StorageBridge.mode==='tauri-file'?'独立软件本地文件存档（不随浏览器缓存清理丢失）':'浏览器本地存储'}</b>${StorageBridge.savePath?`<br><small>路径：${esc(StorageBridge.savePath)}</small>`:''}</p>
   <div class="btns"><button class="btn" data-a="export">导出存档 JSON</button><label class="btn ghost">导入存档<input type="file" id="imp" hidden></label><button class="btn ghost" data-a="reset">删除本地存档并重新开始</button></div>
 </section>`;
+};
 
 // ================= 赛前情报：状态 / 心态 / 历史特质 =================
 const TIER_CLS = t => t>=2?'t2':t===1?'t1':t===0?'t0':t===-1?'tn1':'tn2';
@@ -5811,9 +6779,10 @@ function storeUserReplay(M, g){
 function setupDraft(blue){
   const M=UI.match;
   Watch.stop();
+  clearBpSplash();
   M.draft = newDraft(M.item.m.a, M.item.m.b, blue, M.locked);
   setDraftCtx(M, M.draft);
-  M.phase = 'draft'; M.sel = null; M.roleSel = null; M.swapFrom = null;
+  M.phase = 'draft'; M.sel = null; M.roleSel = null; M.swapFrom = null; M._lastPh = -1;
   resetBpClock();
   queueAI();
 }
@@ -5826,15 +6795,16 @@ function champBadgeInfo(d, M, k){
   const opp = M.me==='A'?'B':'A';
   const myLu = lineupMap(d[M.me]), oppLu = lineupMap(d[opp]);
   const badges = [];
-  if((S.meta[k]||0) >= 2) badges.push({ icon:'🔥', cls:'t0', text:'版本 T0 强势英雄，当前版本强度极高' });
-  else if((S.meta[k]||0) === 1) badges.push({ icon:'↑', cls:'t1', text:'版本 T1 热门英雄，版本契合度良好' });
+  if((S.meta[k]||0) >= 2) badges.push({ icon:ico('flame','c-t0'), cls:'t0', text:'版本 T0 强势英雄，当前版本强度极高' });
+  else if((S.meta[k]||0) === 1) badges.push({ icon:ico('up','c-t1'), cls:'t1', text:'版本 T1 热门英雄，版本契合度良好' });
   for(const r of ROLES){
     if(d.picks[M.me][r]) continue;
     const p = myLu[r]; if(!p) continue;
     const pv = champProfVal(p, k);
     const ti = profTier(pv);
     if(ti.tier >= 2){
-      badges.push({ icon: ti.icon, cls:'mine', text:`我方 ${ROLE_CN[r]} ${playerTag(p)} · ${ti.name}英雄` });
+      const pIco = ti.tier>=4 ? ico('crown','c-gold') : ti.tier===3 ? ico('pick','c-teal') : ico('bolt','c-ice');
+      badges.push({ icon: pIco, cls:'mine', text:`我方 ${ROLE_CN[r]} ${playerTag(p)} · ${ti.name}英雄` });
     }
   }
   for(const r of ROLES){
@@ -5842,7 +6812,7 @@ function champBadgeInfo(d, M, k){
     const p = oppLu[r]; if(!p) continue;
     const pv = champProfVal(p, k);
     if(pv >= 80){
-      badges.push({ icon:'⚠', cls:'opp', text:`对手 ${ROLE_CN[r]} ${playerTag(p)} 的招牌英雄，建议针对` });
+      badges.push({ icon:ico('warn','c-red'), cls:'opp', text:`对手 ${ROLE_CN[r]} ${playerTag(p)} 的招牌英雄，建议针对` });
     }
   }
   const metaText = `${ch.roles.map(r=>ROLE_CN[r]).join(' / ')} · ${DMG_CN[ch.dmg]||ch.dmg} · ${ch.tags.map(t=>TAG_CN[t]||t).join(' / ')}`;
@@ -5861,9 +6831,10 @@ function queueAI(){
       const ch=aiChoose(M.draft);
       draftAct(M.draft, ch.c, ch.role, ch.offrole);
       if(nowCur.kind==='pick') optimizeAiFlex(M.draft, nowCur.side);
+      triggerLockFlash(nowCur.kind, ch.c);
       render();
       queueAI();
-    }, 520);
+    }, 540);
   }
 }
 
@@ -5931,20 +6902,25 @@ function renderSideColumn(M, d, side, cur, isBlue){
       ? (okKind!=='mismatch' ? `<span class="fit-badge flex">奇招·${ti.name}</span>` : `<span class="fit-badge bad">跨位·${ti.name}</span>`)
       : `<span class="fit-badge ${ti.tier>=4?'sig':ti.tier>=2?'ok':ti.tier===1?'fam':'low'}">${ti.name}</span>`;
     const swapAttr = canSwap && (c || M.swapFrom) ? `data-a="dSwap" data-r="${r}"` : '';
+    const fT = p ? formTier(p) : 0, mT = p ? mentalTier(p) : 0;
+    const trList = p ? playerTraits(p).tags.map(x=>x.t) : [];
+    const hoverInfo = p ? `${playerTag(p)} · 状态:${FORM_TIERS[fT+2]} · 心态:${MENTAL_TIERS[mT+2]}${trList.length?' · 特质:'+trList.join('/'):''}${canSwap?'（点击可摇摆换位）':''}` : '';
+    // BP 内选手槽位极简状态提示（仅高/低异常状态显示小圆点，完整状态/心态/特质悬停可见，避免堆叠冗杂）
+    const miniDot = !p ? '' : fT>=2 ? `<i class="st-dot hot" title="${esc(hoverInfo)}"></i>` : fT<=-2 ? `<i class="st-dot cold" title="${esc(hoverInfo)}"></i>` : mT<=-2 ? `<i class="st-dot tilt" title="${esc(hoverInfo)}"></i>` : '';
 
-    return `<div class="pk-slot ${c?'locked':''} ${isPreview?'picking':''} ${isSwapSrc?'swap-src':''} ${isSwapTarget?'swap-dst':''} ${canSwap&&(c||M.swapFrom)?'swappable':''}" ${swapAttr} title="${canSwap?'点击可与同队其他位置互换摇摆位':''}">
+    return `<div class="pk-slot ${c?'locked':''} ${isPreview?'picking':''} ${isSwapSrc?'swap-src':''} ${isSwapTarget?'swap-dst':''} ${canSwap&&(c||M.swapFrom)?'swappable':''}" ${swapAttr} title="${esc(hoverInfo)}">
       <div class="pk-ava-wrap">
-        ${c ? champAvatar(c,'md')
-            : (isPreview && isMe && M.sel) ? `${champAvatar(M.sel,'md preview')}<span class="preview-tag">待锁定</span>`
-            : `<div class="c-ava empty md"><span class="role-ico">${ROLE_SVG[r]}</span></div>`}
+        ${c ? champAvatar(c,'sm')
+            : (isPreview && isMe && M.sel) ? `${champAvatar(M.sel,'sm preview')}<span class="preview-tag">预选</span>`
+            : `<div class="c-ava empty sm"><span class="role-ico">${ROLE_SVG[r]}</span></div>`}
       </div>
       <div class="pk-meta">
         <div class="pk-top">
-          <span class="pk-role">${ROLE_SVG[r]}${ROLE_CN[r]}</span>
+          <span class="pk-role">${ROLE_SVG[r]}</span>
           <b class="pk-player">${p?esc(playerTag(p)):'—'}</b>
+          ${miniDot}
           ${p?`<span class="pk-ovr">${Math.round(effRating(p,r))}</span>`:''}
         </div>
-        ${p?`<div class="pk-st">${formChip(p,true)}${mentalChip(p,true)}${traitChips(p)}</div>`:''}
         <div class="pk-bot">
           ${c ? `<span class="pk-champ">${esc(champName(c))}</span>${fitTag}`
               : (isPreview && isMe && M.sel) ? `<span class="pk-champ preview-txt">${esc(champName(M.sel))}...</span>`
@@ -5959,6 +6935,7 @@ function renderSideColumn(M, d, side, cur, isBlue){
   // 实时阵容构成情报
   const pickedList = Object.values(d.picks[side]).filter(Boolean);
   const ci = compInfo(pickedList);
+  const chem = teamChemistry(key);
   const totalDmg = Math.max(1, ci.ad + ci.ap);
   const adPct = pickedList.length ? Math.round(ci.ad/totalDmg*100) : 50;
   const apPct = 100 - adPct;
@@ -5966,8 +6943,9 @@ function renderSideColumn(M, d, side, cur, isBlue){
   return `<aside class="hex-side ${isBlue?'blue':'red'} ${cur&&cur.side===side?(cur.kind==='ban'?'active-ban':'active-pick'):''}">
     <div class="side-head">
       <div class="side-id">
-        <span class="side-badge ${isBlue?'blue':'red'}">${isBlue?'蓝色方 BLUE':'红色方 RED'}</span>
-        <span class="ord-badge">${d.first===side?'BP先手':'BP后手'}</span>
+        <span class="side-badge ${isBlue?'blue':'red'}">${isBlue?'蓝方':'红方'}</span>
+        <span class="ord-badge">${d.first===side?'先手':'后手'}</span>
+        <span class="chem-mini ${chem.cls}" title="团队化学反应：${chem.label}">${ico('chem')}${chem.score}</span>
       </div>
       <div class="side-team">${teamTag(key)} ${isMe?'<em class="me-pill">我方</em>':''}</div>
     </div>
@@ -5979,10 +6957,10 @@ function renderSideColumn(M, d, side, cur, isBlue){
       </div>
       <div class="dmg-bar"><i class="ad" style="width:${adPct}%"></i><i class="ap" style="width:${apPct}%"></i></div>
       <div class="intel-tags">
-        ${pickedList.length?`<span class="style-chip">${STYLE_CN[ci.style]}体系</span>`:''}
+        ${pickedList.length?`<span class="style-chip">${STYLE_CN[ci.style]}阵</span>`:''}
         ${ci.notes.slice(0,2).map(n=>`<span class="note-chip ${/缺乏|纯/.test(n)?'warn':''}">${esc(n)}</span>`).join('')}
       </div>
-      ${canSwap?`<div class="swap-hint">${M.swapFrom?`已选中 <b>${ROLE_CN[M.swapFrom]}</b>，点另一槽位互换（再点取消）`:'💡 点击己方槽位可摇摆换位'}</div>`:''}
+      ${canSwap?`<div class="swap-hint">${M.swapFrom?`已选中 <b>${ROLE_CN[M.swapFrom]}</b>，点另一槽位互换`:`${ico('transfer')} 点己方槽位可摇摆换位`}</div>`:''}
     </div>
   </aside>`;
 }
@@ -6020,7 +6998,7 @@ function matchScreen(){
       <div class="mh-title">${esc(m.label)} · BO${m.bo} · 第 ${M.phase==='result'?M.games.length:M.games.length+1} 局</div>
       ${d&&M.phase!=='live'?`<div class="ph-track">${stepPills}</div>`:''}
       <div class="fearless-row">
-        <button class="fl-btn ${M.showLocked?'on':''}" data-a="toggleLocked">⛓ 无畏征召已锁 <b>${M.locked.length}</b> 名英雄 ${M.locked.length?(M.showLocked?'▲':'▼'):''}</button>
+        <button class="fl-btn ${M.showLocked?'on':''}" data-a="toggleLocked">${ico('chain')} 无畏征召已锁 <b>${M.locked.length}</b> 名英雄 ${M.locked.length?(M.showLocked?'▲':'▼'):''}</button>
       </div>
     </div>
     <div class="mh-team right ${d?'is-red':''}">
@@ -6158,7 +7136,7 @@ function matchScreen(){
     bannerHtml = `<div class="phase-banner ${isBan?'is-ban':'is-pick'} ${myTurn?'my-turn':'opp-turn'}">
       <div class="pb-dir ${actingIsBlue?'left':'right'}">${actingIsBlue?'◀ 蓝色方行动':'红色方行动 ▶'}</div>
       <div class="pb-main">
-        <span class="pb-tag">${isBan?'⚔ 禁用阶段 · BAN':'✦ 选择阶段 · PICK'}</span>
+        <span class="pb-tag">${isBan?`${ico('ban')} 禁用阶段 · BAN`:`${ico('pick')} 选择阶段 · PICK`}</span>
         <b class="pb-msg">${myTurn ? (isBan?'轮到你禁用一名英雄':'轮到你选择一名英雄') : (isBan?`${teamName(d[cur.side])} 正在禁用…`:`${teamName(d[cur.side])} 正在选人…`)}</b>
       </div>
       <div class="pb-clock">
@@ -6285,9 +7263,9 @@ function matchScreen(){
         return `<div class="ch-card ${dis?'dis':''} ${bestMyTier>=2&&!dis?'my-prof':''} ${sel?(isBan?'sel-ban':'sel-pick'):''}" data-ch="${esc(k)}" ${dis||!myTurn?'':`data-a="dSel" data-c="${esc(k)}"`}>
           <div class="ch-thumb">
             ${champAvatar(k,'grid')}
-            ${S.meta[k]>=2?'<span class="meta-dot t0">🔥</span>':S.meta[k]>=1?'<span class="meta-dot t1">↑</span>':''}
-            ${bestMyTier>=2?`<span class="sig-dot mine ${bestMyCls}">${bestMyIcon}</span>`:''}
-            ${oppSig?`<span class="sig-dot opp ${bestMyTier>=2?'shift':''}">⚠</span>`:''}
+            ${S.meta[k]>=2?`<span class="meta-dot t0">${ico('flame')}</span>`:S.meta[k]>=1?`<span class="meta-dot t1">${ico('up')}</span>`:''}
+            ${bestMyTier>=2?`<span class="sig-dot mine ${bestMyCls}">${bestMyTier>=4?ico('crown'):bestMyTier===3?ico('pick'):ico('bolt')}</span>`:''}
+            ${oppSig?`<span class="sig-dot opp ${bestMyTier>=2?'shift':''}">${ico('warn')}</span>`:''}
             ${stamp}
             ${sel && isBan ? '<div class="sel-overlay ban"><span>BAN</span></div>' : ''}
             ${sel && !isBan ? '<div class="sel-overlay pick"><span>PICK</span></div>' : ''}
@@ -6300,8 +7278,8 @@ function matchScreen(){
         ${selInfoHtml}
         <div class="dock-actions">
           ${myTurn ? `<button class="lock-btn ${isBan?'is-ban':'is-pick'}" data-a="dLock" ${M.sel?'':'disabled'}>
-            ${isBan ? (M.sel?`🚫 确认禁用 · ${esc(champName(M.sel))}`:'确认禁用')
-                    : (M.sel?`✓ 确认选择 · ${esc(champName(M.sel))}`:'确认选择')}
+            ${isBan ? (M.sel?`${ico('ban')} 确认禁用 · ${esc(champName(M.sel))}`:`${ico('ban')} 确认禁用`)
+                    : (M.sel?`${ico('pick')} 确认选择 · ${esc(champName(M.sel))}`:`${ico('pick')} 确认选择`)}
           </button>` : `<div class="ai-wait-pill">对手思考中…</div>`}
           <div class="dock-sub-btns">
             <button class="hex-btn sm ghost" data-a="dAuto">自动完成本局BP</button>
@@ -6424,31 +7402,15 @@ function matchScreen(){
     </section>`;
   }
 
-  // 阶段切换（Ban <-> Pick）LoL 原版风格中心光束过场动画（负延迟保持帧同步，不阻塞点击）
-  let splashHtml = '';
+  // 阶段切换（Ban <-> Pick）触发独立瞬态过场动画层（挂载于 body，严格 1 秒自动消失，绝不因重绘残留）
   if(M.phase === 'draft' && cur && phIdx >= 0 && phIdx <= 3){
     if(M._lastPh !== phIdx){
       M._lastPh = phIdx;
-      M._splashStart = Date.now();
-      M._splashUntil = M._splashStart + 1050;
-    }
-    if(M._splashUntil && Date.now() < M._splashUntil){
-      const elapsed = Math.max(0, Date.now() - (M._splashStart || Date.now()));
-      const dly = `style="animation-delay:-${elapsed}ms"`;
-      const isBanSplash = cur.kind === 'ban';
-      const roundLbl = phIdx<=1 ? '第一轮' : '第二轮';
-      splashHtml = `<div class="bp-splash ${isBanSplash?'ban':'pick'}" ${dly}>
-        <div class="bps-beam" ${dly}></div>
-        <div class="bps-core" ${dly}>
-          <span class="bps-sub">${roundLbl} · ${isBanSplash?'BAN PHASE':'PICK PHASE'}</span>
-          <b>${isBanSplash?'⚔ 进入禁用阶段':'✦ 进入英雄选择'}</b>
-        </div>
-      </div>`;
+      triggerBpSplash(cur.kind, phIdx);
     }
   }
 
-  return `<div class="match hex ${modeCls}">
-    ${splashHtml}
+  return `<div class="match hex bp-fit ${modeCls}">
     ${head}
     ${banBar}
     <div class="draft-lol">
@@ -6596,12 +7558,25 @@ const ACT = {
     if(ps.length){ toast('无法开赛：'+ps.join('；')); return; }
     const it=simUntilUser(false); save(); if(it && userInvolved(it.m)) beginUserMatch(it); else render();
   },
+  dismissUpdate:()=>{ UI.hideUpdateBanner=true; render(); },
+  checkAppUpdate:async()=>{
+    if(typeof AppUpdater === 'undefined') return;
+    toast('正在检查云端版本…');
+    const r = await AppUpdater.check(true);
+    UI.hideUpdateBanner = false;
+    toast(r.hasUpdate ? `发现新版本 v${r.version}！` : r.msg || '当前已是最新版本');
+    render();
+  },
   simStage:()=>{
     const ps = lineupProblems(S.user);
     if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
-    startEvent(); const ev=curEvent(); const si=ev.si; let n=0;
-    while(!ev.done && ev.si===si && n++<500){ const it=nextReadyMatch(); if(!it) break; if(userInvolved(it.m)){ simSeries(it.m,true); afterMatch(it.st,it.m);} else playAI(it); }
+    const res = simCurrentRound();
     save(); render();
+    if(res.stoppedForUser){
+      toast('已推进至本轮你的比赛，请点击「进入比赛」亲自出战！');
+    } else if(res.played > 0){
+      toast(`本轮 ${res.played} 场比赛模拟完毕`);
+    }
   },
   simEvent:()=>{
     const ps = lineupProblems(S.user);
@@ -6712,7 +7687,9 @@ const ACT = {
       role = M.roleSel && chk.openRoles.includes(M.roleSel) ? M.roleSel : null;
     }
     if(draftAct(M.draft, M.sel, role, allowOff)){
+      const lockedC = M.sel;
       M.sel=null; M.roleSel=null; M.swapFrom=null;
+      triggerLockFlash(cur.kind, lockedC);
       render(); queueAI();
     } else toast('该英雄无法选择（没有空余对应位置）');
   },
@@ -6779,6 +7756,7 @@ async function bootApp(){
     }catch(e){ UI.hasSave = false; }
   }
   await CloudSync.init();
+  if(typeof CloudSync.startAutoSync === 'function') CloudSync.startAutoSync();
   if(CloudSync.isLoggedIn()){
     // 已记住上次登录：若有云端恢复的档或本地档，直接进入第2屏（或已在主页）
     if(S) UI.savePreview = makeSaveSummary(S);
@@ -6788,6 +7766,7 @@ async function bootApp(){
     UI.entry = 'gate';
   }
   render();
+  if(typeof AppUpdater !== 'undefined') AppUpdater.check(false).then(r=>{ if(r && r.hasUpdate) render(); });
 }
 document.addEventListener('keydown', e=>{
   if(e.key==='Enter'){

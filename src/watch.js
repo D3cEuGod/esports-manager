@@ -234,12 +234,16 @@ const Watch = (()=>{
   function drawMap(cv, V){
     const ctx = cv.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    const W0 = cv.clientWidth || 400;
-    if(cv.width !== Math.round(W0*dpr)){ cv.width = Math.round(W0*dpr); cv.height = Math.round(W0*dpr); }
-    const k = cv.width/1000;
+    // 画布按实际显示尺寸取正方形并居中，容器不是正方形时也不会拉伸或裁掉地图边缘
+    const cw = cv.clientWidth || 400, ch = cv.clientHeight || cw;
+    const pw = Math.round(cw*dpr), ph = Math.round(ch*dpr);
+    if(cv.width !== pw || cv.height !== ph){ cv.width = pw; cv.height = ph; }
+    const side = Math.min(pw, ph), ox = (pw-side)/2, oy = (ph-side)/2;
+    const k = side/1000;
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.drawImage(mapBackground(), 0, 0, cv.width, cv.height);
-    ctx.setTransform(k,0,0,k,0,0);
+    ctx.fillStyle = '#010a13'; ctx.fillRect(0, 0, pw, ph);
+    ctx.drawImage(mapBackground(), ox, oy, side, side);
+    ctx.setTransform(k,0,0,k,ox,oy);
     // 兵线
     if(V.front){
       for(const lane of ['top','mid','bot']){
@@ -301,12 +305,13 @@ const Watch = (()=>{
       if(c.recall){ ctx.fillStyle = 'rgba(60,140,255,0.45)'; ctx.fillRect(-R,-R,R*2,R*2); }
       ctx.restore();
       // 血条 + 名字
-      const bw = 58, by = -R-16;
+      const bw = 58, by = c.y < R+44 ? R+12 : -R-16;   // 贴近地图上沿时把血条和名字挪到头像下方，避免被裁掉
       ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(-bw/2-1, by-1, bw+2, 9);
       ctx.fillStyle = c.hp>0.5 ? '#3ddc84' : c.hp>0.25 ? '#f5c542' : '#ff4d5e'; ctx.fillRect(-bw/2, by, bw*clamp(c.hp,0,1), 7);
-      ctx.font = 'bold 17px "Noto Sans SC",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(c.tag, 0, by-3);
-      ctx.fillStyle = c.blue ? '#bff6f0' : '#ffd0d6'; ctx.fillText(c.tag, 0, by-3);
+      const below = by > 0, ty = below ? by+10 : by-3;
+      ctx.font = 'bold 17px "Noto Sans SC",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = below ? 'top' : 'bottom';
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.strokeText(c.tag, 0, ty);
+      ctx.fillStyle = c.blue ? '#bff6f0' : '#ffd0d6'; ctx.fillText(c.tag, 0, ty);
       ctx.restore();
     }
   }
@@ -437,8 +442,8 @@ const Watch = (()=>{
       <div class="w5-score" id="w5-score"></div>
       <div class="w5-mtabs"><button data-a="wPane" data-v="feed" class="${W&&W.pane==='feed'?'on':''}">战报</button><button data-a="wPane" data-v="data" class="${W&&W.pane==='data'?'on':''}">数据</button></div>
       <div class="w5-main">
-        <div class="w5-mapbox"><canvas id="w5-map"></canvas><canvas id="w5-gold" class="w5-goldcv"></canvas>
-          <div class="w5-banner" id="w5-banner" style="display:none"></div></div>
+        <div class="w5-mapcell"><div class="w5-mapbox"><canvas id="w5-map"></canvas><canvas id="w5-gold" class="w5-goldcv"></canvas>
+          <div class="w5-banner" id="w5-banner" style="display:none"></div></div></div>
         <div class="w5-side">
           <div class="w5-players" id="w5-players"></div>
           <div class="w5-feed-wrap">

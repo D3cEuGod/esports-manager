@@ -750,7 +750,7 @@ function draftPower(d, side){
     const base = matchRating(p, r, d.ctx);
     let fit = c? champFit(p,c,r) : 0;
     // 战术奇招情境判定：法核下路补齐 AP、长手上路压制短手坦克等
-    if(c && !CH[c].roles.includes(r)){
+    if(c && CH[c] && !CH[c].roles.includes(r)){
       const ok = offRoleKind(c, r);
       const otherList = ROLES.filter(x=>x!==r).map(x=>picks[x]).filter(Boolean);
       const otherCi = compInfo(otherList);

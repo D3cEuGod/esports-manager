@@ -68,6 +68,8 @@
 - 实时观战：`createSolo(...,{record:true})` / `soloStep(g)`，`createGame5(d,{record:true})` / `step5(G)`；读取 `g.F.A/B`、`g.t`、`g.log`、`g.over`、`g.winner`、`g.wave`、`g.tw`、`g.fx`、`g.fxT`，以及 `G.t`、`G.champs`、`G.towers`、`G.front`、`G.obj`、`G.team`、`G.feed`、`G.gs`、`G.fx`、`G.over`、`G.winner`、`G.d`。
 - 常量与工具：`SIM_RATE5`（1x = 每秒 15 秒游戏时间）、`SIM_RATE1`、`MAP5`、`ITEMS` / `ITEM_CN` / `itemIconUrl`、`buildTowers`、`fmtSec`。
 - 回放格式（`recordOf` / `soloResult().rec`）：5v5 为 `{v, dur, blue, champs, teams, f, st, ev, feed, gs}`，`f` 每 3 秒一帧，`st` 每 12 秒一帧，`ev` 事件码 `K/B/S/T/R/O/F`；1v1 为 `{v, start, f, items, sum2}`，由 `soloFrameAt` 解码。改格式时请提升 `SIM_VER`，并保证旧存档回放能读或能安全降级。
+- 录像时间约定（播放器按此解码）：`f[0]` 是开局第 0 秒，`f[k]` 对应第 3k 秒，最后一帧为终局；`st[k]` 对应第 12k 秒，最后一条为终局统计；`ev` 按发生顺序排列，同一秒内先 `S` 后 `B`（辅助装升级也要先记卖出地图集）。
+- 回放摘要字段 `pl:{A,B}`：每名选手 `[选手, 英雄, 击杀, 死亡, 助攻]`，由 `ui.js` 写入，裁剪录像时必须保留。
 
 ## 约束
 

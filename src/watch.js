@@ -86,20 +86,21 @@ const Watch = (()=>{
   function prepRec(rec){
     if(rec._prep) return rec._prep;
     const towers = buildTowers();
-    const P0 = { towers, kills:[], buys:[], sells:[], towerEv:[], resp:[], obj:[], fights:[] };
+    const P0 = { towers, kills:[], items:[], towerEv:[], resp:[], obj:[], fights:[] };
     for(const e of rec.ev){
       const [t,k] = e;
-      if(k==='K') P0.kills.push(e); else if(k==='B') P0.buys.push(e); else if(k==='S') P0.sells.push(e);
+      if(k==='K') P0.kills.push(e); else if(k==='B' || k==='S') P0.items.push(e);   // 买卖保持录像原顺序
       else if(k==='T') P0.towerEv.push(e); else if(k==='R') P0.resp.push(e); else if(k==='O') P0.obj.push(e); else if(k==='F') P0.fights.push(e);
     }
     rec._prep = P0; return P0;
   }
   function view5Rec(rec, t){
     const P0 = prepRec(rec);
-    const fi = clamp(t/3 - 1, 0, rec.f.length-1);
+    // 录像约定：f[k] 对应第 3k 秒（f[0] 为开局）；st[k] 对应第 12k 秒，最后一条为终局
+    const fi = clamp(t/3, 0, rec.f.length-1);
     const i0 = Math.floor(fi), i1 = Math.min(rec.f.length-1, i0+1), fr = fi - i0;
     const f0 = rec.f[i0], f1 = rec.f[i1];
-    const si = clamp(Math.floor(t/12), 0, rec.st.length-1), st = rec.st[si];
+    const si = t >= rec.dur ? rec.st.length-1 : clamp(Math.floor(t/12), 0, rec.st.length-1), st = rec.st[si];
     const champs = rec.champs.map((c,i)=>{
       const x0 = dec1(f0,i*3)/63*1000, y0 = dec1(f0,i*3+1)/63*1000, h0 = dec1(f0,i*3+2)/63;
       const x1 = dec1(f1,i*3)/63*1000, y1 = dec1(f1,i*3+1)/63*1000;
@@ -109,10 +110,14 @@ const Watch = (()=>{
         cs:dec2(st,o), gold:dec2(st,o+2)*10, cur:dec2(st,o+5)*10, items:[], partial:null, recall:false };
     });
     for(const e of P0.kills){ if(e[0] > t) break; champs[e[2]].k++; champs[e[3]].d++; e[4].forEach(a=>champs[a].a++); const v = champs[e[3]]; if(t < e[0]+e[5]) v.rt = Math.ceil(e[0]+e[5]-t); }
-    const sells = P0.sells.filter(e=>e[0]<=t);
-    let si2 = 0;
-    for(const e of P0.buys){ if(e[0] > t) break; while(si2 < sells.length && sells[si2][0] < e[0]){ const s = sells[si2]; champs[s[2]].items.splice(s[3],1); si2++; } champs[e[2]].items.push(e[3]); }
-    while(si2 < sells.length){ const s = sells[si2]; champs[s[2]].items.splice(s[3],1); si2++; }
+    for(const e of P0.items){
+      if(e[0] > t) break;
+      const its = champs[e[2]].items;
+      if(e[1]==='S'){ its.splice(e[3],1); continue; }
+      // 旧录像的辅助装升级没有记卖出：买入升级装时移除世界地图集
+      if(ITEMS[e[3]] && ITEMS[e[3]][2]==='sup'){ const k = its.indexOf(3865); if(k>=0) its.splice(k,1); }
+      its.push(e[3]);
+    }
     const towers = P0.towers.map(tw=>({x:tw.x,y:tw.y,side:tw.side,tier:tw.tier,alive:true,hp:1}));
     const tev = P0.towerEv.concat(P0.resp).sort((a,b)=>a[0]-b[0]);
     for(const e of tev){ if(e[0] > t) break; towers[e[2]].alive = e[1]==='R'; }

@@ -530,17 +530,22 @@ function replayScreen(){
     ${R.kind==='solo' ? `<div class="hex-panel solo-watch-panel">${Watch.shellSolo()}</div>` : Watch.shell5()}
   </div>`;
 }
+function replayKdaHtml(r){
+  if(!r.pl || !(r.pl.A||[]).length) return '';
+  const side = rows => rows.map(([tag,c,k,d,a])=>`<div class="rp-pl"><span class="rp-tag">${esc(tag)}</span><span class="rp-ch">${esc(CH[c]?CH[c].cn:(c||''))}</span><b>${k}/${d}/${a}</b></div>`).join('');
+  return `<details class="rp-kda"><summary>选手数据</summary><div class="rp-sides"><div>${side(r.pl.A)}</div><div>${side(r.pl.B)}</div></div></details>`;
+}
 VIEWS.replays = () => {
   const list = (S.replays||[]);
   const kept = list.filter(r=>r.kept).length;
   const row = r => `<tr class="${r.kept?'kept':''}">
     <td>${esc(String(r.y))}<br><small>${esc(r.label||'')}</small></td>
-    <td>${teamTag(r.a)} <b>${r.kA}:${r.kB}</b> ${teamTag(r.b)}<br><small>第 ${r.gi} 局 · ${r.dur} 分钟 · MVP ${esc(r.mvpTag||'')}</small></td>
+    <td>${teamTag(r.a)} <b>${r.kA}:${r.kB}</b> ${teamTag(r.b)}<br><small>第 ${r.gi} 局 · ${r.dur} 分钟 · MVP ${esc(r.mvpTag||'')}</small>${replayKdaHtml(r)}</td>
     <td>${(r.w==='A'?r.a:r.b)===S.user?'<span class="tagon">胜</span>':'<span class="tagoff">负</span>'}</td>
     <td class="act">${r.rec?`<button class="btn sm" data-a="openReplay" data-id="${esc(r.id)}">▶ 观看</button>${r.solo?`<button class="btn sm ghost" data-a="openReplay" data-id="${esc(r.id)}" data-k="solo">1v1 回放</button>`:''}
       <button class="btn sm ${r.kept?'':'ghost'}" data-a="keepReplay" data-id="${esc(r.id)}">${r.kept?'★ 取消保留':'☆ 永久保留'}</button>`:'<small class="muted">仅保留比分与数据</small>'}</td></tr>`;
   return `<section class="card"><h2>比赛回放</h2>
-    <p class="muted">自动保存你最近 10 局比赛的完整回放；另可永久保留最多 ${REPLAY_MAX_KEPT} 局（已保留 ${kept} 局）。更早的比赛只保留比分、击杀与 MVP。</p>
+    <p class="muted">自动保存你最近 10 局比赛的完整回放；另可永久保留最多 ${REPLAY_MAX_KEPT} 局（已保留 ${kept} 局）。更早的比赛只保留比分和选手 KDA，最多保留 200 条记录。</p>
     ${list.length?`<table class="tbl replays"><tr><th>赛事</th><th>对局</th><th>结果</th><th></th></tr>${list.map(row).join('')}</table>`:'<p>还没有比赛回放。打一场你自己战队的比赛后，这里会自动出现。</p>'}
   </section>`;
 };
@@ -602,7 +607,9 @@ function soloReplayData(res){
 function storeUserReplay(M, g){
   const m = M.item.m;
   const entry = { y:S.year, ev:(curEvent()||{}).type||'', label:m.label, a:m.a, b:m.b, gi:M.games.length+1, w:g.w, kA:g.kA, kB:g.kB, dur:g.dur,
-    mvpTag:g.mvpTag, blue:g.blue, rec:g.rec||null, solo:M.pendingSolo||null, kept:false };
+    mvpTag:g.mvpTag, blue:g.blue, rec:g.rec||null, solo:M.pendingSolo||null, kept:false,
+    // 录像被裁剪后仍保留：每名选手 [选手, 英雄, 击杀, 死亡, 助攻]
+    pl:{A:(g.sa||[]).map(x=>[x.tag, x.c, x.k, x.d, x.a]), B:(g.sb||[]).map(x=>[x.tag, x.c, x.k, x.d, x.a])} };
   g.rid = pushReplay(entry);
   delete g.rec;
   M.pendingSolo = null;

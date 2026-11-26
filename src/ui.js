@@ -1,5 +1,5 @@
 // ================= 界面 =================
-const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false,hideLock:true}, offTab:'patch', trainPid:null, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false, verifyEmail:null, resendCd:0 };
+const UI = { view:'home', modal:null, match:null, evSel:null, mk:{region:'ALL',role:'ALL',q:'',sort:'rating',fa:false,hideLock:true}, offTab:'patch', trainPid:null, toast:null, hasSave:false, savePreview:null, authBusy:false, entry:'gate', authTab:'login', pickTeam:false, verifyEmail:null, resendCd:0, setTab:'replays', db:{region:null, team:null} };
 let _resendTimer = null;
 function startResendCd(sec){
   if(_resendTimer){ clearInterval(_resendTimer); _resendTimer=null; }
@@ -37,7 +37,6 @@ function toast(t){ UI.toast=t; render(); setTimeout(()=>{ if(UI.toast===t){UI.to
 const teamTag = (k,cls='') => { const t=T(k); if(!t) return '—'; return `<span class="tt ${cls} ${k===S.user?'me':''}" title="${esc(t.name)}"><b>${esc(t.short)}</b><i>${t.region}</i></span>`; };
 const champName = c => c? (CH[c]?CH[c].cn:c) : '';
 const ovrBadge = v => `<b class="ovr ${v>=88?'s':v>=80?'a':v>=72?'b':'c'}">${Math.round(v)}</b>`;
-const transferOpen = () => { const ev=curEvent(); return ev.type==='window'||ev.type==='off'||(ev.type==='lpl_s1'&&!ev.started); };
 
 // 后台尝试拉取最新 Data Dragon 版本号（失败/离线静默沿用内置 16.2.1）
 (function refreshDDragon(){
@@ -282,11 +281,11 @@ function renderApp(){
   $app().innerHTML = `
   <header class="top">
     <div class="brand">峡谷经理人</div>
-    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${EVENT_INFO[ev.type].name}</b></div><div><small>默契</small><b class="chem-top ${chem.cls}">${ico('chem')} ${chem.score}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div>${cloudPillHtml()}</div>
+    <div class="hinfo"><div><small>战队</small>${teamTag(S.user)}</div><div><small>赛季</small><b>${S.year}</b></div><div><small>当前</small><b>${esc((eventInfo(ev)||{}).name||'')}</b></div><div><small>默契</small><b class="chem-top ${chem.cls}">${ico('chem')} ${chem.score}</b></div><div><small>预算</small><b>${fmtMoney(me.budget)}</b></div>${cloudPillHtml()}</div>
   </header>
   ${updateBannerHtml()}
-  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['meta','版本'],['replays','回放'],['news','资讯'],['rules','规则'],['sys','账号与存档']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
-  <main>${VIEWS[UI.view]()}</main>
+  <nav class="tabs">${[['home','主页'],['roster','阵容'],['market','转会'],['events','赛事'],['db','资料库'],['meta','版本'],['news','资讯'],['settings','设置']].map(([k,n])=>`<a data-a="view" data-v="${k}" class="${UI.view===k?'on':''}">${n}</a>`).join('')}</nav>
+  <main>${(VIEWS[UI.view]||VIEWS.home)()}</main>
   ${UI.modal?`<div class="mask" data-a="closeModal"></div><div class="modal">${UI.modal()}</div>`:''}
   ${toastHtml()}`;
 }
@@ -485,24 +484,27 @@ function renderOffseasonHome(){
 }
 
 VIEWS.home = () => {
-  const ev=curEvent(), info=EVENT_INFO[ev.type];
+  const ev=curEvent(), info=eventInfo(ev);
   const strip = `<div class="season-strip">${S.events.map((e,i)=>{
     const cls = i<S.evIdx||e.done?'past':i===S.evIdx?'now':'';
-    return `<span class="ss-item ${cls}">${EVENT_INFO[e.type].name.replace(/LPL |全球总决赛 |MSI |电竞世界杯 /g,'')}</span>`;
+    return `<span class="ss-item ${cls}">${esc(((eventInfo(e)||{}).name||'').replace(/LPL |全球总决赛 |MSI |电竞世界杯 /g,''))}</span>`;
   }).join('')}</div>`;
 
-  // 1. 年中转会窗口：直接将转会操作与首发概览放到主页
+  // 1. 转会窗口（新档开局组队 / 年中转会窗）：直接将转会操作与首发概览放到主页
   if(ev.type === 'window'){
     const me = T(S.user);
+    const setup = isRosterSetup(ev);
     return `<section class="card evcard">
       ${strip}
-      <div class="evh"><h2>${info.name}</h2><span>预算 ${fmtMoney(me.budget)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</span></div>
+      <div class="evh"><h2>${esc(info.name)}</h2><span>预算 ${fmtMoney(me.budget)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</span></div>
+      ${setup?`<p class="muted">${esc(info.fmt)}</p>`:''}
       <div class="win-lineup-bar">
         ${ROLES.map(r=>{ const p=P(me.lineup[r]); return `<span class="wl-slot"><small>${ROLE_CN[r]}</small><b>${p?esc(playerTag(p)):'空缺'}</b></span>`; }).join('')}
         <a class="wl-link" data-a="view" data-v="roster">调整首发/出售 →</a>
-        <button class="btn big" style="margin-left:auto" data-a="endWindow">结束转会窗，继续赛程 ▶</button>
+        ${setup?'':`<button class="btn big" style="margin-left:auto" data-a="endWindow">结束转会窗，继续赛程 ▶</button>`}
       </div>
       ${probs()}
+      ${setup?`<div class="btns"><button class="btn big" data-a="finishSetup">完成组队，进入第一赛段 ▶</button></div>`:''}
     </section>
     <section class="card">${marketEmbedHtml(45)}</section>`;
   }
@@ -520,7 +522,7 @@ VIEWS.home = () => {
   let topBody = '';
   let stageCard = '';
   if(!ev.started){
-    topBody = `<p class="muted">${ev.type==='lpl_s1'?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
+    topBody = `<p class="muted">${ev.type==='lpl_s1'&&transferWindowOpen()?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
       <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
   } else if(ev.done){
     topBody = `<div class="done">${ico('check','g')} ${esc(info.name)}已结束 ${ev.res.champ?`· ${ico('trophy','gold')} 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
@@ -561,7 +563,7 @@ function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="war
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
 function findMyNext(){ const ev=curEvent(); if(!ev.started||ev.done) return null; for(const st of ev.stages){ if(st.kind==='br') resolveBR(st); const m=st.matches.find(m=>!m.w&&userInvolved(m)&&m.a&&m.b); if(m) return {m,st}; } return null; }
 function seasonTimeline(){
-  return `<ol class="tl">${S.events.map((e,i)=>{ const inf=EVENT_INFO[e.type];
+  return `<ol class="tl">${S.events.map((e,i)=>{ const inf=eventInfo(e)||{};
     const st = i<S.evIdx||e.done?'past':i===S.evIdx?'now':'';
     return `<li class="${st}"><b>${inf.name}</b> <small>${inf.date}</small> ${e.res&&e.res.champ?`· 冠军 ${teamTag(e.res.champ)}`:''}</li>`; }).join('')}</ol>`;
 }
@@ -603,8 +605,8 @@ VIEWS.roster = () => {
      <td>${ovrBadge(p.rating)}</td><td><span class="bd-val ${bd>=72?'hi':bd>=50?'mid':'lo'}">${bd}</span></td><td>${formChip(p,true)}</td><td>${mentalChip(p,true)}</td><td class="trs">${traitChips(p)||'<small class="muted">—</small>'}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${fmtMoney(p.salary)}</td><td>${p.contract}</td>
      <td class="pool">${p.champs.map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}" title="${ti.name}">${ti.icon?ti.icon+' ':''}${champName(c.c)}</span>`; }).join('')}</td>
      <td class="act">${st?`<span class="tagon">首发·${ROLE_CN[st[0]]}</span>`:`<button class="btn sm" data-a="setStarter" data-p="${esc(p.pid)}" data-r="${p.role}">设为${ROLE_CN[p.role]}首发</button>`}
-       ${transferOpen()?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}</td></tr>`; }).join('')}
-   </table>${transferOpen()?'':'<p class="muted">转会窗口关闭中（季后/休赛期与赛段之间开放），目前只能调整首发。</p>'}</section>`;
+       ${transferWindowOpen()?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}</td></tr>`; }).join('')}
+   </table>${transferWindowOpen()?'':'<p class="muted">转会窗口关闭中（季后/休赛期与赛段之间开放），目前只能调整首发。</p>'}</section>`;
 };
 
 // ---------- 转会市场（含季中建队非卖品过滤） ----------
@@ -619,7 +621,7 @@ function marketEmbedHtml(limit){
   if(f.q) ps=ps.filter(p=>(playerTag(p)+p.name+(p.team||'')).toLowerCase().includes(f.q.toLowerCase()));
   const key={rating:p=>-p.rating, value:p=>-playerValue(p), age:p=>p.age, pot:p=>-p.pot}[f.sort];
   ps.sort((a,b)=>key(a)-key(b));
-  const open=transferOpen();
+  const open=transferWindowOpen();
   const maxShow = limit || 120;
   return `<div class="mk-wrap">
   <div class="mk-hd"><h3>转会市场 ${open?'<span class="on">窗口开放</span>':'<span class="off">窗口关闭</span>'}</h3><span class="muted">我的预算 <b>${fmtMoney(T(S.user).budget)}</b></span></div>
@@ -682,8 +684,8 @@ VIEWS.events = () => {
   const i = UI.evSel==null? S.evIdx : UI.evSel;
   const evs=S.events.map((e,k)=>[e,k]).filter(([e])=>!['window','off'].includes(e.type));
   const ev=S.events[i];
-  return `<section class="card"><div class="evtabs">${evs.map(([e,k])=>`<a data-a="evSel" data-i="${k}" class="${k===i?'on':''}">${EVENT_INFO[e.type].name}</a>`).join('')}</div>
-   ${!ev||['window','off'].includes(ev.type)?'<p>请选择赛事</p>': !ev.started?'<p class="muted">赛事尚未开始。</p><p class="fmt">'+esc(EVENT_INFO[ev.type].fmt)+'</p>' :
+  return `<section class="card"><div class="evtabs">${evs.map(([e,k])=>`<a data-a="evSel" data-i="${k}" class="${k===i?'on':''}">${esc((eventInfo(e)||{}).name||'')}</a>`).join('')}</div>
+   ${!ev||['window','off'].includes(ev.type)?'<p>请选择赛事</p>': !ev.started?'<p class="muted">赛事尚未开始。</p><p class="fmt">'+esc((eventInfo(ev)||{}).fmt||'')+'</p>' :
      ev.stages.map(st=>stageView(st)).join('') + eventSummary(ev)}</section>`;
 };
 function matchCell(m){
@@ -785,7 +787,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.2')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.3')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -862,6 +864,86 @@ VIEWS.replays = () => {
     ${list.length?`<table class="tbl replays"><tr><th>赛事</th><th>对局</th><th>结果</th><th></th></tr>${list.map(row).join('')}</table>`:'<p>还没有比赛回放。打一场你自己战队的比赛后，这里会自动出现。</p>'}
   </section>`;
 };
+
+// ---------- 设置（回放 / 规则 / 账号与存档 合并入口） ----------
+const SET_TABS = [['replays','回放'],['rules','规则'],['sys','账号与存档']];
+VIEWS.settings = () => {
+  const tab = SET_TABS.some(([k])=>k===UI.setTab) ? UI.setTab : 'replays';
+  return `<nav class="off-tabs set-tabs">${SET_TABS.map(([k,n])=>`<a data-a="setTab" data-t="${k}" class="${tab===k?'on':''}">${n}</a>`).join('')}</nav>
+  ${VIEWS[tab]()}`;
+};
+
+// ---------- 资料库（只读：赛区 → 战队 → 首发 / 替补 → 选手详情，始终读取当前存档） ----------
+function dbState(){
+  const st = UI.db || (UI.db = {region:null, team:null});
+  const myT = T(S.user);
+  const region = REGIONS.includes(st.region) ? st.region : (myT && REGIONS.includes(myT.region) ? myT.region : REGIONS[0]);
+  const teams = Object.values(S.teams||{}).filter(t=>t && t.region===region);
+  const team = teams.find(t=>t.key===st.team) || teams.find(t=>t.key===S.user) || teams[0] || null;
+  return { region, teams, team };
+}
+function dbSquad(t){
+  const ids = (t.roster||[]).filter(id=>P(id));
+  const lu = t.lineup || {};
+  const used = new Set();
+  const slots = ROLES.map(r=>{ const id=lu[r]; const p = id && ids.includes(id) && !used.has(id) ? P(id) : null; if(p) used.add(id); return { r, p }; });
+  const subs = ids.filter(id=>!used.has(id)).map(P).sort((a,b)=>{ const ia=ROLES.indexOf(a.role), ib=ROLES.indexOf(b.role); return (ia<0?9:ia)-(ib<0?9:ib) || (b.rating||0)-(a.rating||0); });
+  return { slots, subs };
+}
+function dbRow(p, roleLbl, off){
+  return `<tr class="db-row" data-a="dbPlayer" data-p="${esc(p.pid)}">
+    <td>${roleLbl}</td><td><b>${esc(playerTag(p))}</b>${off?' <em class="muted">非本位</em>':''}<br><small>${esc(p.name||'')}</small></td>
+    <td>${ovrBadge(p.rating||0)}</td><td>${formChip(p,true)}${mentalChip(p,true)}</td><td class="act"><span class="muted">详情 ›</span></td></tr>`;
+}
+VIEWS.db = () => {
+  const { region, teams, team } = dbState();
+  const regionNav = `<nav class="off-tabs db-sel">${REGIONS.map(r=>`<a data-a="dbRegion" data-r="${r}" class="${r===region?'on':''}">${r}</a>`).join('')}</nav>`;
+  const teamNav = teams.length
+    ? `<nav class="off-tabs db-sel">${teams.map(t=>`<a data-a="dbTeam" data-k="${esc(t.key)}" class="${team&&t.key===team.key?'on':''}">${esc(t.short||t.key)}</a>`).join('')}</nav>`
+    : '<p class="muted">该赛区暂无战队。</p>';
+  let body = '';
+  if(team){
+    const { slots, subs } = dbSquad(team);
+    const head = '<tr><th>位置</th><th>选手</th><th>能力</th><th>状态/心态</th><th></th></tr>';
+    body = `<h3>${esc(team.name||team.short||team.key)} ${team.cn?`<small>${esc(team.cn)}</small>`:''}</h3>
+      <h4>首发</h4>
+      <table class="tbl db-tbl">${head}${slots.map(({r,p})=>p
+        ? dbRow(p, `<span class="tagon">首发·${ROLE_CN[r]}</span>`, p.role!==r)
+        : `<tr><td><span class="tagon">首发·${ROLE_CN[r]}</span></td><td colspan="4"><em class="muted">空缺</em></td></tr>`).join('')}</table>
+      <h4>替补</h4>
+      ${subs.length ? `<table class="tbl db-tbl">${head}${subs.map(p=>dbRow(p, `<span class="tagoff">替补</span> ${ROLE_CN[p.role]||esc(p.role||'')}`, false)).join('')}</table>` : '<p class="muted">暂无替补。</p>'}`;
+  }
+  return `<section class="card"><h2>资料库</h2>${regionNav}${teamNav}${body}</section>`;
+};
+function dbPlayerModal(pid){
+  return () => {
+    const p = P(pid);
+    const t = p && p.team ? T(p.team) : null;
+    if(!p || !t || !(t.roster||[]).includes(pid)) return `<h3>资料库</h3><p class="muted">该选手已不在此战队名单中。</p><div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+    const slot = ROLES.find(r=>(t.lineup||{})[r]===pid);
+    const bd = playerTeamBond(p);
+    const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
+    const pool = (p.champs||[]).map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}" title="${ti.name}">${ti.icon?ti.icon+' ':''}${esc(champName(c.c))} ${Math.round(c.p||0)}</span>`; }).join('');
+    return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small></h3>
+      <p>${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}</p>
+      <table class="tbl db-kv">
+        ${kv('位置', ROLE_CN[p.role]||esc(p.role||''))}
+        ${kv('国籍', esc(p.nat||'—'))}
+        ${kv('年龄', p.age!=null?p.age:'—')}
+        ${kv('能力', ovrBadge(p.rating||0))}
+        ${kv('潜力', p.pot!=null?p.pot:'—')}
+        ${kv('状态', formChip(p,true))}
+        ${kv('心态', mentalChip(p,true))}
+        ${kv('特质', traitChips(p)||'<small class="muted">—</small>')}
+        ${kv('默契', `<span class="bd-val ${bd>=72?'hi':bd>=50?'mid':'lo'}">${bd}</span>`)}
+        ${kv('身价', fmtMoney(playerValue(p)))}
+        ${kv('年薪', fmtMoney(p.salary||0))}
+        ${kv('合同至', p.contract!=null?p.contract:'—')}
+        ${kv('英雄池', pool?`<span class="pool">${pool}</span>`:'<small class="muted">—</small>')}
+      </table>
+      <div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+  };
+}
 
 // ================= 比赛（1v1 选边赛 + LoL 海克斯风格 BP）界面 =================
 function needsSolo1v1(M){
@@ -1591,7 +1673,11 @@ function endUserGame(g){
 
 // ================= 交互 =================
 const ACT = {
-  view:d=>{ UI.view=d.v; UI.evSel=null; render(); },
+  view:d=>{ if(['replays','rules','sys'].includes(d.v)){ UI.setTab=d.v; UI.view='settings'; } else UI.view=d.v; UI.evSel=null; render(); },
+  setTab:d=>{ UI.setTab=d.t; render(); },
+  dbRegion:d=>{ UI.db={region:d.r, team:null}; render(); },
+  dbTeam:d=>{ const t=T(d.k); UI.db={region:t?t.region:(UI.db||{}).region, team:d.k}; render(); },
+  dbPlayer:d=>{ UI.modal=dbPlayerModal(d.p); render(); },
   authTab:d=>{ UI.authTab=d.t; UI.verifyEmail=null; render(); },
   cancelOtp:()=>{ UI.verifyEmail=null; render(); },
   enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; UI.verifyEmail=null; render(); },
@@ -1601,7 +1687,7 @@ const ACT = {
   cancelNewTeam:()=>{ UI.pickTeam=false; render(); },
   newgame:d=>{ newGame(d.k); save(); UI.view='home'; UI.pickTeam=false; render(); },
   continue:async()=>{ if(await load()){ render(); if(CloudSync.isLoggedIn()) CloudSync.syncOnLaunch(false); } else toast('未找到本地存档'); },
-  openAccount:()=>{ if(S){ UI.view='sys'; UI.modal=null; render(); } else { UI.entry='gate'; render(); } },
+  openAccount:()=>{ if(S){ UI.view='settings'; UI.setTab='sys'; UI.modal=null; render(); } else { UI.entry='gate'; render(); } },
   cloudSignIn:async()=>{
     const email = (document.getElementById('auth-email')||{}).value || '';
     const pass = (document.getElementById('auth-pass')||{}).value || '';
@@ -1700,7 +1786,8 @@ const ACT = {
   selTrainPid:d=>{ UI.trainPid=d.p; render(); },
   toggleTrain:d=>{ toggleTrainChamp(d.p, d.c); save(); render(); },
   closeModal:()=>{ UI.modal=null; UI.offerCash=null; UI.offerCashRaw=null; UI.offerGive=null; render(); },
-  endWindow:()=>{ curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
+  endWindow:()=>{ if(isRosterSetup(curEvent())) return ACT.finishSetup(); curEvent().done=true; aiTransfers(4); advanceEvent(); save(); render(); },
+  finishSetup:()=>{ const r=finishRosterSetup(); if(r.ok) save(); toast(r.msg); },
   nextEvent:()=>{ advanceEvent(); save(); render(); },
   renew:d=>{ renewPlayer(d.p); save(); render(); },
   newSeason:()=>{ finishOffseason(); save(); render(); toast(`${S.year} 赛季开始！`); },

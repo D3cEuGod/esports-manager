@@ -1,7 +1,7 @@
 {
-  "version": "2.1.2",
-  "date": "2026-11-25",
-  "notes": "128 个英雄机制克制与分路组合、跨端静默云同步、转会报价与手机 BP 操作修复",
+  "version": "2.1.3",
+  "date": "2026-11-26",
+  "notes": "新档先组队、六赛区战队与选手资料库、设置菜单整合",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

@@ -1206,3 +1206,9 @@ body.cb-lock{overflow:hidden}
   /* 手机 BP：确认禁用/选择按钮吸底，滚动英雄池时也随时可点 */
   .match.hex .lock-dock{position:sticky;bottom:0;z-index:5;margin:0 -12px -12px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(4,12,24,0),rgba(4,12,24,.97) 12px,#040c18)}
 }
+/* 设置 / 资料库：子标签与选择器 */
+.set-tabs,.db-sel{margin-bottom:12px}
+.db-sel a{display:inline-flex;align-items:center;min-height:40px}
+.db-row{cursor:pointer}.db-tbl td:first-child{white-space:nowrap}
+.db-kv th{border-bottom:1px solid var(--ln);width:5.5em;vertical-align:top}
+@media(max-width:959px){.modal .tbl.db-kv{display:table}}

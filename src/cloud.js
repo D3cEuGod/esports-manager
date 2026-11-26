@@ -94,7 +94,7 @@ const StorageBridge = {
 function makeSaveSummary(saveObj){
   if(!saveObj) return null;
   const ev = saveObj.events && saveObj.events[saveObj.evIdx];
-  const evName = ev && typeof EVENT_INFO !== 'undefined' && EVENT_INFO[ev.type] ? EVENT_INFO[ev.type].name : '';
+  const evName = typeof eventInfo === 'function' ? eventInfo(ev)?.name || '' : '';
   const team = saveObj.teams && saveObj.teams[saveObj.user] ? saveObj.teams[saveObj.user].short : (saveObj.user || '—');
   return {
     team,
@@ -629,7 +629,7 @@ const CloudSync = {
 
 // ================= 云端版本自动更新检测 =================
 window.AppUpdater = {
-  currentVersion: '2.1.2',
+  currentVersion: '2.1.3',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null,

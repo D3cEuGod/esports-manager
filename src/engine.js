@@ -148,7 +148,7 @@ function newGame(userTeam){
   // LPL 2026 第一赛段分组（官方：按2025排名）
   S.lplOrder = ['BLG','AL','TES','IG','JDG','WBG','NIP','WE','EDG','TT','LGD','UP','LNG','OMG'].filter(k=>S.teams[k]);
   Object.values(S.teams).filter(t=>t.region==='LPL'&&!S.lplOrder.includes(t.key)).forEach(t=>S.lplOrder.push(t.key));
-  buildSeason();
+  buildSeason({rosterSetup:true});
   addNews(`欢迎来到 ${S.year} 赛季！你执掌 ${teamName(userTeam)}。目标：拿下LPL世界赛资格，问鼎全球总决赛。`);
 }
 function genChampPool(pl, r){
@@ -645,10 +645,16 @@ function teamOvr(key){
 function lineupProblems(key){
   const t=T(key), probs=[];
   if(!t) return probs;
-  for(const r of ROLES) if(!t.lineup[r]) probs.push(`缺少${ROLE_CN[r]}首发`);
+  const used=new Set();
+  for(const r of ROLES){
+    const p=P(t.lineup[r]);
+    if(!p || p.retired || p.team!==key || !t.roster.includes(p.pid)) probs.push(`缺少${ROLE_CN[r]}首发`);
+    else if(used.has(p.pid)) probs.push(`${ROLE_CN[r]}首发与其他位置重复`);
+    else used.add(p.pid);
+  }
   const maxF = maxForeignFor(t.region);
   if(maxF < 5){
-    const f = starters(key).filter(isForeign).length;
+    const f = [...used].filter(pid=>isForeign(P(pid))).length;
     if(f>maxF) probs.push(`首发外援${f}人，超过${t.region}上限${maxF}人`);
   }
   return probs;
@@ -1532,8 +1538,12 @@ const EVENT_INFO = {
   window:{name:'转会窗口', date:'', loc:'', fmt:'转会窗口开启：可以买卖、交换选手，签约自由球员。'},
   off:{name:'休赛期', date:'11月 - 次年1月', loc:'', fmt:'合同到期、续约、转会期。选手年龄+1，能力成长或衰退。'},
 };
-function buildSeason(){
+const ROSTER_SETUP_INFO = {name:'重新启航（组队）', date:'赛季开始前', loc:'', fmt:'调整首发阵容、转会引援或签约自由选手。确认组队完成后进入第一赛段。'};
+function isRosterSetup(ev){ return ev?.type==='window' && ev.rosterSetup===true; }
+function eventInfo(ev){ return isRosterSetup(ev) ? ROSTER_SETUP_INFO : EVENT_INFO[ev?.type]; }
+function buildSeason({rosterSetup=false}={}){
   S.events = ['lpl_s1','fst','window','lpl_s2','msi','ewc','window','lpl_s3','lpl_rf','worlds','off'].map(type=>({type, stages:[], si:0, done:false, started:false, res:{}}));
+  if(rosterSetup) S.events.unshift({type:'window', rosterSetup:true, stages:[], si:0, done:false, started:false, res:{}});
   S.evIdx=0; S.points={}; S.lplOrder.forEach(k=>S.points[k]=0);
   S.rr={}; S.log={};
 }
@@ -1912,7 +1922,7 @@ function stageMatches(ev){ // 当前可进行的比赛（含并行小组；循�
 }
 function nextReadyMatch(){ const ev=curEvent(); if(!ev||ev.done) return null; const a=stageMatches(ev); return a[0]||null; }
 function stageDone(st){ if(st.kind==='br') resolveBR(st); return st.matches.every(m=>m.w); }
-function startEvent(){ const ev=curEvent(); if(!ev.started){ ev.started=true; EV[ev.type].init(ev); } }
+function startEvent(){ const ev=curEvent(); if(ev && !ev.started && !isRosterSetup(ev)){ ev.started=true; EV[ev.type].init(ev); } }
 function afterMatch(st, m){
   if(st.kind==='swiss') swissReport(st,m);
   if(st.kind==='br') resolveBR(st);
@@ -1983,12 +1993,27 @@ function advanceEvent(){
   const nxt=curEvent();
   if(nxt && nxt.type==='off') EV.off.init(nxt);
 }
-function addNews(t){ S.news.unshift({y:S.year, ev:curEvent()?EVENT_INFO[curEvent().type].name:'', t}); if(S.news.length>300) S.news.length=300; }
+function finishRosterSetup(){
+  const ev=curEvent();
+  if(!isRosterSetup(ev)) return {ok:false, msg:'当前不在组队阶段。'};
+  const probs=lineupProblems(S.user);
+  if(probs.length) return {ok:false, msg:`请先调整首发阵容：${probs.join('；')}`};
+  ev.started=true;
+  ev.done=true;
+  advanceEvent();
+  return {ok:true, msg:'组队完成，已进入第一赛段。'};
+}
+function addNews(t){ S.news.unshift({y:S.year, ev:eventInfo(curEvent())?.name||'', t}); if(S.news.length>300) S.news.length=300; }
 
 // ================= 转会（含季中建队非卖品保护、化学反应成本、跨赛区年内极稀有机制） =================
 function isMidSeasonWindow(){
   const ev = curEvent();
-  return !!(ev && ev.type === 'window');
+  return !!(ev && ev.type === 'window' && !isRosterSetup(ev));
+}
+function transferWindowOpen(){
+  const ev=curEvent();
+  return !!(ev && (ev.type==='window' || ev.type==='off' ||
+    (ev.type==='lpl_s1' && !ev.started && !isRosterSetup(S.events[S.evIdx-1]))));
 }
 function isOffseasonWindow(){
   const ev = curEvent();
@@ -2152,7 +2177,8 @@ function finishOffseason(){
   ensureRoster(S.user);
   const s3=S.events.find(e=>e.type==='lpl_s3').res.final;
   const ranked=s3.slice(0,8).concat(S.lplOrder.filter(t=>!s3.slice(0,8).includes(t)).sort((a,b)=>(S.points[b]||0)-(S.points[a]||0)));
-  S.history = S.history||[]; S.history.push({year:y, points:{...S.points}, lpl:S.events.filter(e=>/lpl_s/.test(e.type)).map(e=>e.res.champ), fst:S.events[1].res.champ, msi:S.events[4].res.champ, ewc:S.events[5].res.champ, worlds:S.events[9].res.champ});
+  const championOf=type=>S.events.find(e=>e.type===type).res.champ;
+  S.history = S.history||[]; S.history.push({year:y, points:{...S.points}, lpl:S.events.filter(e=>/lpl_s/.test(e.type)).map(e=>e.res.champ), fst:championOf('fst'), msi:championOf('msi'), ewc:championOf('ewc'), worlds:championOf('worlds')});
   S.lplOrder=ranked;
   buildSeason();
   if(userTrainLogs.length) addNews(`🎯 冬训成果：${userTrainLogs.join('；')}。`);

@@ -210,26 +210,72 @@ section('回放：最近 10 局、收藏 10 局、共 200 条');
   ok(r.cancel, '取消旧的 1v1 收藏时裁剪录像并保留摘要');
 }
 
+section('新档组队和存档兼容');
+{
+  const r = run(`(()=>{
+    newGame('TES');
+    const setup=curEvent(), team=T(S.user), initial={...team.lineup};
+    const opens=isRosterSetup(setup) && eventInfo(setup).name==='重新启航（组队）' && transferWindowOpen() && !isMidSeasonWindow();
+    const budget=team.budget;
+    simUntilUser(true); advanceEvent();
+    const waits=curEvent()===setup && !setup.started && !setup.done && !nextReadyMatch();
+    delete team.lineup.TOP;
+    const missingRejected=!finishRosterSetup().ok && curEvent()===setup;
+    team.lineup.TOP=initial.MID;
+    const duplicateRejected=!finishRosterSetup().ok && curEvent()===setup;
+    team.lineup.TOP=T('BLG').lineup.TOP;
+    const otherTeamRejected=!finishRosterSetup().ok && curEvent()===setup;
+    team.lineup.TOP=initial.TOP;
+    const check=starters(S.user).slice(0,3).map(p=>[p,p.nat]);
+    for(const [p] of check) p.nat='KR';
+    const importsRejected=!finishRosterSetup().ok && curEvent()===setup;
+    for(const [p,nat] of check) p.nat=nat;
+    const signing=freeAgents().find(p=>!isForeign(p));
+    const signed=makeOffer(signing.pid,0).ok;
+    team.lineup[signing.role]=signing.pid;
+    S=migrateSave(JSON.parse(JSON.stringify(S)));
+    const restored=isRosterSetup(curEvent()) && transferWindowOpen();
+    const finished=finishRosterSetup().ok && S.events[0].done &&
+      curEvent().type==='lpl_s1' && !curEvent().started && !transferWindowOpen() && T(S.user).budget===budget && !finishRosterSetup().ok;
+    const old=JSON.parse(JSON.stringify(S));
+    old.events.shift(); old.evIdx=0;
+    S=migrateSave(old);
+    const oldPreserved=curEvent().type==='lpl_s1' && !isRosterSetup(curEvent()) && transferWindowOpen();
+    S.evIdx=S.events.findIndex(e=>e.type==='window');
+    const signingPreserved=signed && P(signing.pid).team===S.user && T(S.user).lineup[signing.role]===signing.pid;
+    return {opens, waits, missingRejected, duplicateRejected, otherTeamRejected, importsRejected, restored, finished, signingPreserved,
+      oldPreserved, midSeason:transferWindowOpen() && isMidSeasonWindow()};
+  })()`);
+  ok(r.opens && r.waits && r.restored && r.signingPreserved, '新档等待组队确认，可签约、调整首发并存档续玩');
+  ok(r.missingRejected && r.duplicateRejected && r.otherTeamRejected && r.importsRejected, '缺位、重复、其他队伍选手和超外援上限的阵容均无法完成组队');
+  ok(r.finished && r.oldPreserved && r.midSeason, '确认后进入第一赛段，老档和季中转会规则保留');
+}
+
 // ---------------------------------------------------------------- 完整赛季
 section('完整赛季：从 LPL 第一赛段到世界赛 + 休赛期');
 {
   const t0 = performance.now();
   const r = run(`(()=>{
-    newGame('BLG'); const log=[]; let guard=0;
+    newGame('BLG'); const log=[], champions={}; let guard=0;
     while(guard++<40){
       const ev=curEvent();
+      if(isRosterSetup(ev)){ if(!finishRosterSetup().ok) throw new Error('组队失败'); log.push('setup'); continue; }
       if(ev.type==='off'){ finishOffseason(); log.push('off'); break; }
       if(ev.type==='window'){ ev.done=true; aiTransfers(4); advanceEvent(); log.push('window'); continue; }
       simUntilUser(true);
       if(!ev.done) throw new Error('赛事未完成：'+ev.type);
+      champions[ev.type]=ev.res.champ;
       log.push(ev.type+':'+(ev.res.champ||'-'));
       advanceEvent();
     }
     const ser=JSON.stringify(S); const S2=migrateSave(JSON.parse(ser));
-    return {log, year:S.year, ok: !!S2 && S2.year===S.year, size: ser.length};
+    const history=S.history[0];
+    const historyOk=['fst','msi','ewc','worlds'].every(type=>champions[type] && history?.[type]===champions[type]);
+    return {log, year:S.year, ok: !!S2 && S2.year===S.year, size: ser.length, historyOk, nextEvent:curEvent().type};
   })()`);
   console.log('  ', r.log.join(' → '), ` 用时 ${((performance.now() - t0) / 1000).toFixed(1)}s  存档 ${(r.size / 1024).toFixed(0)}KB`);
-  ok(r.log.includes('off') && r.year === 2027, '赛季顺利结束并进入下一年');
+  ok(r.log.includes('off') && r.year === 2027 && r.nextEvent === 'lpl_s1', '赛季顺利结束，下一年保留原赛程');
+  ok(r.historyOk, '插入组队事件后，国际赛冠军正确写入赛季历史');
   ok(r.ok, '存档序列化与迁移正常');
 }
 

@@ -434,5 +434,141 @@ section('英雄机制克制与分路联动');
   ok(r.game, '阵容克制进入 BP 胜率与实战阶段战力');
 }
 
+section('BP 反制权重与阵容实战对照');
+{
+  const r = run(`(()=>{
+    newGame('TES');
+    for(const key of ['TES','BLG']) for(const player of starters(key)){
+      player.rating=82; player.form=0; player.mental=0; player.champs=[];
+    }
+    for(const champ of CHAMP_KEYS) S.meta[champ]=0;
+    const d=newDraft('TES','BLG','A',[]);
+    d.picks.A={TOP:'Ornn',JUG:'Poppy',MID:'Azir',ADC:'Jinx',SUP:'Lulu'};
+    d.picks.B={TOP:'Ambessa',JUG:'Vi',MID:'Ahri',ADC:"Kai'Sa",SUP:'Rakan'};
+    d.step=20;
+    const before=JSON.stringify(S), oldRandom=Math.random, weight=DRAFT_COUNTERS.Poppy[1];
+    const strong=evalDraft(d).pA;
+    let weak, wStrong=0, wWeak=0;
+    try {
+      DRAFT_COUNTERS.Poppy[1]=0;
+      weak=evalDraft(d).pA;
+      for(let seed=1;seed<=240;seed++){
+        S=JSON.parse(before); Math.random=srand((seed*2654435761)>>>0); DRAFT_COUNTERS.Poppy[1]=0;
+        wWeak+=playGame(d).w==='A'?1:0;
+        S=JSON.parse(before); Math.random=srand((seed*2654435761)>>>0); DRAFT_COUNTERS.Poppy[1]=weight;
+        wStrong+=playGame(d).w==='A'?1:0;
+      }
+    } finally { Math.random=oldRandom; DRAFT_COUNTERS.Poppy[1]=weight; S=JSON.parse(before); }
+    const live=newDraft('TES','BLG','A',[]);
+    const ban=draftFeedback(live,'Ahri');
+    const banUnaffected=live.step===0 && !live.bans.A.length;
+    live.step=19; live.picks=JSON.parse(JSON.stringify(d.picks)); delete live.picks.A.JUG;
+    const cur=draftSide(live); cur.side==='B' && (live.first='B');
+    const preview=draftFeedback(live,'Poppy','JUG');
+    const profile=ids=>fightProfile(ids.map(c=>({combat:draftCombatProfile(c),hp:1,tags:new Set(CH[c].tags)})));
+    const dive=profile(['Vi','Ambessa','Rakan',"Kai'Sa"]);
+    const open=localFightBonus(dive,profile(['Jinx','Zoe','Karma']),'team',true);
+    const defended=localFightBonus(dive,profile(['Poppy','Jinx','Lulu']),'team',true);
+    return {strong,weak,wStrong,wWeak,ban:banUnaffected && !!ban.banReason && ban.last.kind==='ban',
+      preview:preview.last?.champ==='Poppy' && !live.picks.A.JUG && preview.A.advantages.some(n=>n.includes('波比')),interact:defended<open};
+  })()`);
+  console.log('  波比对多突进，BP 胜率差', ((r.strong-r.weak)*100).toFixed(1)+' 个百分点，实战配对', `${r.wStrong}/240 vs ${r.wWeak}/240`);
+  ok(r.strong-r.weak>=0.075 && r.wStrong>r.wWeak,'提高强反制的评分，并在同条件实战观察到胜率改善');
+  ok(r.ban && r.preview && r.interact, '选禁预览无副作用，局部反开随实际参战英雄生效');
+}
+
+section('AI BP：对位预判与能力权重');
+{
+  const r=run(`(()=>{
+    newGame('TES');
+    for(const key of ['TES','BLG']) for(const p of starters(key)){
+      p.rating=82; p.form=0; p.mental=0; p.champs=[];
+    }
+    for(const c of CHAMP_KEYS) S.meta[c]=0;
+    const d=newDraft('TES','BLG','A',[]);
+    d.step=18;
+    d.picks.A={TOP:'Ornn',JUG:'Trundle',MID:'Azir',ADC:'Jinx'};
+    d.picks.B={TOP:'Ambessa',JUG:'Vi',MID:'Ahri',ADC:"Kai'Sa"};
+    const original=JSON.stringify(d), counters=aiChoose(d,{lookahead:true});
+    const unchanged=JSON.stringify(d)===original;
+    const ranged={...d,picks:{...d.picks,B:{TOP:'Kennen',JUG:'Karthus',MID:'Hwei',ADC:'Varus'}}};
+    const antiMagic=aiChoose(ranged,{lookahead:true});
+    const denied={...d,locked:['Poppy']}, eligible=aiChoose(denied,{lookahead:true});
+    const opening=newDraft('TES','BLG','A',[]);
+    opening.step=6;
+    opening.bans={A:['Aurora','Pyke','Xin Zhao'],B:['Miss Fortune','Nidalee','Viego']};
+    const immediate=aiDraftCandidates(opening,1,false)[0];
+    const planned=aiChoose(opening,{lookahead:true});
+    const afterReply=c=>{
+      const next=draftAfterChoice(opening,c);
+      return Math.min(...aiDraftCandidates(next,3,false).map(reply=>evalDraft(draftAfterChoice(next,reply)).diff));
+    };
+    const considersReply=planned.c!==immediate.c && afterReply(planned)>afterReply(immediate)+0.3;
+    const initial=evalDraft(d).diff;
+    for(const p of starters('TES')) p.rating+=10;
+    const gain=evalDraft(d).diff-initial;
+    const game=createGame5(d);
+    const c=game.champs[0], context=d.ctx;
+    const same=Math.abs(c.sk-draftPlayerRating(c.p,c.role,context)-champFit(c.p,c.c,c.role)*DRAFT_FIT_WEIGHT)<1e-9;
+    return {counter:counters.c==='Poppy' && counters.role==='SUP',
+      magic:antiMagic.c==='Galio' && antiMagic.role==='SUP',legal:eligible.c!=='Poppy' && !!draftAfterChoice(denied,eligible),unchanged,gain,same,considersReply};
+  })()`);
+  ok(r.counter && r.magic && r.legal && r.unchanged,'AI 响应不同阵容威胁并遵守当前禁选、位置和无畏锁定');
+  ok(r.considersReply,'AI 在首抢时能避开对手可利用的回应');
+  ok(Math.abs(r.gain-6.4)<0.05 && r.same,'全队能力升 10 分的净贡献为 6.4，比赛沿用同一权重');
+}
+
+section('职业英雄池、熟练度持久化与选手成长');
+{
+  const r=run(`(()=>{
+    newGame('TES');
+    const realistic=!!professionalPicks(P('Doran')).Jayce && P('Doran').champs.every(e=>e.c!=='Rengar') &&
+      Object.values(S.players).find(p=>playerTag(p).toLowerCase()==='fengyue').champs.every(e=>e.c!=='Amumu') && (S.meta.Sona||0)<1;
+    const pro={...P('Doran'),champs:[{c:'Rumble',p:95},{c:'Jayce',p:63}]};
+    const unpracticed={pid:'test-learner',tag:'test-learner',role:'TOP',champs:[]};
+    S.meta.Rumble=0; S.meta.Jayce=0;
+    const signature=champFit(pro,'Rumble','TOP');
+    const neutral=champFit(pro,'Jayce','TOP'), unknown=champFit(unpracticed,'Jayce','TOP');
+    S.meta.Jayce=2;
+    const metaFit=champFit(pro,'Jayce','TOP'), rookieFit=champFit(unpracticed,'Jayce','TOP');
+    const version=signature>neutral && metaFit>signature && metaFit-neutral>rookieFit-unknown;
+    const player=starters('TES')[0];
+    player.champs=CHAMP_KEYS.slice(0,11).map(c=>({c,p:90}));
+    const hero='Ornn';
+    const g={w:'A',mvp:player.pid,sa:[{pid:player.pid,k:8,d:0,a:4,c:hero}],sb:[]};
+    applyGameImpact(g,'TES','BLG');
+    const first=champProfVal(player,hero);
+    S=migrateSave(JSON.parse(JSON.stringify(S)));
+    const saved=P(player.pid);
+    applyGameImpact(g,'TES','BLG');
+    const kept=first>0 && saved.champs.length===11 && g.masteryChanges[0].prev===first && champProfVal(saved,hero)>first;
+    const initial=JSON.stringify(S), oldRandom=Math.random;
+    let direct, skipped, once;
+    try{
+      const d=newDraft('TES','BLG','A',[]);
+      Math.random=srand(18); autoDraftRest(d);
+      Math.random=srand(635); direct=playGame(d);
+      S=JSON.parse(initial);
+      Math.random=srand(635); const recording=createGame5(d,{record:true});
+      for(let i=0;i<10;i++) step5(recording);
+      while(!recording.over) step5(recording);
+      skipped=game5Result(recording);
+      const snapshot=JSON.stringify(S.players);
+      once=game5Result(recording)===skipped && JSON.stringify(S.players)===snapshot;
+    } finally { Math.random=oldRandom; }
+    const growth={pid:'test-growth',age:18,rating:62,pot:94,development:{games:14,performance:12}};
+    const inactive={...growth,development:{games:0,performance:0}};
+    settlePlayerDevelopment(growth); settlePlayerDevelopment(inactive);
+    const same=initialPairBond('369','JackeyLove'), stranger=initialPairBond('369','Doran');
+    return {realistic,version,kept,once,sameRun:JSON.stringify(direct.masteryChanges)===JSON.stringify(skipped.masteryChanges),
+      grow:growth.rating>inactive.rating && growth.ratingDelta>0 && initialPotential(growth)===initialPotential({...growth,rating:91}),
+      chemistry:same>stranger && same>40 && stranger>0};
+  })()`);
+  ok(r.realistic,'开档英雄池和 T0 避免用随机奇招充当招牌或职业常用英雄');
+  ok(r.version,'合适的版本英雄能超过非版本招牌，新手无法取得相同的版本收益');
+  ok(r.kept && r.once && r.sameRun,'满英雄池依然保留熟练度，快进与快模一致，一局只结算一次');
+  ok(r.grow && r.chemistry, '潜力独立，实战出场加快成长，历史搭档有默契基础');
+}
+
 console.log(fails ? `\n✗ ${fails} 项失败` : '\n✓ 全部通过');
 process.exit(fails ? 1 : 0);

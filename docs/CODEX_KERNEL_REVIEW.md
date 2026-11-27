@@ -71,6 +71,14 @@
 - 录像时间约定（播放器按此解码）：`f[0]` 是开局第 0 秒，`f[k]` 对应第 3k 秒，最后一帧为终局；`st[k]` 对应第 12k 秒，最后一条为终局统计；`ev` 按发生顺序排列，同一秒内先 `S` 后 `B`（辅助装升级也要先记卖出地图集）。
 - 回放摘要字段 `pl:{A,B}`：每名选手 `[选手, 英雄, 击杀, 死亡, 助攻]`，由 `ui.js` 写入，裁剪录像时必须保留。
 
+## 接口变更
+
+- `draftFeedback(d, champ?, role?)` 返回 A/B 两支队伍的优势与风险、A 方预测胜率 `pA`、相对上一步或候选操作的变化 `deltaA`、`partial`、`last` 和 `banReason`。同一方法用于实时和候选预览，调用不会修改 BP。未选完的阵容用暂估概率，禁用说明单独展示。
+- `playGame` / `game5Result` 新增 `masteryChanges`。每条记录 `{pid, tag, champ, prev, next, gain}`，仅包含玩家所执教队伍。保留系列赛对局明细时，该字段也写入 `m.gm`。快模和观战共用结算。
+- `playerProfTier(p, champ, value?)` 供档案和 BP 展示经过职业记录或实战培养确认的招牌。`p.ratingDelta` 和 `p.ratingYearStart` 用于能力变化展示。旧存档可缺少这些显示字段。
+- `aiChoose(d, {lookahead:true})` 为实时 BP 提供对手应对和己方联动预判，`AI_DRAFT_WAIT_MS` 是每手 AI 禁选的展示时长。快模调用 `aiChoose(d)` 走单步评分。BP 与实战共用能力和阵容权重。
+- 回放帧、统计和事件编码保持原格式。
+
 ## 约束
 
 - 零外部运行时依赖，原生 JS；`python build_web.py` 仍要产出单文件 `dist/index.html`。

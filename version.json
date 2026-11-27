@@ -1,7 +1,7 @@
 {
-  "version": "2.1.3",
-  "date": "2026-11-26",
-  "notes": "新档先组队、六赛区战队与选手资料库、设置菜单整合",
+  "version": "2.1.4",
+  "date": "2026-11-27",
+  "notes": "AI BP 思考与反制预判、提高阵容分量、职业英雄池和快模成长修复",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

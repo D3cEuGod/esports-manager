@@ -193,6 +193,53 @@ async function main(){
   assert.equal(JSON.parse(expiredDevice.disk.get('save')).match,10);
   assert.equal(expired.requests.length,1);
   console.log('✓ 云同步：静默轮询、操作中延后、离线重试、并发保护和会话过期');
+
+  const accounts=mockCloud(null), defaultFetch=accounts.fetch.bind(accounts);
+  const session={access_token:'fictional-session',refresh_token:'fictional-refresh',user:{id:'test-user',email:'test@example.invalid'}};
+  const seenAuth=[];
+  accounts.fetch=async(url,options)=>{
+    const {pathname,searchParams}=new URL(url);
+    if(!pathname.includes('/auth/v1/')) return defaultFetch(url,options);
+    const action=pathname.split('/').at(-1);
+    seenAuth.push(action);
+    const input=options.body?JSON.parse(options.body):{};
+    if(action==='verify' && input.token!=='123456') return {ok:false,status:400,json:async()=>({message:'invalid code'})};
+    if(action==='token') assert.equal(searchParams.get('grant_type'),'password');
+    if(action==='logout') assert.equal(searchParams.get('scope'),'local');
+    return {ok:true,status:200,json:async()=>action==='verify'||action==='token'?session:{}};
+  };
+  const login=device(accounts);
+  login.run('CloudSync.auth=null');
+  assert.equal((await login.run("CloudSync.signUp('invalid','short')")).ok,false);
+  assert.equal((await login.run("CloudSync.signUp('test@example.invalid','fictional-pass')")).needConfirm,true);
+  assert.equal((await login.run("CloudSync.resendSignupOtp('test@example.invalid')")).ok,true);
+  assert.equal((await login.run("CloudSync.verifySignupOtp('test@example.invalid','654321')")).ok,false);
+  assert.equal((await login.run("CloudSync.verifySignupOtp('test@example.invalid','123456')")).ok,true);
+  assert.equal(login.run('CloudSync.isLoggedIn()'),true);
+  login.setLocal(save('logout-keeps-local',11));
+  await login.run('CloudSync.signOut()');
+  assert.equal(login.run('CloudSync.isLoggedIn()'),false);
+  assert.equal(JSON.parse(login.disk.get('save')).match,11);
+  assert.equal((await login.run("CloudSync.signIn('test@example.invalid','fictional-pass')")).ok,true);
+  assert.deepEqual(seenAuth,['signup','resend','verify','verify','logout','token']);
+
+  const app=device(mockCloud(null));
+  const nativeFiles=new Map();
+  app.context.__TAURI__={core:{invoke:async(name,args)=>{
+    if(name==='get_save_path') return 'test-fixture/save.json';
+    if(name==='write_local_save'){ nativeFiles.set('save',args.content); return; }
+    if(name==='load_local_save') return nativeFiles.get('save');
+    if(name==='delete_local_save'){ nativeFiles.delete('save'); return; }
+    throw Error(name);
+  }}};
+  await app.run('StorageBridge.init()');
+  assert.equal(app.run('StorageBridge.savePath'),'test-fixture/save.json');
+  await app.run("StorageBridge.writeSaveText('{\"a\":1}')");
+  assert.equal(await app.run('StorageBridge.readSaveText()'),'{"a":1}');
+  await app.run('StorageBridge.deleteSave()');
+  assert.equal(nativeFiles.has('save'),false);
+  assert.equal(app.disk.has('save'),false);
+  console.log('✓ 测试账号：注册、验证码、登录、退出、本地保留及桌面存储桥接');
 }
 
 main().catch(err=>{

@@ -5,6 +5,8 @@ const REGIONS = ['LPL','LCK','LEC','LCS','CBLOL','LCP'];
 const REGION_STR = {LCK:6,LPL:6,LEC:4,LCS:3,LCP:2,CBLOL:1};
 const CH = {}; CHAMPS.forEach(([k,cn,roles,tags,dmg])=>CH[k]={k,cn,roles,tags,dmg});
 const CHAMP_KEYS = Object.keys(CH);
+const PRO_DATA = window.PRO_PLAYER_DATA || {players:{}, roles:{}, pairs:{}};
+const PROFESSIONAL_HEROES = Object.fromEntries(ROLES.map(r=>[r,CHAMP_KEYS.filter(c=>CH[c].roles.includes(r) && (PRO_DATA.roles[r]?.[c]||0)>=6)]));
 const rnd = () => Math.random();
 const randn = () => { let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
 const pick = a => a[Math.floor(rnd()*a.length)];
@@ -54,8 +56,10 @@ function normalizeMetaQuota(meta, oldMeta){
       const keep = prev >= 2 ? 0.55 : prev >= 1 ? 0.35 : 0;
       return { k, s: (cur * 0.45) + keep + rnd() * 1.45 };
     }).sort((a,b) => b.s - a.s);
-    scored.slice(0, 2).forEach(x => { out[x.k] = 2; pickedT0.add(x.k); });
-    scored.slice(2, 5).forEach(x => { out[x.k] = 1; pickedT1.add(x.k); });
+    const strong=scored.filter(x=>PROFESSIONAL_HEROES[role].includes(x.k));
+    const viable=(strong.length>=5 ? strong : scored);
+    viable.slice(0, 2).forEach(x => { out[x.k] = 2; pickedT0.add(x.k); });
+    viable.slice(2, 5).forEach(x => { out[x.k] = 1; pickedT1.add(x.k); });
     scored.slice(-5).forEach(x => { if(!pickedT0.has(x.k) && !pickedT1.has(x.k) && rnd() < 0.72) out[x.k] = -1; });
   }
   return out;
@@ -67,7 +71,8 @@ function migrateSave(s){
   s.meta = s.meta || {};
   const strongCnt = CHAMP_KEYS.filter(k => (s.meta[k]||0) >= 1).length;
   const missingCnt = CHAMP_KEYS.filter(k => s.meta[k]==null).length;
-  if(strongCnt > 27 || strongCnt < 16 || missingCnt > 0){
+  const invalidMeta=CHAMP_KEYS.some(c=>(s.meta[c]||0)>0 && PROFESSIONAL_HEROES[CH[c].roles[0]].length>=5 && !PROFESSIONAL_HEROES[CH[c].roles[0]].includes(c));
+  if(strongCnt > 27 || strongCnt < 16 || missingCnt > 0 || invalidMeta){
     s.meta = normalizeMetaQuota(s.meta, s.meta);
   }
   s.log = s.log || {};
@@ -81,11 +86,15 @@ function migrateSave(s){
       if(typeof p.mental!=='number' || isNaN(p.mental)) p.mental = 0;
       if(!Array.isArray(p.champs)) p.champs = [];
       p.champs = p.champs.filter(x=>x && CH[x.c]).map(x=>({ c:x.c, p:migrateChampProf(x.p) }));
-      if(!p.champs.length) genChampPool(p, srand(hash(p.pid)));
+      if(p.champPractice && typeof p.champPractice==='object') p.champPractice=Object.fromEntries(Object.entries(p.champPractice).filter(([c,v])=>CH[c] && Number.isFinite(v) && v>=15 && v<=100));
+      if(!p.champs.length) genChampPool(p, srand(hash(p.pid)),s.meta);
+      if(!s.playerDevelopment || !Number.isFinite(p.pot)) p.pot=initialPotential(p);
+      if(!Number.isFinite(p.ratingYearStart)) p.ratingYearStart=p.rating;
       if(!Array.isArray(p.trainTargets)) p.trainTargets = [];
       if(p.dynTr && typeof p.dynTr !== 'object') delete p.dynTr;
     });
   }
+  s.playerDevelopment=1;
   if(!s.bonds || typeof s.bonds !== 'object'){
     s.bonds = {};
     const prevS = S; S = s;
@@ -133,31 +142,63 @@ function newGame(userTeam){
         const age = AGE_FIX[baseId] || p.age || (18 + Math.floor(r()*9));
         const pl = { pid, tag:baseId, name:p.name||baseId, role:p.role, nat:p.nat||(reg==='LPL'?'CN':reg==='LCK'?'KR':'--'),
           age, rating:p.rating||70, team:key, form:initialForm(baseId), mental:0, champs:[], sub:!!p.sub };
-        pl.pot = Math.round(clamp(pl.rating + Math.max(0,23-age)*1.6 + r()*4, pl.rating, 97));
+        pl.pot = initialPotential(pl);
+        pl.ratingYearStart = pl.rating;
         pl.salary = fairSalary(pl);
         pl.contract = 2026 + Math.floor(r()*3);
-        genChampPool(pl, r);
         S.players[pid]=pl; S.teams[key].roster.push(pid);
       }
     }
   }
+  S.playerDevelopment=1;
+  newPatch();
+  Object.values(S.players).forEach(p=>genChampPool(p,srand(hash(p.pid)),S.meta));
   for(let i=0;i<24;i++) genRookie(2026);
   Object.values(S.teams).forEach(t=>autoLineup(t.key));
   initTeamBonds();
-  newPatch();
   // LPL 2026 第一赛段分组（官方：按2025排名）
   S.lplOrder = ['BLG','AL','TES','IG','JDG','WBG','NIP','WE','EDG','TT','LGD','UP','LNG','OMG'].filter(k=>S.teams[k]);
   Object.values(S.teams).filter(t=>t.region==='LPL'&&!S.lplOrder.includes(t.key)).forEach(t=>S.lplOrder.push(t.key));
   buildSeason({rosterSetup:true});
   addNews(`欢迎来到 ${S.year} 赛季！你执掌 ${teamName(userTeam)}。目标：拿下LPL世界赛资格，问鼎全球总决赛。`);
 }
-function genChampPool(pl, r){
+function initialPotential(p){
+  const r=srand(hash('potential:'+p.pid));
+  const talent=(r()+r())*0.5;
+  return Math.round(clamp(57 + talent*40 + (p.age<=21?7:p.age<=24?2:0),55,98));
+}
+const styleForPlayer=new Map();
+function professionalPicks(p){ return PRO_DATA.players[String(playerTag(p)).toLowerCase()] || {}; }
+function playerStyle(p){
+  const id=playerTag(p).toLowerCase();
+  if(!styleForPlayer.has(id)){
+    const counts={};
+    for(const [c,n] of Object.entries(professionalPicks(p))) for(const t of CH[c]?.tags||[]) counts[t]=(counts[t]||0)+n;
+    styleForPlayer.set(id,Object.keys(counts).sort((a,b)=>counts[b]-counts[a]).slice(0,2));
+  }
+  return styleForPlayer.get(id);
+}
+function proAffinity(p,c){
+  const n=professionalPicks(p)[c]||0;
+  if(n>=4) return 1;
+  const style=playerStyle(p);
+  return clamp(0.44 + n*0.09 + (CH[c]?.tags||[]).filter(t=>style.includes(t)).length*0.19,0.44,0.94);
+}
+function genChampPool(pl, r, meta=S?.meta||{}){
   r = r || rnd;
-  const pool = CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
+  const history=professionalPicks(pl);
+  const pool = PROFESSIONAL_HEROES[pl.role]?.length ? PROFESSIONAL_HEROES[pl.role] : CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
   const depth = (pl.rating||70)>=86 ? 8 : 7;
-  const sorted = pool.map(k=>[k, (CH[k].roles[0]===pl.role?0.35:0)+r()]).sort((a,b)=>b[1]-a[1]).slice(0, depth);
-  const baseVals = [92, 87, 74, 68, 56, 48, 36, 30];
-  pl.champs = sorted.map(([c],i)=>({c, p: clamp(Math.round((baseVals[i]||32) + (r()-0.5)*6), 25, 98)}));
+  const signatures=Object.keys(history).filter(c=>history[c]>=4 && CH[c]?.roles.includes(pl.role)).slice(0,2);
+  const candidates=pool.filter(c=>!signatures.includes(c)).map(c=>({c,score:(meta[c]||0)*proAffinity(pl,c)*1.7 + Math.log1p(history[c]||0)*0.72 + proAffinity(pl,c) + r()})).sort((a,b)=>b.score-a.score);
+  const baseVals = [79,72,66,60,55,48,42,37];
+  pl.champs = signatures.map((c,i)=>({c,p:Math.round(clamp(86+Math.log2(history[c])*1.5-i*2,85,97))}));
+  for(const {c} of candidates.slice(0,Math.max(0,depth-signatures.length))){
+    const i=pl.champs.length-signatures.length;
+    const affinity=proAffinity(pl,c);
+    const value=(baseVals[i]||36) - (1-affinity)*13 + (r()-0.5)*6;
+    pl.champs.push({c,p:Math.round(clamp(value,25,84))});
+  }
   pl.trainTargets = pl.trainTargets || [];
 }
 const RK_A=['Shy','Lin','Kai','Ming','Zero','Neo','Hao','Yun','Feng','Bai','Leo','Qing','Ace','Mist','Ray','Tian','Sky','Jin','Rin','Sol','Xia','Lan','Mo','Chen','Yu','Nova','Rex','Hex','Ark','Vex'];
@@ -167,8 +208,8 @@ function genRookie(year, forceRole, forceNat){
   const role = forceRole || pick(ROLES); const age = 17+Math.floor(rnd()*3);
   const rating = Math.round(56+rnd()*12);
   const nat = forceNat || pick(['CN','CN','CN','KR']);
-  const pl = { pid:id, tag:id, name:id+'（虚构新秀）', role, nat, age, rating, team:null, form:0, mental:0, champs:[], rookie:true,
-    pot: Math.round(clamp(rating+8+rnd()*18,rating,96)) };
+  const pl = { pid:id, tag:id, name:id+'（虚构新秀）', role, nat, age, rating, team:null, form:0, mental:0, champs:[], rookie:true, ratingYearStart:rating };
+  pl.pot=initialPotential(pl);
   pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl);
   S.players[id]=pl; return pl;
 }
@@ -280,9 +321,27 @@ const REAL_CORES_2026 = [
   [['Blaber','Zven'], 76],
 ];
 function pairKey(a, b){ return a < b ? a + '|' + b : b + '|' + a; }
+const LANGUAGE_BY_NAT={CN:'zh',TW:'zh',HK:'zh',MO:'zh',KR:'ko',VN:'vi',BR:'pt',PT:'pt',JP:'ja',US:'en',CA:'en',GB:'en',UK:'en',AU:'en',NZ:'en',FR:'fr',DE:'de',AT:'de',ES:'es',MX:'es',AR:'es',CL:'es',PE:'es',DK:'da',SE:'sv',PL:'pl',TR:'tr',CZ:'cs'};
+const KNOWN_PLAYER_LANGUAGES={corejj:['ko','en'],impact:['ko','en'],theshy:['ko','zh'],rookie:['ko','zh'],tarzan:['ko','zh']};
+function initialPairBond(a,b){
+  const x=P(a), y=P(b);
+  if(!x || !y) return 0;
+  const tx=playerTag(x).toLowerCase(), ty=playerTag(y).toLowerCase();
+  const lx=KNOWN_PLAYER_LANGUAGES[tx] || [LANGUAGE_BY_NAT[x.nat]];
+  const ly=KNOWN_PLAYER_LANGUAGES[ty] || [LANGUAGE_BY_NAT[y.nat]];
+  const former=PRO_DATA.pairs[pairKey(tx,ty)]||0;
+  const base=lx.some(l=>l && ly.includes(l))?40:27;
+  return former>=5 ? Math.min(66,base+13+Math.round(Math.log2(former)*2)) : base;
+}
 function getBond(a, b){
   if(!S || !S.bonds || !a || !b || a===b) return 0;
-  return S.bonds[pairKey(a, b)] || 0;
+  const stored=S.bonds[pairKey(a,b)];
+  if(stored>=40) return stored;
+  return Math.max(stored||0,initialPairBond(a,b));
+}
+function joiningBond(a,b){
+  const familiarity=getBond(a,b);
+  return familiarity>70 ? Math.min(76,Math.max(63,Math.round(familiarity*0.86))) : familiarity;
 }
 function setBond(a, b, v){
   if(!S || !a || !b || a===b) return;
@@ -302,7 +361,8 @@ function initTeamBonds(){
       for(let j=i+1;j<ids.length;j++){
         const r = srand(hash('bd:'+pairKey(ids[i], ids[j])));
         const isSub = P(ids[i]).sub || P(ids[j]).sub;
-        setBond(ids[i], ids[j], base + (isSub ? -12 : 0) + (r()-0.5)*10);
+        const familiar=initialPairBond(ids[i],ids[j]);
+        setBond(ids[i], ids[j], Math.max(base + (isSub ? -9 : 0),familiar+4) + (r()-0.5)*8);
       }
     }
   });
@@ -313,8 +373,9 @@ function initTeamBonds(){
     const matched = tags.map(tg => (byTag[tg.toLowerCase()]||[])[0]).filter(Boolean);
     for(let i=0;i<matched.length;i++){
       for(let j=i+1;j<matched.length;j++){
-        if(getBond(matched[i].pid, matched[j].pid) < bond){
-          setBond(matched[i].pid, matched[j].pid, bond);
+        const established=matched[i].team===matched[j].team?bond:Math.min(66,Math.round(bond*0.75));
+        if(getBond(matched[i].pid, matched[j].pid) < established){
+          setBond(matched[i].pid, matched[j].pid, established);
         }
       }
     }
@@ -327,7 +388,7 @@ function chemTierInfo(score){
   if(score >= 34) return { tier:1, label:'磨合之中', cls:'c1' };
   return { tier:0, label:'生疏拼凑', cls:'c0' };
 }
-function calcLineupChemistry(pids){
+function calcLineupChemistry(pids,bondFor=getBond){
   const list = (pids||[]).filter(Boolean);
   if(list.length < 2) return { score:0, ...chemTierInfo(0), bonus:0, cores:[], strongPairs:0 };
   let sum = 0, cnt = 0, strongPairs = 0;
@@ -335,7 +396,7 @@ function calcLineupChemistry(pids){
   list.forEach(id => adj[id] = []);
   for(let i=0;i<list.length;i++){
     for(let j=i+1;j<list.length;j++){
-      const b = getBond(list[i], list[j]);
+      const b = bondFor(list[i], list[j]);
       sum += b; cnt++;
       if(b >= 72){ strongPairs++; adj[list[i]].push(list[j]); adj[list[j]].push(list[i]); }
     }
@@ -365,8 +426,10 @@ function previewChemWith(teamKey, incomingPid, replaceRole){
   const before = teamChemistry(teamKey);
   const role = replaceRole || (P(incomingPid) && P(incomingPid).role);
   const pids = ROLES.map(r => r===role ? incomingPid : t.lineup[r]).filter(Boolean);
-  const after = calcLineupChemistry(pids);
-  const keptFriends = pids.filter(id => id!==incomingPid && getBond(incomingPid, id)>=60).map(id => playerTag(P(id)));
+  const arriving=P(incomingPid)?.team!==teamKey;
+  const read=(a,b)=>arriving && (a===incomingPid||b===incomingPid) ? joiningBond(a,b) : getBond(a,b);
+  const after = calcLineupChemistry(pids,read);
+  const keptFriends = pids.filter(id => id!==incomingPid && read(incomingPid, id)>=60).map(id => playerTag(P(id)));
   return { before, after, delta: after.score - before.score, keptFriends };
 }
 function playerTeamBond(p){
@@ -386,7 +449,7 @@ function growSeriesBonds(m, games){
       for(let j=i+1;j<pids.length;j++){
         const cur = getBond(pids[i], pids[j]);
         // 80 以上递减成长，需要多年并肩才可达到 95+
-        const gain = cur >= 85 ? step * 0.35 : cur >= 70 ? step * 0.65 : step;
+        const gain = step * Math.pow(clamp((100-cur)/46,0,1),2);
         setBond(pids[i], pids[j], cur + gain);
       }
     }
@@ -401,9 +464,10 @@ function evolveTeamBonds(isOffseason){
       for(let j=i+1;j<ids.length;j++){
         const pk = pairKey(ids[i], ids[j]);
         sameTeamPairs.add(pk);
-        const cur = S.bonds[pk] || 0;
+        const cur = getBond(ids[i],ids[j]);
         const bothSt = Object.values(t.lineup).includes(ids[i]) && Object.values(t.lineup).includes(ids[j]);
-        const add = (isOffseason ? 7.5 : 5.0) * (bothSt ? 1 : 0.55) * (cur >= 84 ? 0.4 : cur >= 68 ? 0.72 : 1);
+        const room=clamp((100-cur)/48,0,1);
+        const add = (isOffseason ? 7.5 : 5.0) * (bothSt ? 1 : 0.55) * room*room;
         setBond(ids[i], ids[j], cur + add);
       }
     }
@@ -691,9 +755,13 @@ function ensureRoster(key){
 function freeAgents(){ return Object.values(S.players).filter(p=>!p.team && !p.retired); }
 function signPlayer(pid,key,salary,contract){
   const p=P(pid); if(!p) return;
+  const transferred=p.team!==key;
   if(p.team){ const o=T(p.team); if(o){ o.roster=o.roster.filter(x=>x!==pid); for(const r of ROLES) if(o.lineup[r]===pid) delete o.lineup[r]; } }
   p.team=key; p.salary=salary; p.contract=contract; p.rookie=false;
   if(!T(key).roster.includes(pid)) T(key).roster.push(pid);
+  if(transferred) for(const id of T(key).roster){
+    if(id!==pid) setBond(pid,id,joiningBond(pid,id));
+  }
 }
 
 // ================= BP / 阵容分析 / 非本位奇招平衡 =================
@@ -723,18 +791,41 @@ function offRoleKind(c, assignedRole){
 }
 
 function champProfVal(p, c){
-  if(!p || !Array.isArray(p.champs)) return 0;
-  const e = p.champs.find(x=>x.c===c);
-  return e ? migrateChampProf(e.p) : 0;
+  if(!p) return 0;
+  const e = p.champs?.find(x=>x.c===c);
+  return e ? migrateChampProf(e.p) : p.champPractice?.[c]||0;
+}
+
+function playerProfTier(p,c,value=champProfVal(p,c)){
+  if(value>=85 && (professionalPicks(p)[c]||0)<4 && (p?.champGames?.[c]||0)<6) return profTier(84);
+  return profTier(value);
+}
+function rememberChampProf(p,c,value){
+  const list=p.champs || (p.champs=[]);
+  const existing=list.find(e=>e.c===c);
+  if(existing){ existing.p=value; return; }
+  if(list.length<11){
+    list.push({c,p:value});
+    if(p.champPractice) delete p.champPractice[c];
+    return;
+  }
+  const weakest=list.reduce((a,b)=>a.p<=b.p?a:b);
+  p.champPractice ||= {};
+  if(value>weakest.p){
+    p.champPractice[weakest.c]=weakest.p;
+    weakest.c=c; weakest.p=value;
+    delete p.champPractice[c];
+  } else p.champPractice[c]=value;
 }
 
 function champFit(p, c, assignedRole){
   if(!p || !c || !CH[c]) return -5;
   const pv = champProfVal(p, c);
-  let f = profTier(pv).bonus;
+  let f = playerProfTier(p,c,pv).bonus*0.53;
   // 同档位内部微调（让熟练度经验增长也能平滑体现细微收益）
-  if(pv >= 25) f += ((pv - 25) / 75) * 0.45;
-  f += (S.meta[c]||0) * 0.95;
+  if(pv >= 25) f += ((pv - 25) / 75) * 0.27;
+  const meta=S.meta[c]||0;
+  f += meta>0 ? meta*2.18*clamp(proAffinity(p,c)*0.64 + pv*0.0045,0.34,1) : meta*1.15;
   const r = assignedRole || p.role;
   const off = offRoleKind(c, r);
   f += off.basePen;
@@ -744,7 +835,9 @@ function champFit(p, c, assignedRole){
 function compInfo(champs){
   const list = champs.filter(c=>c && CH[c]);
   const tags={}; let ad=0,ap=0;
+  let frontline=0, control=0;
   list.forEach(c=>{ CH[c].tags.forEach(t=>tags[t]=(tags[t]||0)+1); if(CH[c].dmg==='AD')ad++; else if(CH[c].dmg==='AP')ap++; else {ad+=.5;ap+=.5;} });
+  for(const c of list){ const kit=draftCombatProfile(c); frontline+=kit.frontline; control+=kit.control; }
   let score=0, notes=[];
   if((tags.engage||0)>=2){score+=1.3; notes.push('开团充足');}
   if((tags.engage||0)===0 && list.length===5){score-=1.2; notes.push('缺乏开团');}
@@ -755,12 +848,17 @@ function compInfo(champs){
   if((tags.split||0)>=2){score+=0.5; notes.push('边带分推');}
   if(list.length===5 && (ad>=4.5||ap>=4.5)){score-=1.6; notes.push(ad>=4.5?'纯AD易出护甲':'纯AP易出魔抗');}
   else if(list.length===5 && ad>=1.5 && ap>=1.5){score+=0.4; notes.push('伤害均衡');}
+  if(frontline>=1.6){ score+=0.64; notes.push('前排可承伤'); }
+  if(control>=2.3){ score+=0.52; notes.push('控制能连续衔接'); }
+  if((tags.scale||0)>0 && list.some(c=>PEEL_CHAMPS.has(c))) notes.push('有反开和后排保护');
+  if(list.length===5 && frontline<0.55){score-=0.84; notes.push('前排薄，容易被强开');}
+  if(list.length===5 && control<0.9){score-=0.68; notes.push('硬控不足，难留人');}
   const style = ['engage','poke','scale','pick','early'].sort((a,b)=>(tags[b]||0)-(tags[a]||0))[0];
   // 三阶段曲线分（供分阶段模拟与情报面板使用）
   const early = (tags.early||0)*1.15 + (tags.pick||0)*0.45 - (tags.scale||0)*0.35;
   const mid   = (tags.engage||0)*0.75 + (tags.poke||0)*0.7 + (tags.pick||0)*0.6 + (tags.split||0)*0.45;
   const late  = (tags.scale||0)*1.25 + (tags.protect||0)*0.85 + (tags.engage||0)*0.35 - (tags.early||0)*0.25;
-  return {score, notes, style, tags, ad, ap, early, mid, late};
+  return {score, notes, style, tags, ad, ap, early, mid, late, frontline, control};
 }
 const STYLE_CN={engage:'开团',poke:'消耗',scale:'后期',pick:'抓单',early:'前期'};
 // 克制：开团>消耗>后期>开团；前期>后期；抓单>消耗
@@ -775,6 +873,19 @@ function styleEdge(a,b){
 const HARD_SUPPORTS = new Set(['Alistar','Amumu','Braum','Blitzcrank','Galio','Gragas','Leona','Malphite','Maokai','Nautilus','Poppy','Rakan','Rell','Tahm Kench','Taric','Thresh','Zac']);
 const PEEL_CHAMPS = new Set(['Braum','Gragas','Janna','Lulu','Milio','Poppy','Renata Glasc','Tahm Kench','Taric','Thresh']);
 const PROJECTILE_PRESSURE = new Set(['Ahri','Ashe','Caitlyn','Corki','Ezreal','Jhin','Jinx','Kai\'Sa','Kalista','Kennen','Lucian','Miss Fortune','Nidalee','Sivir','Taliyah','Varus','Xayah','Zoe']);
+const FRONTLINE_CHAMPS = new Set(['Alistar','Braum','Dr. Mundo','Galio','Gragas','K\'Sante','Leona','Malphite','Maokai','Nautilus','Ornn','Poppy','Rell','Sejuani','Shen','Sion','Skarner','Tahm Kench','Taric','Zac']);
+const RELIABLE_CONTROL = new Set(['Alistar','Annie','Camille','Galio','Leona','Lissandra','Malzahar','Maokai','Nautilus','Ornn','Pantheon','Poppy','Rakan','Rell','Renekton','Sejuani','Skarner','Twisted Fate','Vi','Zac']);
+const COMBAT_PROFILES = Object.fromEntries(CHAMP_KEYS.map(c=>{
+  const kit=window.CHAMP_TACTICS[c], tags=CH[c].tags;
+  return [c,{frontline:FRONTLINE_CHAMPS.has(c)?1:tags.includes('tank')?0.5:0,
+    control:RELIABLE_CONTROL.has(c)?1:tags.includes('engage')||tags.includes('pick')?0.45:0,
+    engage:(kit?.engage||0)*0.5, dash:(kit?.dash||0)*0.5, protect:PEEL_CHAMPS.has(c)?1:tags.includes('protect')?0.55:0,
+    sustained:(kit?.autos||0)*0.5, escape:(kit?.escape||0)*0.5, antiDash:c==='Poppy'?1:c==='Taliyah'||c==='Cassiopeia'?0.65:0,
+    magic:(kit?.magic||0)*0.5, antiMagic:c==='Galio'?1:0, antiAuto:c==='Jax'||c==='Nilah'?1:c==='Malphite'?0.55:0,
+    projectile:PROJECTILE_PRESSURE.has(c)?1:0, guardProjectile:['Braum','Yasuo','Samira','Mel'].includes(c)?1:0}];
+}));
+const EMPTY_COMBAT_PROFILE = {frontline:0,control:0,engage:0,dash:0,protect:0,sustained:0,escape:0,antiDash:0,magic:0,antiMagic:0,antiAuto:0,projectile:0,guardProjectile:0};
+function draftCombatProfile(c){ return COMBAT_PROFILES[c] || EMPTY_COMBAT_PROFILE; }
 const DRAFT_COUNTERS = {
   Poppy: ['dash',0.22,'打断进场位移'],
   Taliyah: ['dash',0.14,'限制进场位移'],
@@ -841,7 +952,7 @@ function laneTacticEdge(champ, enemy){
   return edge;
 }
 
-function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null){
+function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null, risks=null){
   let lane = 0, fight = 0, peel = 0, vulnerable = 0;
   for(const role of ROLES){
     const c = picks[role], kit = window.CHAMP_TACTICS[c];
@@ -849,11 +960,15 @@ function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null){
     const rule = DRAFT_COUNTERS[c];
     if(rule){
       const [key, weight, label] = rule;
-      const strength = weight * threats[key];
-      fight += Math.min(1.03, strength);
+      const strength = weight * threats[key] * 1.75;
+      fight += Math.min(2.40, strength);
       if(notes && strength>=0.30) notes.push(CH[c].cn + label);
     }
-    if(role==='TOP' || role==='MID') lane += laneTacticEdge(c,enemy[role]);
+    if(role==='TOP' || role==='MID'){
+      const edge=laneTacticEdge(c,enemy[role]);
+      lane+=edge;
+      if(notes && edge>=0.37) notes.push(`${ROLE_CN[role]} ${CH[c].cn} 有对位压制`);
+    }
     if(role==='ADC' || role==='SUP'){
       lane += 0.35 * (laneTacticEdge(c,enemy.ADC) + laneTacticEdge(c,enemy.SUP));
     }
@@ -863,33 +978,34 @@ function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null){
 
   const dive = Math.max(0, threats.engage-2)*0.5;
   const exposed = dive / (1+0.45*peel);
-  fight -= 0.24 * vulnerable * exposed;
-  if(notes && vulnerable*exposed>=1.4) notes.push('后排缺位移，容易被对方开团');
+  fight -= 0.34 * vulnerable * exposed;
+  if((risks||notes) && vulnerable*exposed>=1.4) (risks||notes).push('后排缺位移，容易被对方开团');
 
   const bot = BOT_DUOS[picks.ADC + '+' + picks.SUP];
   const mid = MID_JUNGLE_DUOS[picks.MID + '+' + picks.JUG];
   const top = TOP_JUNGLE_DUOS[picks.TOP + '+' + picks.JUG];
   for(const duo of [bot,mid,top]){
     if(!duo) continue;
-    lane += duo[0];
-    fight += duo[1];
+    lane += duo[0]*1.33;
+    fight += duo[1]*1.42;
     if(notes) notes.push(duo[2]);
   }
   if(picks.ADC==='Ashe' && picks.SUP==='Seraphine'){
     lane -= 0.39 * exposed;
-    fight -= 0.86 * exposed;
-    if(notes && exposed>=0.7) notes.push('寒冰＋萨勒芬妮怕连续先手');
+    fight -= 1.14 * exposed;
+    if((risks||notes) && exposed>=0.7) (risks||notes).push('寒冰＋萨勒芬妮怕连续先手');
   }
   if(picks.ADC==='Ziggs' && picks.SUP){
     const hard = HARD_SUPPORTS.has(picks.SUP);
     lane += hard ? 0.56 : -0.58;
     fight += hard ? 0.42 : -0.45;
-    if(notes) notes.push(hard ? '硬辅定身配合炸弹人输出' : '炸弹人下路缺少硬辅留人与保护');
+    if(hard && notes) notes.push('硬辅定身配合炸弹人输出');
+    if(!hard && (risks||notes)) (risks||notes).push('炸弹人下路缺少硬辅留人与保护');
   }
 
-  const early = clamp(lane + fight*0.23,-1.45,1.45);
-  const midgame = clamp(lane*0.30 + fight,-1.60,1.60);
-  const late = clamp(lane*0.15 + fight*0.90,-1.50,1.50);
+  const early = clamp(lane*1.25 + fight*0.28,-2.7,2.7);
+  const midgame = clamp(lane*0.34 + fight,-3.35,3.35);
+  const late = clamp(lane*0.18 + fight*0.92,-3.08,3.08);
   return {early, mid:midgame, late, score:early*0.30 + midgame*0.35 + late*0.35};
 }
 
@@ -959,6 +1075,14 @@ const DRAFT_SEQ = [ // F=先选方 S=后选方
   ['pick','F'],['pick','S'],['pick','S'],['pick','F'],['pick','F'],['pick','S'],
   ['ban','S'],['ban','F'],['ban','S'],['ban','F'],
   ['pick','S'],['pick','F'],['pick','F'],['pick','S']];
+const AI_DRAFT_WAIT_MS = 5000;
+const DRAFT_RATING_WEIGHT = 0.64;
+const DRAFT_COMPOSITION_WEIGHT = 1.20;
+const DRAFT_FIT_WEIGHT = 0.95;
+const DRAFT_WIN_SCALE = 4.3;
+function draftPlayerRating(p, role, ctx){
+  return 80 + (matchRating(p,role,ctx)-80)*DRAFT_RATING_WEIGHT;
+}
 function newDraft(A,B,blue,locked){
   // 经典职业规则：蓝色方固定为 BP 先手（first === blue）
   return {A,B,first:blue,blue,locked:(locked||[]).slice(),bans:{A:[],B:[]},picks:{A:{},B:{}},pickOrder:{A:[],B:[]},step:0};
@@ -984,7 +1108,7 @@ function bestRoleFor(d, side, c, allowOffrole){
 }
 function canPickChamp(d, side, c){
   const un = unavailable(d);
-  if(un.has(c)) return {ok:false, offrole:false, openRoles:[]};
+  if(!CH[c] || un.has(c)) return {ok:false, offrole:false, openRoles:[]};
   const open = openRolesFor(d, side);
   if(!open.length) return {ok:false, offrole:false, openRoles:[]};
   const onRole = open.filter(r=>CH[c].roles.includes(r));
@@ -1048,7 +1172,7 @@ function draftAct(d, c, role, allowOffrole){
   } else {
     const chk = canPickChamp(d, cur.side, c);
     const offOk = allowOffrole || chk.offrole;
-    if(role && d.picks[cur.side][role]) role = null;
+    if(role && (!ROLES.includes(role) || d.picks[cur.side][role])) role = null;
     if(role && !CH[c].roles.includes(role) && !offOk) role = null;
     role = role || bestRoleFor(d, cur.side, c, offOk);
     if(!role) return false;
@@ -1058,14 +1182,25 @@ function draftAct(d, c, role, allowOffrole){
   d.step++; return true;
 }
 
-function aiChoose(d){
-  const cur=draftSide(d); if(!cur) return {c:null};
+function aiDraftCandidates(d, limit=1, varied=true){
+  const cur=draftSide(d); if(!cur) return [];
   const un=unavailable(d);
   const me=cur.side, opp= me==='A'?'B':'A';
   const myLu=lineupMap(d[me]), oppLu=lineupMap(d[opp]);
   const myPicks=Object.values(d.picks[me]).filter(Boolean);
   const oppPicks=Object.values(d.picks[opp]).filter(Boolean);
-  let best=null, bs=-1e9;
+  const ranked=[];
+  function consider(c, score, role=null){
+    if(ranked.length===limit && score<=ranked[limit-1].score) return;
+    const prior=ranked.findIndex(x=>x.c===c);
+    if(prior>=0){
+      if(ranked[prior].score>=score) return;
+      ranked.splice(prior,1);
+    }
+    const at=ranked.findIndex(x=>x.score<score);
+    ranked.splice(at<0?ranked.length:at,0,{c,role,offrole:!!role && !CH[c].roles.includes(role),score});
+    if(ranked.length>limit) ranked.pop();
+  }
 
   if(cur.kind==='ban'){
     const oppOpen = openRolesFor(d, opp);
@@ -1093,11 +1228,14 @@ function aiChoose(d){
         const myMatch = myOpen.filter(r=>CH[c].roles.includes(r));
         if(myMatch.length && Math.max(...myMatch.map(r=>champFit(myLu[r],c,r)))>=5) s -= 2.5;
       }
-      s += rnd()*1.35;
-      if(s>bs){ bs=s; best=c; }
+      if(varied) s += rnd()*1.05;
+      consider(c,s);
     }
-    if(!best) best = CHAMP_KEYS.find(c=>!un.has(c));
-    return {c:best};
+    if(!ranked.length){
+      const fallback=CHAMP_KEYS.find(c=>!un.has(c));
+      if(fallback) consider(fallback,0);
+    }
+    return ranked;
   }
 
   // Pick 阶段
@@ -1105,7 +1243,6 @@ function aiChoose(d){
   const oppComp = compInfo(oppPicks);
   const myOpen = openRolesFor(d, me);
   const earlyPhase = myPicks.length < 3;
-  let br=null;
   const allowOff = !hasAnyOnRoleChamp(d, me);
   const tacticGain = draftTacticGain(d.picks[me],d.picks[opp]);
   const allowsPair = draftBotPairFilter(d.picks[me],un);
@@ -1123,7 +1260,7 @@ function aiChoose(d){
       if(!allowsPair(r,c)) continue;
       let s = champFit(myLu[r], c, r);
       s += (nextComp.score - baseComp.score) * 1.15;
-      s += 2.4 * tacticGain(r,c);
+      s += 3.0 * tacticGain(r,c);
       // 克制对手已亮阵容风格
       if(oppPicks.length>=2){
         s += (styleEdge(nextComp.style, oppComp.style) - styleEdge(baseComp.style, oppComp.style)) * 0.9;
@@ -1137,11 +1274,52 @@ function aiChoose(d){
       if(earlyPhase && CH[c].roles.length>=2) s += 0.55;
       // 版本 T0 优先级
       if((S.meta[c]||0)>=2) s += 1.1;
-      s += rnd()*1.25;
-      if(s>bs){ bs=s; best=c; br=r; }
+      if(varied) s += rnd()*1.05;
+      consider(c,s,r);
     }
   }
-  return {c:best, role:br, offrole:!!best && !CH[best].roles.includes(br)};
+  return ranked;
+}
+
+function draftAfterChoice(d, choice){
+  const next={...d,pickOrder:null,bans:{A:d.bans.A.slice(),B:d.bans.B.slice()},picks:{A:{...d.picks.A},B:{...d.picks.B}}};
+  return draftAct(next,choice.c,choice.role,choice.offrole)?next:null;
+}
+
+function aiChoose(d,{lookahead=false}={}){
+  const ranked=aiDraftCandidates(d,lookahead?6:1,!lookahead);
+  if(!ranked.length) return {c:null};
+  if(!lookahead || ranked.length===1) return ranked[0];
+
+  const cur=draftSide(d), mine=cur.side, enemy=mine==='A'?'B':'A';
+  const margin=state=>evalDraft(state).diff*(mine==='A'?1:-1);
+  let value;
+  if(cur.kind==='ban'){
+    const prospects=side=>{
+      for(let step=d.step+1;step<DRAFT_SEQ.length;step++){
+        const future={...d,step}, turn=draftSide(future);
+        if(turn.kind==='pick' && turn.side===side) return aiDraftCandidates(future,3,false);
+      }
+      return [];
+    };
+    const ours=prospects(mine), theirs=prospects(enemy);
+    const loss=(rank,champ)=>rank.length>=2 && rank[0].c===champ?Math.max(0,rank[0].score-rank[1].score):0;
+    value=choice=>choice.score + 0.9*loss(theirs,choice.c) - 0.85*loss(ours,choice.c);
+  } else {
+    value=choice=>{
+      const next=draftAfterChoice(d,choice);
+      if(!next) return -Infinity;
+      const now=margin(next);
+      const turn=draftSide(next);
+      if(turn?.kind!=='pick') return choice.score*0.62 + now;
+      const responses=aiDraftCandidates(next,3,false).map(reply=>draftAfterChoice(next,reply)).filter(Boolean).map(margin);
+      const reaction=responses.length?(turn.side===mine?Math.max(...responses):Math.min(...responses)):now;
+      return choice.score*0.62 + now + (reaction-now)*0.65;
+    };
+  }
+  let winner=ranked[0], best=-Infinity;
+  for(const choice of ranked){ const score=value(choice); if(score>best){ winner=choice; best=score; } }
+  return winner;
 }
 
 function autoDraftRest(d){
@@ -1176,7 +1354,7 @@ function coachSuggest(d, side){
       let bestR = roles[0], bestF = -99;
       for(const r of roles){ const f=champFit(oppLu[r],c,r); if(f>bestF){bestF=f;bestR=r;} }
       let s = bestF*1.1 + ((S.meta[c]||0)>=2?2.2:0);
-      let reason = bestF>=5.5 ? `针对 ${playerTag(oppLu[bestR])} 招牌` : (S.meta[c]||0)>=2 ? '版本T0威胁' : `限制对方${ROLE_CN[bestR]}`;
+      let reason = playerProfTier(oppLu[bestR],c).tier===4 ? `针对 ${playerTag(oppLu[bestR])} 招牌` : (S.meta[c]||0)>=2 ? '版本T0威胁' : `限制对方${ROLE_CN[bestR]}`;
       if(tacticGain){
         const gain = Math.max(0, ...roles.map(r=>tacticGain(r,c)));
         s += 1.6*gain;
@@ -1223,7 +1401,7 @@ function draftPower(d, side){
 
   for(const r of ROLES){
     const p=lu[r], c=picks[r];
-    const base = matchRating(p, r, d.ctx);
+    const base = draftPlayerRating(p, r, d.ctx);
     let fit = c? champFit(p,c,r) : 0;
     // 战术奇招情境判定：法核下路补齐 AP、长手上路压制短手坦克等
     if(c && CH[c] && !CH[c].roles.includes(r)){
@@ -1246,7 +1424,7 @@ function draftPower(d, side){
         if(!ci.notes.includes('中路摇摆奇招')) ci.notes.unshift('中路摇摆奇招');
       }
     }
-    const total = base + fit*0.85;
+    const total = base + fit*DRAFT_FIT_WEIGHT;
     s += total;
     earlyP += total * ({TOP:.20,JUG:.28,MID:.20,ADC:.14,SUP:.18}[r]);
     midP   += total * ({TOP:.22,JUG:.22,MID:.24,ADC:.18,SUP:.14}[r]);
@@ -1254,17 +1432,17 @@ function draftPower(d, side){
     det.push({r,p,c,fit,base});
   }
   const tacShare = tacBonus * 0.85 / 5;
-  const notes = [];
-  const tactics = draftTactics(picks,oppPicks,undefined,notes);
-  ci.notes.unshift(...notes);
+  const notes = [], risks=[];
+  const tactics = draftTactics(picks,oppPicks,undefined,notes,risks);
+  ci.notes.unshift(...notes,...risks);
   const chem = teamChemistry(team);
   const chemB = chem.bonus; // 团队化学反应轻中度加成（满默契约 +2.0，生疏拼凑约 -1.8）
   return {
-    power: s/5 + ci.score + tacShare + chemB + tactics.score,
-    early: earlyP + ci.early*1.1 + tacShare + tacEarly + chemB*0.85 + tactics.early,
-    mid:   midP   + ci.mid*1.0 + ci.score*0.6 + tacShare + chemB*1.05 + tactics.mid,
-    late:  lateP  + ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + chemB*1.1 + tactics.late,
-    comp: ci, chem, det
+    power: s/5 + (ci.score + tacShare + tactics.score)*DRAFT_COMPOSITION_WEIGHT + chemB,
+    early: earlyP + (ci.early*1.1 + tacShare + tacEarly + tactics.early)*DRAFT_COMPOSITION_WEIGHT + chemB*0.85,
+    mid:   midP   + (ci.mid + ci.score*0.6 + tacShare + tactics.mid)*DRAFT_COMPOSITION_WEIGHT + chemB*1.05,
+    late:  lateP  + (ci.late*1.15 + ci.score*0.7 + tacShare*0.8 + tactics.late)*DRAFT_COMPOSITION_WEIGHT + chemB*1.1,
+    comp: ci, chem, det, tactics:{notes,risks}
   };
 }
 
@@ -1272,12 +1450,57 @@ function evalDraft(d){
   const a=draftPower(d,'A'), b=draftPower(d,'B');
   const se = styleEdge(a.comp.style, b.comp.style);
   const blueEdge = d.blue==='A' ? 0.35 : -0.35;
-  // 与分阶段模拟严格一致的综合优势指标（1分差≈+4.8%胜率，保留职业赛场合理爆冷空间）
+  // 三阶段分差使用与比赛相同的权重，再将分差换算为胜率。
   const earlyDiff = (a.early - b.early) + blueEdge*0.6;
   const midDiff   = (a.mid   - b.mid)   + se*0.6 + blueEdge*0.4;
   const lateDiff  = (a.late  - b.late)  + se*0.8;
   const diff = earlyDiff*0.30 + midDiff*0.35 + lateDiff*0.35;
-  return {a, b, se, blueEdge, earlyDiff, midDiff, lateDiff, diff, pA: sigmoid(diff/5.2)};
+  return {a, b, se, blueEdge, earlyDiff, midDiff, lateDiff, diff, pA: sigmoid(diff/DRAFT_WIN_SCALE)};
+}
+
+function draftFeedback(d, champ, role){
+  const copy=()=>({...d, picks:{A:{...d.picks.A},B:{...d.picks.B}}, bans:{A:d.bans.A.slice(),B:d.bans.B.slice()},pickOrder:null});
+  const before=evalDraft(d);
+  let shown=before, last=null, prospective=false;
+  const step=draftSide(d);
+  if(champ && step){
+    const next=copy();
+    const forcedOffrole=step.kind==='pick' && canPickChamp(d,step.side,champ).offrole;
+    if(draftAct(next,champ,role,forcedOffrole)){
+      shown=evalDraft(next);
+      last={...step,champ};
+      prospective=true;
+    }
+  }
+  let base=before;
+  if(!last && d.step>0){
+    const previous=copy(); previous.step--;
+    const action=draftSide(previous);
+    if(action.kind==='ban') last={...action,champ:previous.bans[action.side].pop()};
+    else {
+      const pick=d.pickOrder?.[action.side].at(-1);
+      if(pick){
+        const slot=ROLES.find(r=>previous.picks[action.side][r]===pick.c);
+        if(slot){ delete previous.picks[action.side][slot]; last={...action,champ:pick.c}; }
+      }
+    }
+    if(last) base=evalDraft(previous);
+  }
+  const sideNotes=power=>({advantages:power.comp.notes.filter(x=>!power.tactics.risks.includes(x) && !/缺乏|易出|不足|前排薄/.test(x)),
+    risks:power.comp.notes.filter(x=>power.tactics.risks.includes(x) || /缺乏|易出|不足|前排薄/.test(x))});
+  let banReason='';
+  if(last?.kind==='ban' && last.champ){
+    const c=last.champ, opponent=last.side==='A'?'B':'A';
+    const opponents=lineupMap(d[opponent]);
+    const roles=openRolesFor(d,opponent).filter(r=>CH[c].roles.includes(r));
+    const specialist=roles.map(r=>opponents[r]).find(p=>playerProfTier(p,c).tier===4);
+    if(specialist) banReason=`封锁 ${playerTag(specialist)} 的招牌`;
+    else if((S.meta[c]||0)>=1) banReason='封锁当前强势版本英雄';
+    else if(roles.length) banReason=`限制对手${roles.map(r=>ROLE_CN[r]).join('、')}可用英雄`;
+    else banReason='减少对手可用英雄';
+  }
+  return {pA:shown.pA, deltaA:shown.pA-base.pA, partial:d.step+(prospective?1:0)<DRAFT_SEQ.length,
+    last,banReason,A:sideNotes(shown.a),B:sideNotes(shown.b)};
 }
 
 // 严格按权重将整数 total 分配为 weights.length 个非负整数（保证总和 === total）
@@ -1306,6 +1529,7 @@ function fmtClock(minFloat){
 // 赛后联动：选手状态 form 波动 & 英雄熟练度成长
 function applyGameImpact(g, teamA, teamB){
   const impacts = [];
+  g.masteryChanges=[];
   const handleSide = (side, stats) => {
     const won = g.w === side;
     const isUserTeam = (side==='A'?teamA:teamB) === S.user;
@@ -1316,6 +1540,9 @@ function applyGameImpact(g, teamA, teamB){
       // 状态变化：近期个人表现为主，向个人历来表现基线回归，幅度乘以稳定性，噪声很小
       const tr = playerTraits(p);
       const perf = (won?0.45:-0.45) + clamp((kda-3)/3, -1, 1)*0.55 + (isMvp?0.5:0);
+      const development=p.development||(p.development={games:0,performance:0});
+      development.games++;
+      development.performance+=perf;
       const f0 = p.form||0;
       p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn()*0.12);
       // 小局胜负对心态的即时影响（系列赛结束时另有更大的结算）
@@ -1323,21 +1550,18 @@ function applyGameImpact(g, teamA, teamB){
       p.mental = stepTier(m0, m0 + (won ? 0.22*tr.res : -0.3/tr.res) + randn()*0.05);
       // 英雄熟练度经验累积（每次出场累积熟练度数值，跨过档位线时晋升档位）
       if(row.c && CH[row.c]){
-        p.champs = p.champs || [];
-        let entry = p.champs.find(x=>x.c===row.c);
+        const prev=champProfVal(p,row.c);
         const gain = Math.round(3 + (won?3:1) + clamp((kda-2)*0.9, 0, 3) + (isMvp?2:0));
-        if(entry){
-          const oldT = profTier(entry.p).tier;
-          entry.p = clamp(migrateChampProf(entry.p) + gain, 5, 100);
-          const newInfo = profTier(entry.p);
-          if(isUserTeam && newInfo.tier > oldT && newInfo.tier >= 2){
-            impacts.push(`${playerTag(p)} 的 ${CH[row.c].cn} 熟练度晋升为「${newInfo.name}」！`);
-          }
-        } else {
-          const initP = clamp(16 + gain + (CH[row.c].roles.includes(p.role)?6:0), 18, 42);
-          p.champs.push({c:row.c, p:initP});
-          if(p.champs.length > 11) p.champs.sort((a,b)=>b.p-a.p).length = 11;
-          if(isUserTeam && initP >= 25) impacts.push(`${playerTag(p)} 通过实战熟悉了 ${CH[row.c].cn}`);
+        const next=prev>0?Math.min(100,prev+gain):clamp(16+gain+(CH[row.c].roles.includes(p.role)?6:0),18,42);
+        const oldTier=playerProfTier(p,row.c,prev).tier;
+        p.champGames ||= {};
+        p.champGames[row.c]=(p.champGames[row.c]||0)+1;
+        rememberChampProf(p,row.c,next);
+        if(isUserTeam){
+          const newInfo=playerProfTier(p,row.c,next);
+          const suffix=newInfo.tier>oldTier && newInfo.tier>=2 ? `，晋升为「${newInfo.name}」` : '';
+          g.masteryChanges.push({pid:p.pid,tag:playerTag(p),champ:row.c,prev,next,gain:next-prev});
+          if(next>prev) impacts.push(`${playerTag(p)} · ${CH[row.c].cn} 熟练度 +${next-prev}（${next}/100）${suffix}`);
         }
       }
       if(isUserTeam && isMvp) impacts.push(`${playerTag(p)} 斩获 MVP，状态 ${FORM_TIERS[formTier(p)+2]}`);
@@ -1378,7 +1602,7 @@ function finishSeries(m, wa, wb, games, keep){
     w:g.w, dur:g.dur, kA:g.kA, kB:g.kB,
     turA:g.turA, turB:g.turB, dragA:g.dragA, dragB:g.dragB, baronA:g.baronA, baronB:g.baronB, goldDiff:g.goldDiff,
     mvp:g.mvp, mvpTag:g.mvpTag, picks:g.picks, bans:g.bans, blue:g.blue, events:g.events,
-    sa:g.sa, sb:g.sb, rid:g.rid||null
+    sa:g.sa, sb:g.sb, rid:g.rid||null, masteryChanges:g.masteryChanges||[]
   }));
   // 英雄统计
   for(const g of games){
@@ -1833,23 +2057,29 @@ function evolveChampPool(p, metaTable, isOffseason){
   p.champs = Array.isArray(p.champs) ? p.champs : [];
   // 1. 自然遗忘衰减（老英雄长期不练会缓慢流失熟练度）
   const baseDecay = isOffseason ? 8 : 3;
+  const history=professionalPicks(p);
+  const signatures=Object.keys(history).filter(c=>history[c]>=4).slice(0,2);
   p.champs.forEach(e=>{
     const d = Math.round(baseDecay + rnd() * (isOffseason ? 6 : 2));
-    e.p = Math.max(0, migrateChampProf(e.p) - d);
+    const prev=migrateChampProf(e.p);
+    e.p = Math.max(signatures.includes(e.c)?Math.min(prev,78):0,prev-d);
   });
   p.champs = p.champs.filter(e=>e.p >= 15);
+  for(const c of Object.keys(p.champPractice||{})){
+    p.champPractice[c]-=Math.floor(baseDecay*0.5);
+    if(p.champPractice[c]<15) delete p.champPractice[c];
+  }
 
   // 2. 自动适应新版本：自发练习 1~2 个本位置英雄（倾向版本加强英雄）
-  const rolePool = CHAMP_KEYS.filter(k=>CH[k].roles.includes(p.role));
+  const rolePool=PROFESSIONAL_HEROES[p.role]||[];
   if(rolePool.length){
     const nLearn = isOffseason ? (p.age<=22 ? 2 : 1 + (rnd()<0.5?1:0)) : 1;
-    const weighted = rolePool.slice().sort((a,b)=>((metaTable[b]||0)*1.3 + rnd()*2) - ((metaTable[a]||0)*1.3 + rnd()*2));
+    const weighted = rolePool.map(c=>({c,w:(metaTable[c]||0)*1.6*proAffinity(p,c)+proAffinity(p,c)+rnd()*1.2})).sort((a,b)=>b.w-a.w);
     for(let i=0;i<nLearn && i<weighted.length;i++){
-      const c = weighted[i];
+      const c = weighted[i].c;
       const gain = Math.round((isOffseason ? 18 : 8) + rnd() * (isOffseason ? 14 : 6));
-      const ex = p.champs.find(x=>x.c===c);
-      if(ex) ex.p = clamp(ex.p + gain, 15, 98);
-      else p.champs.push({c, p: clamp(22 + gain, 25, 68)});
+      const prev=champProfVal(p,c);
+      rememberChampProf(p,c,prev?clamp(prev+gain,15,98):clamp(22+gain,25,68));
     }
   }
 
@@ -1859,27 +2089,41 @@ function evolveChampPool(p, metaTable, isOffseason){
     let targets = Array.isArray(p.trainTargets) ? p.trainTargets.slice(0,2) : [];
     // AI 选手也会自动定向特训 1 个下版本强势英雄
     if(p.team !== S.user && !targets.length && rolePool.length){
-      const strong = rolePool.filter(k=>(metaTable[k]||0)>=1);
+      const strong = rolePool.filter(k=>(metaTable[k]||0)>=1).sort((a,b)=>proAffinity(p,b)-proAffinity(p,a)).slice(0,3);
       if(strong.length) targets = [pick(strong)];
     }
     for(const c of targets){
       if(!CH[c]) continue;
       const gain = Math.round(28 + (p.age<=22?6:0) + rnd()*10);
-      const ex = p.champs.find(x=>x.c===c);
-      if(ex) ex.p = clamp(ex.p + gain, 30, 99);
-      else p.champs.push({c, p: clamp(24 + gain, 46, 72)});
-      trainedNames.push(`${CH[c].cn}（${profTier(p.champs.find(x=>x.c===c).p).name}）`);
+      const prev=champProfVal(p,c);
+      const value=prev?clamp(prev+gain,30,99):clamp(24+gain,46,72);
+      rememberChampProf(p,c,value);
+      trainedNames.push(`${CH[c].cn}（${playerProfTier(p,c,value).name}）`);
     }
     p.trainTargets = [];
   }
 
   p.champs.sort((a,b)=>b.p - a.p);
-  if(p.champs.length > 11) p.champs.length = 11;
   if(!p.champs.length) genChampPool(p);
   return trainedNames;
 }
 
 function intlPrize(pl, table){ pl.forEach((t,i)=>{ if(t&&table[i]) T(t).budget+=table[i]; }); const u=pl.indexOf(S.user); if(u>=0&&table[u]) addNews(`💰 ${teamName(S.user)} 获得奖金 ${fmtMoney(table[u])}。`); }
+function settlePlayerDevelopment(p){
+  const games=p.development?.games||0;
+  const team=p.team?T(p.team):null;
+  const regionalStarter=team && team.region!=='LPL' && Object.values(team.lineup).includes(p.pid);
+  const reps=Math.min(1,(games+(regionalStarter?5:0))/12);
+  const quality=games?clamp(p.development.performance/games,-0.8,1.2):0;
+  const ageFactor=p.age<=22?1:p.age<=26?0.55:p.age<=29?0.24:0.10;
+  const room=Math.max(0,p.pot-p.rating);
+  const growth=room*ageFactor*(0.035+reps*0.10)+quality*reps*ageFactor*0.80;
+  const aging=p.age<27?0:(p.age-26)*0.13*(1-reps*0.42);
+  const next=clamp(Math.round((p.rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
+  p.ratingDelta=Math.round((next-p.rating)*10)/10;
+  p.rating=next;
+  p.development={games:0,performance:0};
+}
 function splitEnd(split, order){
   REGIONS.filter(r=>r!=='LPL').forEach(r=>regionRank(r,split));
   // 财务：修复优先级 Bug（9-14名正确拿到 300 + 40 = 340 万）
@@ -1896,8 +2140,7 @@ function splitEnd(split, order){
   newPatch();
   // 成长、状态回正与赛段间英雄池小幅流转
   Object.values(S.players).forEach(p=>{ if(p.retired) return;
-    let d = p.age<=22 ? (p.pot-p.rating)*0.1+randn()*0.7 : p.age<=26 ? randn()*0.7 : -0.35+randn()*0.7;
-    p.rating = clamp(Math.round((p.rating+d)*10)/10, 45, 97);
+    settlePlayerDevelopment(p);
     const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.4*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + randn()*0.3, -5, 5)*100)/100;
     evolveChampPool(p, S.meta, false);
   });
@@ -2160,6 +2403,7 @@ function finishOffseason(){
   Object.values(S.players).forEach(p=>{ if(!p.team && !p.retired && p.age>=29 && rnd()<0.5){ p.retired=true; } p.age++; });
   // 兑现新赛季版本 & 结算全员年度英雄池流转、定向冬训与团队化学反应
   S.year = y + 1;
+  Object.values(S.players).forEach(p=>{ p.ratingYearStart=p.rating; p.ratingDelta=0; });
   S.patchNo = 0;
   newPatch(np);
   S.nextPatch = null;

@@ -18,6 +18,10 @@ grill-me 的位置：
 - **Claude 和 Gemini 负责全部前端开发**，包括界面、观战、样式、响应式适配、打包和客户端壳。跨边界需求由 Codex 提供接口与验收约定，再交给 Claude 或 Gemini 实现前端。
 - 跨边界的改动（回放数据格式、`playGame` / `simSolo1v1` 返回字段、`watch.js` 读取的状态字段）要在 PR 描述里写明“接口变更”。接口清单见 `docs/CODEX_KERNEL_REVIEW.md`。
 
+## 验收与发布
+
+- 完成本地改动后，先构建并验证本次涉及的可玩流程。通过后提交该批改动，直接推送到 GitHub 的 `main`，发布对应 GitHub Release 并确认安装包可下载。用户明确要求暂缓发布时按当次要求执行。
+
 ## 项目背景
 
 - 单文件 HTML 的英雄联盟（LoL）电竞经理游戏，浏览器直接打开 `dist/index.html` 就能玩。

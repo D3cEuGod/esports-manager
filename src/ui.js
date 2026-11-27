@@ -148,8 +148,9 @@ function champAvatar(c, cls=''){
 
 // BP 倒计时器：归零时自动采用已预选或教练推荐首选项，不再停在 00 秒
 let _bpTimer = null;
-function autoLockOnTimeout(M){
-  if(!M || M.phase!=='draft' || !M.draft) return;
+function autoLockOnTimeout(M, boundDraft, boundStep){
+  if(!M || M.phase!=='draft' || !M.draft || M.clockAi) return;
+  if(boundDraft && (M.draft!==boundDraft || boundDraft.step!==boundStep)) return;
   const d = M.draft, cur = draftSide(d);
   if(!cur || cur.side !== M.me) return;
   const un = unavailable(d);
@@ -178,31 +179,47 @@ function autoLockOnTimeout(M){
     M.sel = null; M.roleSel = null; M.swapFrom = null;
     triggerLockFlash(cur.kind, pickC);
     toast(`倒计时结束，已自动${cur.kind==='ban'?'禁用':'选择'}推荐英雄「${champName(pickC)}」`);
-    render();
     queueAI();
+    render();
   }
 }
-function resetBpClock(){
+// 顶部时钟：玩家回合 30 秒（归零自动锁定）；对手回合显示 AI 思考倒计时（归零不做任何玩家操作）
+// 绑定 match + draft + step：换步、换局、退出后旧时钟自行失效
+function resetBpClock(sec, ai){
   if(_bpTimer){ clearInterval(_bpTimer); _bpTimer = null; }
   const M = UI.match;
-  if(!M || M.phase!=='draft') return;
-  M.clock = 30;
-  _bpTimer = setInterval(()=>{
-    if(!UI.match || UI.match!==M || M.phase!=='draft'){ clearInterval(_bpTimer); _bpTimer=null; return; }
+  if(!M || M.phase!=='draft' || !M.draft) return;
+  const d = M.draft, step = d.step;
+  const total = typeof sec==='number' ? Math.max(0, sec) : 30;
+  M.clock = total; M.clockMax = total || 1; M.clockAi = !!ai;
+  if(total <= 0) return;
+  const h = setInterval(()=>{
+    if(UI.match!==M || M.phase!=='draft' || M.draft!==d || d.step!==step){ clearInterval(h); if(_bpTimer===h) _bpTimer=null; return; }
     if(M.clock > 0){
       M.clock--;
-      const num = document.getElementById('bp-clock-num');
-      const bar = document.getElementById('bp-clock-fill');
-      if(num){ num.textContent = String(M.clock).padStart(2,'0'); num.classList.toggle('urgent', M.clock<=5); }
-      if(bar){ bar.style.width = (M.clock/30*100)+'%'; }
+      const num = typeof document!=='undefined' && document.getElementById ? document.getElementById('bp-clock-num') : null;
+      const bar = typeof document!=='undefined' && document.getElementById ? document.getElementById('bp-clock-fill') : null;
+      if(num){ num.textContent = String(M.clock).padStart(2,'0'); num.classList.toggle('urgent', !ai && M.clock<=5); }
+      if(bar){ bar.style.width = (M.clock/M.clockMax*100)+'%'; }
       if(M.clock === 0){
-        clearInterval(_bpTimer); _bpTimer = null;
-        autoLockOnTimeout(M);
+        clearInterval(h); if(_bpTimer===h) _bpTimer = null;
+        if(!ai) autoLockOnTimeout(M, d, step);
       }
     }
   }, 1000);
+  _bpTimer = h;
 }
-function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } clearBpSplash(); }
+// 对手 BP 思考：每次禁用 / 选择各约 AI_DRAFT_WAIT_MS（引擎未提供时兜底 5000ms），到点用深思考选择锁定
+const AI_DRAFT_WAIT_FALLBACK_MS = 5000;
+function aiDraftWaitMs(){
+  return (typeof AI_DRAFT_WAIT_MS==='number' && isFinite(AI_DRAFT_WAIT_MS) && AI_DRAFT_WAIT_MS>=0) ? AI_DRAFT_WAIT_MS : AI_DRAFT_WAIT_FALLBACK_MS;
+}
+let _aiDraftTimer = null, _aiDraftKey = null;
+function cancelAiDraft(){
+  if(_aiDraftTimer) clearTimeout(_aiDraftTimer);
+  _aiDraftTimer = null; _aiDraftKey = null;
+}
+function stopBpClock(){ if(_bpTimer){ clearInterval(_bpTimer); _bpTimer=null; } cancelAiDraft(); clearBpSplash(); }
 
 function cloudPillHtml(){
   const st = CloudSync.status;
@@ -445,14 +462,14 @@ function renderOffseasonHome(){
         ${selPl ? `<div class="train-picker">
           <div class="tp-hd">
             <b>${esc(playerTag(selPl))}（${ROLE_CN[selPl.role]}）当前英雄池：</b>
-            <div class="pool">${selPl.champs.map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}">${ti.icon?ti.icon+' ':''}${esc(champName(c.c))}·${ti.name}</span>`; }).join('')}</div>
+            <div class="pool">${(selPl.champs||[]).map(c=>{ const ti=proTier(selPl,c.c); return `<span class="pl-${ti.cls}">${ti.icon?ti.icon+' ':''}${esc(champName(c.c))}·${ti.name}</span>`; }).join('')}</div>
           </div>
           <div class="tp-sub">点选冬训目标英雄（已选 ${targets.length}/2）：</div>
           <div class="train-cgrid">${candChamps.slice(0, 42).map(k=>{
             const on = targets.includes(k);
             const m = np.meta[k]||0;
             const curP = champProfVal(selPl, k);
-            const ti = curP>=25 ? profTier(curP) : null;
+            const ti = curP>=25 ? proTier(selPl, k, curP) : null;
             return `<button class="tc-chip ${on?'on':''}" data-a="toggleTrain" data-p="${esc(selPl.pid)}" data-c="${esc(k)}">
               ${champAvatar(k,'xs')}
               <span>${esc(champName(k))}${m>=2?' 🔥':m>=1?' ↑':''}${ti?`<small>${ti.name}</small>`:''}</span>
@@ -587,27 +604,51 @@ function eventSummary(ev){
 
 // ---------- 阵容 ----------
 VIEWS.roster = () => {
-  const t=T(S.user); const ps=t.roster.map(P).filter(Boolean).sort((a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||b.rating-a.rating);
-  const sal=ps.reduce((s,p)=>s+p.salary,0);
+  const t=T(S.user); const ps=(t.roster||[]).map(P).filter(Boolean);
+  const sal=ps.reduce((s,p)=>s+(p.salary||0),0);
   const chem = teamChemistry(S.user);
   const coresHtml = chem.cores.length
     ? chem.cores.map(c=>`<span class="chem-core">${ico('chem')} ${c.label}：${c.members.map(esc).join(' · ')}</span>`).join('')
     : '<span class="muted">暂无长期老搭档核心，多赛段同队出战将逐步形成羁绊</span>';
-  return `<section class="card"><h2>${esc(t.name)} ${t.cn?`<small>${esc(t.cn)}</small>`:''}</h2>
+  const win = transferWindowOpen();
+  const { slots, subs } = dbSquad(t);
+  return `<section class="card roster-view"><h2>${esc(t.name)} ${t.cn?`<small>${esc(t.cn)}</small>`:''}</h2>
    <p>战力 ${ovrBadge(teamOvr(S.user))} · 团队化学反应 <span class="chem-pill ${chem.cls}">${ico('chem')} <b>${chem.score}</b> ${chem.label}</span> · 预算 ${fmtMoney(t.budget)} · 年薪总额 ${fmtMoney(sal)} · 首发外援 ${starters(S.user).filter(isForeign).length}/2</p>
    <div class="chem-bar-row">${coresHtml}</div>
+   <p class="rs-note muted">${ico('chem')} 默契：选手与当前其余首发队友的平均羁绊（<span class="bd-val hi">72+</span> 高 · <span class="bd-val mid">50–71</span> 中 · <span class="bd-val lo">&lt;50</span> 低），同队出战越久越高，并影响团队化学反应。</p>
    ${probs()}
-   <div class="lineup">${ROLES.map(r=>{ const p=P(t.lineup[r]); return `<div class="slot"><div class="r">${ROLE_CN[r]}</div>${p?`<b>${esc(playerTag(p))}</b>${ovrBadge(Math.round(effRating(p,r)))}${p.role!==r?'<em>非本位</em>':''}`:'<em>空缺</em>'}</div>`; }).join('')}</div>
-   <button class="btn sm ghost" data-a="autoLineup">自动最佳合规阵容</button>
-   <table class="tbl roster"><tr><th>位置</th><th>选手</th><th>国籍</th><th>年龄</th><th>能力</th><th>默契</th><th>状态</th><th>心态</th><th>特质</th><th>潜力</th><th>身价</th><th>年薪</th><th>合同至</th><th>英雄池</th><th></th></tr>
-   ${ps.map(p=>{ const st=Object.entries(t.lineup).find(([r,id])=>id===p.pid); const bd=playerTeamBond(p); return `<tr>
-     <td>${ROLE_CN[p.role]}</td><td><b>${esc(playerTag(p))}</b><br><small>${esc(p.name)}</small></td><td>${esc(p.nat)}${isForeign(p)?'<small class="fx">外援</small>':''}</td><td>${p.age}</td>
-     <td>${ovrBadge(p.rating)}</td><td><span class="bd-val ${bd>=72?'hi':bd>=50?'mid':'lo'}">${bd}</span></td><td>${formChip(p,true)}</td><td>${mentalChip(p,true)}</td><td class="trs">${traitChips(p)||'<small class="muted">—</small>'}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${fmtMoney(p.salary)}</td><td>${p.contract}</td>
-     <td class="pool">${p.champs.map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}" title="${ti.name}">${ti.icon?ti.icon+' ':''}${champName(c.c)}</span>`; }).join('')}</td>
-     <td class="act">${st?`<span class="tagon">首发·${ROLE_CN[st[0]]}</span>`:`<button class="btn sm" data-a="setStarter" data-p="${esc(p.pid)}" data-r="${p.role}">设为${ROLE_CN[p.role]}首发</button>`}
-       ${transferWindowOpen()?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}</td></tr>`; }).join('')}
-   </table>${transferWindowOpen()?'':'<p class="muted">转会窗口关闭中（季后/休赛期与赛段之间开放），目前只能调整首发。</p>'}</section>`;
+   <div class="rs-head"><h3>首发</h3><button class="btn sm ghost" data-a="autoLineup">自动最佳合规阵容</button></div>
+   <div class="rs-grid">${slots.map(({r,p})=>p ? rosterCard(p, r, win)
+     : `<div class="rs-card empty"><div class="rs-top"><span class="rs-role">${ROLE_SVG[r]} 首发·${ROLE_CN[r]}</span></div><div class="rs-empty">空缺</div></div>`).join('')}</div>
+   <div class="rs-head"><h3>替补 <small>${subs.length} 人</small></h3></div>
+   ${subs.length ? `<div class="rs-grid">${subs.map(p=>rosterCard(p, null, win)).join('')}</div>` : '<p class="muted">暂无替补。</p>'}
+   ${win?'':'<p class="muted">转会窗口关闭中（季后/休赛期与赛段之间开放），目前只能调整首发。</p>'}</section>`;
 };
+function rosterActsHtml(p, slot, win, inCard){
+  return `${slot?(inCard?'':`<span class="tagon">首发·${ROLE_CN[slot]}</span>`):`<button class="btn sm" data-a="setStarter" data-p="${esc(p.pid)}" data-r="${p.role}">设为${ROLE_CN[p.role]||''}首发</button>`}
+    ${win?`<button class="btn sm ghost" data-a="sell" data-p="${esc(p.pid)}">出售</button><button class="btn sm ghost" data-a="release" data-p="${esc(p.pid)}">解约</button>`:''}`;
+}
+function rosterCard(p, slot, win){
+  const bd = playerTeamBond(p);
+  const off = slot && p.role!==slot;
+  const tr = traitChips(p);
+  const dl = ratingDeltaHtml(p);
+  const acts = rosterActsHtml(p, slot, win, true);
+  return `<div class="rs-card ${slot?'starter':'sub'}">
+    <div class="rs-top"><span class="rs-role">${ROLE_SVG[slot||p.role]||''} ${slot?`首发·${ROLE_CN[slot]}`:`替补·${ROLE_CN[p.role]||esc(p.role||'')}`}</span>${off?'<em class="rs-off">非本位</em>':''}${isForeign(p)?'<small class="fx">外援</small>':''}</div>
+    <button class="rs-open" data-a="rsPlayer" data-p="${esc(p.pid)}" title="查看选手详情">
+      <span class="rs-name"><b>${esc(playerTag(p))}</b><small>${esc(p.name||'')}</small></span>
+      <span class="rs-more muted">详情 ›</span>
+    </button>
+    <div class="rs-rt">${ovrBadge(p.rating||0)}${slot?`<small class="rs-eff" title="含状态与位置修正的出场能力">出场 ${Math.round(effRating(p,slot))}</small>`:''}</div>
+    ${dl?`<div class="rs-dl">${dl}</div>`:''}
+    <div class="rs-chips">${formChip(p,true)}${mentalChip(p,true)}<span class="rs-bd" title="默契：与其余首发队友的平均羁绊">默契 <span class="bd-val ${bondCls(bd)}">${bd}</span></span></div>
+    ${tr?`<div class="rs-trs">${tr}</div>`:''}
+    <div class="pool rs-pool">${poolChipsHtml(p,{limit:4})||'<small class="muted">英雄池 —</small>'}</div>
+    <div class="rs-meta">${esc(p.nat||'—')} · ${p.age!=null?p.age+' 岁':'—'} · 潜力 ${p.pot!=null?p.pot:'—'}<br>身价 ${fmtMoney(playerValue(p))} · 年薪 ${fmtMoney(p.salary||0)} · 合同至 ${p.contract!=null?p.contract:'—'}</div>
+    ${acts.trim()?`<div class="rs-act">${acts}</div>`:''}
+  </div>`;
+}
 
 // ---------- 转会市场（含季中建队非卖品过滤） ----------
 function marketEmbedHtml(limit){
@@ -717,6 +758,7 @@ function matchDetail(mid){
        ${g.rid && findReplay(g.rid) && findReplay(g.rid).rec ? ` <button class="btn sm" data-a="openReplay" data-id="${esc(g.rid)}">▶ 观看回放</button>` : ''}
        <div class="gp"><div>${teamTag(m.a)} ${ROLES.map(r=>champName(g.picks.A[r])).join(' / ')}<br><small>禁用：${g.bans.A.map(champName).join(' ')}</small></div>
        <div>${teamTag(m.b)} ${ROLES.map(r=>champName(g.picks.B[r])).join(' / ')}<br><small>禁用：${g.bans.B.map(champName).join(' ')}</small></div></div>
+       ${masteryChipsHtml(g.masteryChanges)}
        ${g.events&&g.events.length?`<ul class="evlog-sm">${g.events.map(ev=>`<li><b>${esc(ev.t)}</b> ${esc(ev.text)}</li>`).join('')}</ul>`:''}
      </div>`).join('')}
      <button class="btn ghost" data-a="closeModal">关闭</button>`; };
@@ -787,7 +829,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.3')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.4')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -804,6 +846,53 @@ const TIER_CLS = t => t>=2?'t2':t===1?'t1':t===0?'t0':t===-1?'tn1':'tn2';
 function formChip(p, short){ if(!p) return ''; const t = formTier(p); return `<span class="tchip ${TIER_CLS(t)}" title="状态：${FORM_TIERS[t+2]}">${short?'':'状态 '}<b>${FORM_TIERS[t+2]}</b></span>`; }
 function mentalChip(p, short){ if(!p) return ''; const t = mentalTier(p); return `<span class="tchip m ${TIER_CLS(t)}" title="心态：${MENTAL_TIERS[t+2]}">${short?'':'心态 '}<b>${MENTAL_TIERS[t+2]}</b></span>`; }
 function traitChips(p){ if(!p) return ''; return playerTraits(p).tags.map(x=>`<span class="trchip ${x.c}">${esc(x.t)}</span>`).join(''); }
+// 熟练度显示档位：优先用后端 playerProfTier（未经职业出场验证的旧随机高熟练不会被标成招牌）
+function proTier(p, c, v){
+  const val = v!=null ? v : champProfVal(p, c);
+  if(p && typeof playerProfTier==='function'){ try{ return playerProfTier(p, c, val); }catch(e){} }
+  return profTier(val);
+}
+function poolChipsHtml(p, opts={}){
+  const list = (p && Array.isArray(p.champs) ? p.champs : []).filter(e=>e && e.c);
+  const shown = opts.limit ? list.slice(0, opts.limit) : list;
+  const html = shown.map(e=>{ const v = champProfVal(p, e.c); const ti = proTier(p, e.c, v);
+    return `<span class="pl-${ti.cls}" title="${esc(ti.name)} ${Math.round(v)}/100">${ti.icon?ti.icon+' ':''}${esc(champName(e.c))}${opts.val?' '+Math.round(v):''}</span>`; }).join('');
+  return html + (opts.limit && list.length>opts.limit ? `<span class="pl-more">+${list.length-opts.limit}</span>` : '');
+}
+// 能力变化：本赛段 p.ratingDelta 与相对赛季初 p.ratingYearStart（旧档可能缺省）
+const fmtDelta = v => { const r = Math.round(v*10)/10; return r>0 ? `+${r}` : r<0 ? `${r}` : '±0'; };
+function ratingDeltaHtml(p){
+  if(!p) return '';
+  const out = [];
+  const seg = Number(p.ratingDelta);
+  if(p.ratingDelta!=null && Number.isFinite(seg)) out.push(`<span class="rt-d ${seg>=0.05?'up':seg<=-0.05?'dn':''}" title="本赛段能力变化">本赛段 ${fmtDelta(seg)}</span>`);
+  const ys = Number(p.ratingYearStart);
+  if(p.ratingYearStart!=null && Number.isFinite(ys) && Number.isFinite(Number(p.rating))){
+    const yd = Number(p.rating) - ys;
+    out.push(`<span class="rt-d ${yd>=0.05?'up':yd<=-0.05?'dn':''}" title="相对赛季初（${Math.round(ys*10)/10}）">赛季 ${fmtDelta(yd)}</span>`);
+  }
+  return out.join('');
+}
+const bondCls = bd => bd>=72?'hi':bd>=50?'mid':'lo';
+// 熟练度变化（g.masteryChanges，仅玩家队伍）：实际增加量，已满 100 显示“满级”
+function masteryChipsHtml(list){
+  const rows = (Array.isArray(list) ? list : []).filter(x=>x && x.champ);
+  if(!rows.length) return '';
+  return `<div class="mastery-box"><span class="mb-lbl">英雄熟练度</span>${rows.map(x=>{
+    const gain = Math.max(0, Math.round(Number(x.gain)||0));
+    const next = Math.round(Number(x.next)||0), prev = Math.round(Number(x.prev)||0);
+    const p = P(x.pid);
+    let up = '';
+    if(p && gain>0){ const a = proTier(p, x.champ, prev), b = proTier(p, x.champ, next); if(b.tier>a.tier && b.tier>=2) up = ` <em>晋升${esc(b.name)}</em>`; }
+    const val = gain>0 ? `<b>+${gain}</b><small>${next}/100</small>` : next>=100 ? '<b class="full">满级</b>' : '<b class="full">+0</b>';
+    return `<span class="ms-chip ${gain>0?'':'max'}">${esc(x.tag||(p?playerTag(p):x.pid||''))} · ${esc(champName(x.champ))} ${val}${up}</span>`;
+  }).join('')}</div>`;
+}
+// impacts 中的熟练度条目与 masteryChanges 重复时剔除，避免叠加
+function impactsWithoutMastery(g){
+  const imp = Array.isArray(g && g.impacts) ? g.impacts : [];
+  return (g && Array.isArray(g.masteryChanges) && g.masteryChanges.length) ? imp.filter(s=>!/熟练度/.test(String(s))) : imp;
+}
 function intelPanel(M){
   const m = M.item.m, ctx = matchCtx(M);
   const col = (key, side) => {
@@ -915,7 +1004,7 @@ VIEWS.db = () => {
   }
   return `<section class="card"><h2>资料库</h2>${regionNav}${teamNav}${body}</section>`;
 };
-function dbPlayerModal(pid){
+function dbPlayerModal(pid, opts={}){
   return () => {
     const p = P(pid);
     const t = p && p.team ? T(p.team) : null;
@@ -923,25 +1012,27 @@ function dbPlayerModal(pid){
     const slot = ROLES.find(r=>(t.lineup||{})[r]===pid);
     const bd = playerTeamBond(p);
     const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
-    const pool = (p.champs||[]).map(c=>{ const ti=profTier(c.p); return `<span class="pl-${ti.cls}" title="${ti.name}">${ti.icon?ti.icon+' ':''}${esc(champName(c.c))} ${Math.round(c.p||0)}</span>`; }).join('');
+    const pool = poolChipsHtml(p, {val:true});
+    const dl = ratingDeltaHtml(p);
+    const manage = opts.manage && t.key===S.user;
     return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small></h3>
-      <p>${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}</p>
+      <p>${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}${slot&&p.role!==slot?' <em class="muted">非本位</em>':''}</p>
       <table class="tbl db-kv">
         ${kv('位置', ROLE_CN[p.role]||esc(p.role||''))}
-        ${kv('国籍', esc(p.nat||'—'))}
+        ${kv('国籍', esc(p.nat||'—')+(isForeign(p)?'<small class="fx">外援</small>':''))}
         ${kv('年龄', p.age!=null?p.age:'—')}
-        ${kv('能力', ovrBadge(p.rating||0))}
+        ${kv('能力', ovrBadge(p.rating||0)+(dl?` <span class="rs-dl">${dl}</span>`:''))}
         ${kv('潜力', p.pot!=null?p.pot:'—')}
         ${kv('状态', formChip(p,true))}
         ${kv('心态', mentalChip(p,true))}
         ${kv('特质', traitChips(p)||'<small class="muted">—</small>')}
-        ${kv('默契', `<span class="bd-val ${bd>=72?'hi':bd>=50?'mid':'lo'}">${bd}</span>`)}
+        ${kv('默契', `<span class="bd-val ${bondCls(bd)}">${bd}</span> <small class="muted">与其余首发队友的平均羁绊</small>`)}
         ${kv('身价', fmtMoney(playerValue(p)))}
         ${kv('年薪', fmtMoney(p.salary||0))}
         ${kv('合同至', p.contract!=null?p.contract:'—')}
         ${kv('英雄池', pool?`<span class="pool">${pool}</span>`:'<small class="muted">—</small>')}
       </table>
-      <div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+      <div class="btns">${manage?rosterActsHtml(p, slot, transferWindowOpen()):''}<button class="btn ghost" data-a="closeModal">关闭</button></div>`;
   };
 }
 
@@ -952,6 +1043,7 @@ function needsSolo1v1(M){
 }
 function enterNextGamePhase(M){
   const m = M.item.m, me = M.me, op = me==='A'?'B':'A';
+  stopBpClock();
   M.draft = null; M.sel = null; M.roleSel = null; M.swapFrom = null;
   M.solo = null; M.soloAiBlue = null; Watch.stop();
   if(needsSolo1v1(M)){
@@ -1016,7 +1108,7 @@ function setupDraft(blue){
   M.draft = newDraft(M.item.m.a, M.item.m.b, blue, M.locked);
   setDraftCtx(M, M.draft);
   M.phase = 'draft'; M.sel = null; M.roleSel = null; M.swapFrom = null; M._lastPh = -1;
-  resetBpClock();
+  cancelAiDraft();
   queueAI();
 }
 
@@ -1033,8 +1125,7 @@ function champBadgeInfo(d, M, k){
   for(const r of ROLES){
     if(d.picks[M.me][r]) continue;
     const p = myLu[r]; if(!p) continue;
-    const pv = champProfVal(p, k);
-    const ti = profTier(pv);
+    const ti = proTier(p, k);
     if(ti.tier >= 2){
       const pIco = ti.tier>=4 ? ico('crown','c-gold') : ti.tier===3 ? ico('pick','c-teal') : ico('bolt','c-ice');
       badges.push({ icon: pIco, cls:'mine', text:`我方 ${ROLE_CN[r]} ${playerTag(p)} · ${ti.name}英雄` });
@@ -1044,31 +1135,49 @@ function champBadgeInfo(d, M, k){
     if(d.picks[opp][r]) continue;
     const p = oppLu[r]; if(!p) continue;
     const pv = champProfVal(p, k);
-    if(pv >= 80){
-      badges.push({ icon:ico('warn','c-red'), cls:'opp', text:`对手 ${ROLE_CN[r]} ${playerTag(p)} 的招牌英雄，建议针对` });
+    const ti = proTier(p, k, pv);
+    if(ti.tier >= 4 || (ti.tier >= 3 && pv >= 80)){
+      badges.push({ icon:ico('warn','c-red'), cls:'opp', text:`对手 ${ROLE_CN[r]} ${playerTag(p)} 的${ti.tier>=4?'招牌':'拿手'}英雄，建议针对` });
     }
   }
   const metaText = `${ch.roles.map(r=>ROLE_CN[r]).join(' / ')} · ${DMG_CN[ch.dmg]||ch.dmg} · ${ch.tags.map(t=>TAG_CN[t]||t).join(' / ')}`;
   return { badges, metaText };
 }
+// 推进 BP：玩家回合开 30 秒时钟；对手回合排一个绑定 match + draft + step 的思考计时，同一步重复调用只保留一个
 function queueAI(){
-  const M=UI.match; if(!M||M.phase!=='draft') return;
-  const cur=draftSide(M.draft);
+  const M=UI.match; if(!M||M.phase!=='draft'||!M.draft){ cancelAiDraft(); return; }
+  const d=M.draft, cur=draftSide(d);
   if(!cur){ stopBpClock(); M.phase='ready'; M.sel=null; render(); return; }
-  resetBpClock();
-  if(cur.side!==M.me){
-    setTimeout(()=>{
-      if(UI.match!==M||M.phase!=='draft') return;
-      const nowCur = draftSide(M.draft);
-      if(!nowCur || nowCur.side===M.me) return;
-      const ch=aiChoose(M.draft);
-      draftAct(M.draft, ch.c, ch.role, ch.offrole);
-      if(nowCur.kind==='pick') optimizeAiFlex(M.draft, nowCur.side);
-      triggerLockFlash(nowCur.kind, ch.c);
-      render();
-      queueAI();
-    }, 540);
-  }
+  if(cur.side===M.me){ cancelAiDraft(); resetBpClock(); return; }
+  const k=_aiDraftKey;
+  if(_aiDraftTimer && k && k.M===M && k.d===d && k.step===d.step) return;
+  cancelAiDraft();
+  const step=d.step, ms=aiDraftWaitMs();
+  resetBpClock(Math.ceil(ms/1000), true);
+  const key={M, d, step};
+  _aiDraftKey=key;
+  _aiDraftTimer=setTimeout(()=>{
+    if(_aiDraftKey!==key) return;
+    _aiDraftTimer=null; _aiDraftKey=null;
+    runAiDraftStep(M, d, step);
+  }, ms);
+}
+function aiDraftChoice(d, deep){
+  if(deep){ try{ const ch=aiChoose(d, {lookahead:true}); if(ch && ch.c) return ch; }catch(e){ if(typeof console!=='undefined') console.warn('[BP] 深思考选择失败，改用常规选择', e); } }
+  return aiChoose(d);
+}
+function runAiDraftStep(M, d, step){
+  if(UI.match!==M || M.phase!=='draft' || M.draft!==d || d.step!==step) return;
+  const cur=draftSide(d);
+  if(!cur || cur.side===M.me) return;
+  let ch=aiDraftChoice(d, true);
+  let ok=!!(ch && ch.c) && draftAct(d, ch.c, ch.role, ch.offrole);
+  if(!ok){ ch=aiDraftChoice(d, false); ok=!!(ch && ch.c) && draftAct(d, ch.c, ch.role, ch.offrole); }
+  if(!ok){ if(typeof console!=='undefined') console.warn('[BP] 对手无法完成本步', step); return; }
+  if(cur.kind==='pick') optimizeAiFlex(d, cur.side);
+  triggerLockFlash(cur.kind, ch.c);
+  queueAI();
+  render();
 }
 
 // 计算当前 4 阶段索引（0=Ban1, 1=Pick1, 2=Ban2, 3=Pick2, 4=Done）
@@ -1128,7 +1237,7 @@ function renderSideColumn(M, d, side, cur, isBlue){
     const isSwapSrc = isMe && M.swapFrom===r;
     const isSwapTarget = isMe && M.swapFrom && M.swapFrom!==r;
     const pv = c ? champProfVal(p, c) : 0;
-    const ti = c ? profTier(pv) : null;
+    const ti = c ? proTier(p, c, pv) : null;
     const offRole = c && !CH[c].roles.includes(r);
     const okKind = offRole ? offRoleKind(c, r).kind : 'native';
     const fitTag = !c ? '' : offRole
@@ -1196,6 +1305,67 @@ function renderSideColumn(M, d, side, cur, isBlue){
       ${canSwap?`<div class="swap-hint">${M.swapFrom?`已选中 <b>${ROLE_CN[M.swapFrom]}</b>，点另一槽位互换`:`${ico('transfer')} 点己方槽位可摇摆换位`}</div>`:''}
     </div>
   </aside>`;
+}
+
+// BP 实时面板：只展示后端 draftFeedback 的结论（胜率 / 最近一步变化 / 双方关键优劣），UI 不自行算分
+function bpFeedbackData(M, d, cur){
+  if(!d || typeof draftFeedback!=='function') return null;
+  const myTurn = cur && cur.side===M.me;
+  let fb = null, preview = false;
+  try{
+    if(myTurn && M.sel && CH[M.sel] && !unavailable(d).has(M.sel)){
+      let role = null, ok = true;
+      if(cur.kind==='pick'){
+        const chk = canPickChamp(d, M.me, M.sel);
+        ok = chk.ok;
+        // 与「确认选择」落位规则一致：手动指定位置优先，否则按最佳位置
+        if(ok) role = (M.roleSel && chk.openRoles.includes(M.roleSel)) ? M.roleSel : bestRoleFor(d, M.me, M.sel, chk.offrole);
+      }
+      if(ok){
+        fb = draftFeedback(d, M.sel, role);
+        preview = !!(fb && fb.last && fb.last.champ===M.sel && fb.last.kind===cur.kind && fb.last.side===cur.side);
+        if(!preview) fb = null;
+      }
+    }
+    if(!fb) fb = draftFeedback(d);
+  }catch(e){ return null; }
+  if(!fb || !Number.isFinite(Number(fb.pA))) return null;
+  return { fb, preview };
+}
+function fbNotes(side){
+  const s = side || {};
+  return { adv:(Array.isArray(s.advantages)?s.advantages:[]).filter(Boolean), risk:(Array.isArray(s.risks)?s.risks:[]).filter(Boolean) };
+}
+function bpFeedbackHtml(M, d, cur, leftSide){
+  const res = bpFeedbackData(M, d, cur); if(!res) return '';
+  const { fb, preview } = res;
+  const rightSide = leftSide==='A' ? 'B' : 'A';
+  const pA = clamp(Number(fb.pA), 0, 1);
+  const leftP = Math.round((leftSide==='A' ? pA : 1-pA)*100), rightP = 100-leftP;
+  const myD = (Number(fb.deltaA)||0) * (M.me==='A' ? 1 : -1) * 100;
+  const last = fb.last && fb.last.champ ? fb.last : null;
+  const who = s => s===M.me ? '我方' : '对手';
+  const act = k => k==='ban' ? '禁用' : '选择';
+  let lastTxt, dTxt = '';
+  if(last){
+    lastTxt = preview ? `若${act(last.kind)}「${esc(champName(last.champ))}」` : `${who(last.side)}${act(last.kind)}「${esc(champName(last.champ))}」`;
+    if(Math.abs(myD) < 0.05) dTxt = `<span class="fb-d flat">胜率无变化${last.kind==='ban' && fb.banReason ? ` · ${esc(fb.banReason)}` : ''}</span>`;
+    else dTxt = `<span class="fb-d ${myD>0?'up':'dn'}">我方胜率 ${myD>0?'+':''}${myD.toFixed(1)}%</span>`;
+  } else lastTxt = '尚未选禁：按双方首发与先手的初始预测';
+  const sideHtml = (side, isBlue) => {
+    const n = fbNotes(fb[side]);
+    const chips = [...n.adv.slice(0,3).map(t=>`<span class="fb-chip adv">${esc(t)}</span>`), ...n.risk.slice(0,2).map(t=>`<span class="fb-chip risk">${esc(t)}</span>`)];
+    return `<div class="fb-side ${isBlue?'blue':'red'}"><b>${isBlue?'蓝方':'红方'} ${esc((T(d[side])||{}).short||d[side]||'')}${side===M.me?' <em>我方</em>':''}</b>${chips.length?chips.join(''):'<span class="fb-none">暂无明显优劣</span>'}</div>`;
+  };
+  return `<div class="bp-fb ${preview?'is-preview':''}">
+    <div class="fb-hd">
+      <span class="fb-st ${preview?'pv':'now'}">${preview?'选择预览':'实时'}</span>
+      <span class="fb-st ${fb.partial?'est':'fin'}" title="${fb.partial?'阵容未完成，胜率为暂估':'阵容已完整'}">${fb.partial?'暂估':'阵容完整'}</span>
+      <span class="fb-last">${lastTxt}</span>${dTxt}
+      <span class="fb-prob" title="${fb.partial?'暂估':'预测'}胜率（左蓝右红）"><b class="bl">${leftP}%</b><span class="prob-track"><span class="bl" style="width:${leftP}%"></span><span class="rd" style="width:${rightP}%"></span></span><b class="rd">${rightP}%</b></span>
+    </div>
+    <div class="fb-cols">${sideHtml(leftSide, true)}${sideHtml(rightSide, false)}</div>
+  </div>`;
 }
 
 function matchScreen(){
@@ -1373,8 +1543,8 @@ function matchScreen(){
         <b class="pb-msg">${myTurn ? (isBan?'轮到你禁用一名英雄':'轮到你选择一名英雄') : (isBan?`${teamName(d[cur.side])} 正在禁用…`:`${teamName(d[cur.side])} 正在选人…`)}</b>
       </div>
       <div class="pb-clock">
-        <span id="bp-clock-num" class="${M.clock<=5?'urgent':''}">${String(M.clock).padStart(2,'0')}</span>
-        <div class="pb-clock-bar"><i id="bp-clock-fill" style="width:${M.clock/30*100}%"></i></div>
+        <span id="bp-clock-num" class="${!M.clockAi && M.clock<=5?'urgent':''}">${String(M.clock).padStart(2,'0')}</span>
+        <div class="pb-clock-bar"><i id="bp-clock-fill" style="width:${M.clock/(M.clockMax||30)*100}%"></i></div>
       </div>
     </div>`;
   } else if(M.phase==='ready'){
@@ -1437,7 +1607,7 @@ function matchScreen(){
       } else {
         const chk = canPickChamp(d, M.me, M.sel);
         const r = (M.roleSel && chk.openRoles.includes(M.roleSel)) ? M.roleSel : bestRoleFor(d, M.me, M.sel, true);
-        const ti = r ? profTier(champProfVal(myLu[r], M.sel)) : null;
+        const ti = r ? proTier(myLu[r], M.sel) : null;
         const ok = r ? offRoleKind(M.sel, r).kind : 'native';
         const offDesc = !r || ch.roles.includes(r) ? ''
           : ok==='apc_bot' ? ' · ✨ 法核下路奇招（菜刀队补法伤可获胜率加成）'
@@ -1457,6 +1627,7 @@ function matchScreen(){
     }
 
     center = `<section class="hex-center ${isBan?'stage-ban':'stage-pick'}">
+      ${bpFeedbackHtml(M, d, cur, leftSide)}
       ${myTurn && suggestions.length ? `<div class="coach-bar">
         <span class="coach-lbl">${isBan?'教练建议禁用':'教练建议选择'}</span>
         <div class="coach-list">${suggestions.map(s=>`<button class="coach-chip ${M.sel===s.c?'sel':''}" data-a="dSel" data-c="${esc(s.c)}" ${s.role?`data-r="${s.role}"`:''}>
@@ -1486,10 +1657,10 @@ function matchScreen(){
         let bestMyTier = 0, bestMyIcon = '', bestMyCls = '';
         for(const r of ROLES){
           if(d.picks[M.me][r] || !myLu[r]) continue;
-          const ti = profTier(champProfVal(myLu[r], k));
+          const ti = proTier(myLu[r], k);
           if(ti.tier > bestMyTier){ bestMyTier = ti.tier; bestMyIcon = ti.icon; bestMyCls = ti.cls; }
         }
-        const oppSig = ROLES.find(r=>!d.picks[opp][r] && oppLu[r] && champProfVal(oppLu[r], k)>=80);
+        const oppSig = ROLES.find(r=>{ if(d.picks[opp][r] || !oppLu[r]) return false; const v = champProfVal(oppLu[r], k); if(v < 80) return false; return proTier(oppLu[r], k, v).tier>=3; });
         const stamp = isLocked ? `<span class="c-stamp fl">无畏锁</span>`
                     : isBanned ? `<span class="c-stamp bn">已禁</span>`
                     : isPicked ? `<span class="c-stamp pk">已选</span>` : '';
@@ -1529,6 +1700,12 @@ function matchScreen(){
     const leftP  = Math.round((leftSide==='A' ? e.pA : 1-e.pA)*100);
     const rightP = 100 - leftP;
     const se = styleEdge(leftE.comp.style, rightE.comp.style);
+    const rfb = bpFeedbackData(M, d, null);
+    const rcNotes = (side, E) => {
+      const n = rfb ? fbNotes(rfb.fb[side]) : null;
+      if(n && (n.adv.length || n.risk.length)) return `<div class="rc-chips">${n.adv.map(t=>`<span class="fb-chip adv">${esc(t)}</span>`).join('')}${n.risk.map(t=>`<span class="fb-chip risk">${esc(t)}</span>`).join('')}</div>`;
+      return `<p>${E.comp.notes.length?E.comp.notes.map(esc).join(' · '):'均衡常规阵'}</p>`;
+    };
     const curveBar = (label, lv, rv) => {
       const p = clamp(Math.round(sigmoid((lv-rv)/3.5)*100), 15, 85);
       return `<div class="curve-row"><span>${label}</span><div class="curve-bar"><i class="bl" style="width:${p}%"></i><i class="rd" style="width:${100-p}%"></i></div><span>${p}% / ${100-p}%</span></div>`;
@@ -1542,12 +1719,12 @@ function matchScreen(){
       <div class="ready-compare">
         <div class="rc-card blue">
           <h4>${teamName(leftTeam)} · ${STYLE_CN[leftE.comp.style]}阵</h4>
-          <p>${leftE.comp.notes.length?leftE.comp.notes.join(' · '):'均衡常规阵'}</p>
+          ${rcNotes(leftSide, leftE)}
         </div>
         <div class="rc-vs">${se>0?'◀ 体系克制':se<0?'体系克制 ▶':'体系均势'}</div>
         <div class="rc-card red">
           <h4>${teamName(rightTeam)} · ${STYLE_CN[rightE.comp.style]}阵</h4>
-          <p>${rightE.comp.notes.length?rightE.comp.notes.join(' · '):'均衡常规阵'}</p>
+          ${rcNotes(rightSide, rightE)}
         </div>
       </div>
       <div class="curve-box">
@@ -1621,8 +1798,9 @@ function matchScreen(){
         </li>`).join('')}</ul>
       </div>` : ''}
 
-      ${g.impacts&&g.impacts.length ? `<div class="impact-box">
-        ${g.impacts.map(s=>`<span class="imp-chip">✦ ${esc(s)}</span>`).join('')}
+      ${masteryChipsHtml(g.masteryChanges)}
+      ${impactsWithoutMastery(g).length ? `<div class="impact-box">
+        ${impactsWithoutMastery(g).map(s=>`<span class="imp-chip">✦ ${esc(s)}</span>`).join('')}
       </div>` : ''}
 
       <div class="ready-actions">
@@ -1678,6 +1856,7 @@ const ACT = {
   dbRegion:d=>{ UI.db={region:d.r, team:null}; render(); },
   dbTeam:d=>{ const t=T(d.k); UI.db={region:t?t.region:(UI.db||{}).region, team:d.k}; render(); },
   dbPlayer:d=>{ UI.modal=dbPlayerModal(d.p); render(); },
+  rsPlayer:d=>{ UI.modal=dbPlayerModal(d.p,{manage:true}); render(); },
   authTab:d=>{ UI.authTab=d.t; UI.verifyEmail=null; render(); },
   cancelOtp:()=>{ UI.verifyEmail=null; render(); },
   enterGuest:()=>{ UI.entry='lobby'; UI.pickTeam=false; UI.verifyEmail=null; render(); },
@@ -1929,7 +2108,7 @@ const ACT = {
       const lockedC = M.sel;
       M.sel=null; M.roleSel=null; M.swapFrom=null;
       triggerLockFlash(cur.kind, lockedC);
-      render(); queueAI();
+      queueAI(); render();
     } else toast('该英雄无法选择（没有空余对应位置）');
   },
   dAuto:()=>{ const M=UI.match; stopBpClock(); autoDraftRest(M.draft); M.phase='ready'; M.sel=null; M.swapFrom=null; render(); },
@@ -1961,6 +2140,8 @@ const ACT = {
       const d=newDraft(m.a,m.b,blue,M.locked); setDraftCtx(M, d); autoDraftRest(d); play(d);
     }
     ACT.finishSeries();
+    // 自动模拟结算：直接打开本系列赛详情，展示每局实际熟练度增加量
+    if(m.id && Array.isArray(m.gm) && m.gm.some(g=>g && Array.isArray(g.masteryChanges) && g.masteryChanges.length)){ UI.modal = matchDetail(m.id); render(); }
   },
   finishSeries:()=>{
     const M=UI.match; const m=M.item.m;

@@ -101,6 +101,11 @@ function migrateSave(s){
   }
   s.playerDevelopment=1;
   // 旧档一次性补上个人性格基线与偏移：保留全队的大方向（如连胜后的自信），让同队五人拉开差距
+  // v2.1.17：潜力不再低于当前能力（只执行一次）
+  if(!s.potVer && s.players){
+    Object.values(s.players).forEach(p=>{ if(Number.isFinite(p.pot) && Number.isFinite(p.rating) && p.pot<p.rating) p.pot=Math.round(p.rating); });
+    s.potVer=1;
+  }
   if(!s.moodVer && s.players){
     Object.values(s.players).forEach(p=>{
       if(p.retired) return;
@@ -190,6 +195,7 @@ function newGame(userTeam){
   }
   S.playerDevelopment=1;
   S.moodVer=1;
+  S.potVer=1;
   S.legendsVer=1;
   newPatch();
   addLegends();
@@ -203,11 +209,23 @@ function newGame(userTeam){
   buildSeason({rosterSetup:true});
   addNews(`欢迎来到 ${S.year} 赛季！你执掌 ${teamName(userTeam)}。目标：拿下LPL世界赛资格，问鼎全球总决赛。`);
 }
+// 潜力（v2.1.17）：职业选手 = 当前能力 + 按年龄和天赋随机的上升空间，开档时不会低于当前能力；
+// 新秀仍按天赋大范围随机（至少比当前高 3），保证有人能成长为明星。
 function initialPotential(p){
   const r=srand(hash('potential:'+p.pid));
   const talent=(r()+r())*0.5;
-  return Math.round(clamp(57 + talent*40 + (p.age<=21?7:p.age<=24?2:0),55,98));
+  if(p.rookie) return Math.round(clamp(Math.max(57 + talent*40 + (p.age<=21?7:p.age<=24?2:0), (p.rating||60)+3),55,98));
+  const age=p.age||22, rating=p.rating||70;
+  const head = age<22 ? 3+talent*9 : age<=25 ? 1+talent*5 : talent*3;
+  return Math.round(clamp(rating+head, rating, 98));
 }
+// 潜力越高长得越快：潜力 70 → 0.9 倍、80 → 1.0 倍、95 → 1.1 倍
+function potentialGrowthMul(pot){
+  pot = Number.isFinite(pot) ? pot : 80;
+  return pot<=80 ? clamp(1+(pot-80)*0.01, 0.85, 1) : Math.min(1.12, 1+(pot-80)/150);
+}
+const POT_OVER_RATE = 0.25;   // 达到潜力后，成长只剩四分之一
+const POT_OVER_CAP = 2;       // 最多超出潜力 2 分
 const styleForPlayer=new Map();
 function professionalPicks(p){ return champOverride(p)?.picks || PRO_DATA.players[String(playerTag(p)).toLowerCase()] || {}; }
 // 传奇选手作为自由球员加入（只有玩家能签，AI 不会签约）；已存在则跳过
@@ -1988,7 +2006,7 @@ function applyGameImpact(g, teamA, teamB, random=rnd){
 // 队伍均分差 5 分时，强队单局胜率约 65%、BO5 约 78%；实力接近的对局仍约五五开。
 const FORM_SWING = { game:6, series:2.5 };
 const REGION_RANK_NOISE = 3;     // 非 LPL 赛区按战力 + 噪声排名
-const DEV_GROWTH_MUL = 1.25;
+const DEV_GROWTH_MUL = 1.15;
 function ensureSeriesForm(ctx){
   if(!ctx) return ctx;
   if(ctx.simSeed==null) ctx.simSeed=rnd()*0x100000000>>>0;
@@ -2574,10 +2592,12 @@ function settlePlayerDevelopment(p){
   const quality=games?clamp(p.development.performance/games,-0.8,1.2):0;
   const ageFactor=p.age<=22?1:p.age<=26?0.55:p.age<=29?0.24:0.10;
   const room=Math.max(0,p.pot-p.rating);
-  // 年度成长整体 ×1.25（v2.1.10 提到 1.5 后 90+ 选手膨胀过快，按用户要求回调）；90+ 选手不额外削减
-  const growth=(room*ageFactor*(0.035+reps*0.10)+quality*reps*ageFactor*0.80)*DEV_GROWTH_MUL;
+  // 年度成长整体 ×1.15，再按潜力 ×0.9~1.1；达到潜力后成长降为四分之一，最多超出潜力 2 分
+  let growth=(room*ageFactor*(0.035+reps*0.10)+quality*reps*ageFactor*0.80)*DEV_GROWTH_MUL*potentialGrowthMul(p.pot);
+  if(growth>0 && Number.isFinite(p.pot) && p.rating>=p.pot) growth*=POT_OVER_RATE;
   const aging=p.age<27?0:(p.age-26)*0.13*(1-reps*0.42);
-  const next=clamp(Math.round((p.rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
+  let next=clamp(Math.round((p.rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
+  if(next>p.rating && Number.isFinite(p.pot)) next=Math.min(next, Math.max(p.rating, p.pot+POT_OVER_CAP));
   p.ratingDelta=Math.round((next-p.rating)*10)/10;
   p.rating=next;
   p.development={games:0,performance:0};

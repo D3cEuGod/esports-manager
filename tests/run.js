@@ -840,13 +840,13 @@ section('职业英雄池、熟练度持久化与选手成长');
     settlePlayerDevelopment(growth); settlePlayerDevelopment(inactive);
     const same=initialPairBond('369','JackeyLove'), stranger=initialPairBond('369','Doran');
     return {realistic,version,kept,once,sameRun:JSON.stringify(direct.masteryChanges)===JSON.stringify(skipped.masteryChanges),
-      grow:growth.rating>inactive.rating && growth.ratingDelta>0 && initialPotential(growth)===initialPotential({...growth,rating:91}),
+      grow:growth.rating>inactive.rating && growth.ratingDelta>0 && initialPotential({...growth,rating:91})>=91 && initialPotential({...growth,rookie:true})===initialPotential({...growth,rookie:true,rating:60}),
       chemistry:same>stranger && same>40 && stranger>0};
   })()`);
   ok(r.realistic,'开档英雄池和 T0 避免用随机奇招充当招牌或职业常用英雄');
   ok(r.version,'合适的版本英雄能超过非版本招牌，新手无法取得相同的版本收益');
   ok(r.kept && r.once && r.sameRun,'满英雄池依然保留熟练度，快进与快模一致，一局只结算一次');
-  ok(r.grow && r.chemistry, '潜力独立，实战出场加快成长，历史搭档有默契基础');
+  ok(r.grow && r.chemistry, '职业选手潜力不低于当前能力、新秀潜力按天赋，实战出场加快成长，历史搭档有默契基础');
 }
 
 section('传奇自由选手与手工英雄池');
@@ -919,6 +919,27 @@ section('临场发挥与爆冷');
   ok(r.shared, '系列赛共享一组临场发挥浮动，并写入比赛场合');
   ok(r.finite, '每局为双方生成临场发挥浮动');
   ok(r.upsets>=1 && r.upsets<=20, '大比分差距下弱队偶尔能爆冷，但强队仍占优');
+}
+
+section('潜力决定成长速度与上限');
+{
+  const r = run(`(()=>{
+    const mk=(pot,rating=70)=>({pid:'pot-'+pot+'-'+rating,age:19,rating,pot,development:{games:14,performance:8}});
+    const lo=mk(72), mid=mk(80), hi=mk(95);
+    [lo,mid,hi].forEach(settlePlayerDevelopment);
+    const speed=lo.ratingDelta<mid.ratingDelta && mid.ratingDelta<hi.ratingDelta;
+    const at=mk(75,75), under=mk(85,75); settlePlayerDevelopment(at); settlePlayerDevelopment(under);
+    const slowAtCap=at.ratingDelta>0 && at.ratingDelta<under.ratingDelta*0.5;
+    const capped=mk(75,76.5); for(let i=0;i<12;i++){ capped.development={games:14,performance:14}; settlePlayerDevelopment(capped); }
+    const old=JSON.parse(JSON.stringify(S)); delete old.potVer; const pid=Object.keys(old.players)[0]; old.players[pid].pot=old.players[pid].rating-10;
+    const m=migrateSave(old); const fixed=m.players[pid].pot>=Math.round(m.players[pid].rating) && m.potVer===1;
+    const none=Object.values(S.players).filter(p=>!p.legend && p.pot<p.rating).length===0;
+    return {speed, slowAtCap, cap:capped.rating<=77, fixed, none, d:[lo.ratingDelta,mid.ratingDelta,hi.ratingDelta]};
+  })()`);
+  console.log(`   潜力 72/80/95 的同条件新人单赛段成长 ${r.d.join(' / ')}`);
+  ok(r.speed, '潜力越高成长越快');
+  ok(r.slowAtCap && r.cap, '达到潜力后成长放缓，最多超出潜力 2 分');
+  ok(r.fixed && r.none, '新档无人低于潜力；旧档潜力低于能力的选手补到当前能力');
 }
 
 console.log(fails ? `\n✗ ${fails} 项失败` : '\n✓ 全部通过');

@@ -664,7 +664,7 @@ if(typeof document!=='undefined' && isTauriApp()){
 }
 
 window.AppUpdater = {
-  currentVersion: '2.1.16',
+  currentVersion: '2.1.17',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null, // { version, notes, url, assetUrl, mode }

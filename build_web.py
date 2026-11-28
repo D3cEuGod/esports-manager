@@ -66,7 +66,7 @@ manifest = {
 open(os.path.join('dist', 'manifest.webmanifest'), 'w', encoding='utf-8').write(
     json.dumps(manifest, ensure_ascii=False, indent=2)
 )
-sw_code = """const CACHE = 'rift-manager-v2.1.4';
+sw_code = """const CACHE = 'rift-manager-v2.1.5';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

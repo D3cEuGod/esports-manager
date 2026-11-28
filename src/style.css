@@ -1290,3 +1290,17 @@ body.cb-lock{overflow:hidden}
 .match.hex .ms-chip{background:rgba(10,200,185,.14);border-color:rgba(10,200,185,.45);color:#9bf5ed}
 .match.hex .ms-chip small{color:#7fb8b2}.match.hex .ms-chip em{color:#f7d77e}
 .match.hex .ms-chip.max{background:rgba(200,155,60,.16);border-color:rgba(200,155,60,.55);color:#f7d77e}
+/* 设置 › 对局：BP 每手时限（单选分段，原生 radio 保证键盘方向键可操作） */
+.seg-field{border:0;margin:0;padding:0;min-width:0}
+.seg-field legend{font-weight:900;font-size:17px;padding:0;margin-bottom:4px}
+.seg-field>p{margin:0 0 10px;font-size:13px}
+.seg{display:flex;flex-wrap:wrap;border:2px solid var(--ink);width:max-content;max-width:100%}
+.seg-opt{position:relative;display:flex;flex:1 1 0;cursor:pointer}
+.seg-opt+.seg-opt{border-left:1px solid var(--ln2)}
+.seg-opt input{position:absolute;opacity:0;width:1px;height:1px;min-height:0;margin:0}
+.seg-opt span{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px;min-width:96px;padding:6px 16px;font-weight:700;white-space:nowrap}
+.seg-opt span small{font-size:11px;font-weight:500}
+.seg-opt.on span,.seg-opt input:checked+span{background:var(--ink);color:#fff}.seg-opt.on span small{color:#c9c5be}
+.seg-opt input:focus-visible+span{outline:2px solid var(--hex-gold);outline-offset:-4px}
+.seg-note{margin-top:10px!important;font-size:12px}
+@media(max-width:600px){.seg{width:100%}.seg-opt span{min-width:0;padding:6px 8px}}

@@ -1,7 +1,7 @@
 {
-  "version": "2.1.4",
-  "date": "2026-11-27",
-  "notes": "AI BP 思考与反制预判、提高阵容分量、职业英雄池和快模成长修复",
+  "version": "2.1.5",
+  "date": "2026-11-28",
+  "notes": "玩家每手 BP 时限可在设置中选择 30、60 或 90 秒，默认 30 秒",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

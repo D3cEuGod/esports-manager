@@ -54,11 +54,16 @@ async function main(){
   await send('Runtime.enable');
   await send('Network.enable');
   await send('Network.setBlockedURLs',{urls:['https://*','http://*']});
-  await send('Page.navigate',{url:pathToFileURL(path.join(root,'dist/index.html')).href});
-  for(let attempt=0;attempt<80;attempt++){
-    if(await run(()=>typeof ACT==='object' && !!document.querySelector('#app [data-a]'))) break;
-    await delay(80);
-  }
+  const appUrl=pathToFileURL(path.join(root,'dist/index.html')).href;
+  const waitForApp=async()=>{
+    for(let attempt=0;attempt<80;attempt++){
+      if(await run(()=>typeof ACT==='object' && !!document.querySelector('#app [data-a="enterGuest"]'))) return;
+      await delay(80);
+    }
+    throw Error('Guest entry did not finish loading');
+  };
+  await send('Page.navigate',{url:appUrl});
+  await waitForApp();
   const checks={};
   checks.entry=await run(()=>{
     Math.random=srand(12072026);
@@ -240,6 +245,64 @@ async function main(){
     stopBpClock(); UI.match=null; render();
     return aiStarts && noEarlyLock && playerClock && noDelay && skipped.step===20 &&
       firstElapsed>=4800 && pairElapsed>=9800 && restartedClock;
+  });
+  checks.playerBpClock=await run(()=>{
+    ACT.view({v:'settings'});
+    document.querySelector('.set-tabs [data-t="game"]').click();
+    const options=[...document.querySelectorAll('input[name="bp-turn-sec"]')];
+    const defaults=options.map(input=>input.value).join(',')==='30,60,90' && options[0].checked;
+    document.querySelector('#bp-turn-60').click();
+    const originalSetInterval=window.setInterval;
+    let tick=null;
+    try{
+      window.setInterval=(fn,ms)=>{
+        if(ms===1000) tick=fn;
+        return originalSetInterval(fn,ms);
+      };
+      beginUserMatch({m:{a:'TES',b:'BLG',bo:3,label:'玩家 BP 时限验收'}});
+      setupDraft('A');
+      const M=UI.match, d=M.draft;
+      const banStarts=M.clock===60 && M.clockMax===60 && !M.clockAi;
+      const ban=coachSuggest(d,M.me)[0].c;
+      M.sel=ban;
+      for(let i=0;i<59;i++) tick();
+      const noEarlyLock=M.clock===1 && d.step===0;
+      tick();
+      const autoBan=d.step===1 && d.bans[M.me][0]===ban;
+      stopBpClock();
+      while(draftSide(d).kind==='ban'){
+        const choice=aiChoose(d);
+        if(!draftAct(d,choice.c,choice.role,choice.offrole)) throw Error('Could not prepare the first pick');
+      }
+      queueAI();
+      const pickStarts=M.clock===60 && M.clockMax===60 && !M.clockAi;
+      const pick=coachSuggest(d,M.me)[0];
+      M.sel=pick.c; M.roleSel=pick.role;
+      for(let i=0;i<60;i++) tick();
+      const autoPick=d.step===7 && Object.values(d.picks[M.me]).includes(pick.c);
+      return defaults && banStarts && noEarlyLock && autoBan && pickStarts && autoPick && M.clockAi && M.clock===5;
+    } finally {
+      window.setInterval=originalSetInterval;
+      stopBpClock();
+      UI.match=null; render();
+      document.querySelector('#bp-turn-90').click();
+    }
+  });
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await send('Page.reload');
+  await waitForApp();
+  checks.savedBpClock=await run(()=>{
+    ACT.enterGuest(); ACT.newgame({k:'TES'});
+    ACT.view({v:'settings'}); document.querySelector('.set-tabs [data-t="game"]').click();
+    const options=document.querySelector('[data-testid="bp-turn-limit"]');
+    const settingsFit=options.getBoundingClientRect().right<=390 &&
+      options.querySelector('#bp-turn-90').checked;
+    beginUserMatch({m:{a:'TES',b:'BLG',bo:3,label:'本地时限恢复验收'}});
+    setupDraft('A'); render();
+    const M=UI.match, clock=document.querySelector('#bp-clock-num');
+    const saved=M.clock===90 && M.clockMax===90 && clock?.textContent==='90';
+    stopBpClock(); UI.match=null; render();
+    return settingsFit && saved;
   });
   for(const [name,passed] of Object.entries(checks)) assert.equal(passed,true,name);
   assert.deepEqual(exceptions,[],'unexpected app exceptions');

@@ -183,14 +183,30 @@ function autoLockOnTimeout(M, boundDraft, boundStep){
     render();
   }
 }
-// 顶部时钟：玩家回合 30 秒（归零自动锁定）；对手回合显示 AI 思考倒计时（归零不做任何玩家操作）
+// 玩家每手 BP 时限（设置 › 对局）：30 / 60 / 90 秒，设备本地存储；缺失或无效旧值用 30；
+// 存储不可用时仍保留本次会话的选择。每次轮到玩家禁用/选人时读取，AI 回合不受影响。
+const BP_TURN_KEY = 'em_bp_turn_sec', BP_TURN_OPTS = [30, 60, 90], BP_TURN_DEFAULT = 30;
+let _bpTurnSession = null;
+function bpTurnSeconds(){
+  if(BP_TURN_OPTS.includes(_bpTurnSession)) return _bpTurnSession;
+  let v = null;
+  try{ const raw = localStorage.getItem(BP_TURN_KEY); v = raw==null ? null : Number(raw); }catch(e){ v = null; }
+  return BP_TURN_OPTS.includes(v) ? v : BP_TURN_DEFAULT;
+}
+function setBpTurnSeconds(v){
+  v = Number(v);
+  if(!BP_TURN_OPTS.includes(v)) return false;
+  _bpTurnSession = v;
+  try{ localStorage.setItem(BP_TURN_KEY, String(v)); return true; }catch(e){ return false; }
+}
+// 顶部时钟：玩家回合按设置时限（默认 30 秒，归零自动锁定）；对手回合显示 AI 思考倒计时（归零不做任何玩家操作）
 // 绑定 match + draft + step：换步、换局、退出后旧时钟自行失效
 function resetBpClock(sec, ai){
   if(_bpTimer){ clearInterval(_bpTimer); _bpTimer = null; }
   const M = UI.match;
   if(!M || M.phase!=='draft' || !M.draft) return;
   const d = M.draft, step = d.step;
-  const total = typeof sec==='number' ? Math.max(0, sec) : 30;
+  const total = typeof sec==='number' ? Math.max(0, sec) : bpTurnSeconds();
   M.clock = total; M.clockMax = total || 1; M.clockAi = !!ai;
   if(total <= 0) return;
   const h = setInterval(()=>{
@@ -829,7 +845,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.4')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.5')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -955,7 +971,20 @@ VIEWS.replays = () => {
 };
 
 // ---------- 设置（回放 / 规则 / 账号与存档 合并入口） ----------
-const SET_TABS = [['replays','回放'],['rules','规则'],['sys','账号与存档']];
+const SET_TABS = [['replays','回放'],['game','对局'],['rules','规则'],['sys','账号与存档']];
+// 设置 › 对局：玩家每手 BP（禁用与选人）时限
+VIEWS.game = () => {
+  const cur = bpTurnSeconds();
+  const saved = UI.bpTurnSaved;
+  return `<section class="card set-game"><h2>对局</h2>
+    <fieldset class="seg-field" data-testid="bp-turn-limit">
+      <legend>BP 每手时限</legend>
+      <p class="muted">轮到你禁用或选人时的倒计时，超时自动锁定预选或教练推荐英雄。对手 AI 每手仍约 5 秒。</p>
+      <div class="seg" role="radiogroup" aria-label="BP 每手时限">${BP_TURN_OPTS.map(v=>`<label class="seg-opt ${v===cur?'on':''}"><input type="radio" name="bp-turn-sec" id="bp-turn-${v}" value="${v}" data-testid="bp-turn-${v}" ${v===cur?'checked':''}><span>${v} 秒${v===BP_TURN_DEFAULT?'<small>默认</small>':''}</span></label>`).join('')}</div>
+      <p class="muted seg-note" data-testid="bp-turn-note" aria-live="polite">${saved===false?'本设备暂时无法保存设置，本次打开期间有效。':'设置保存在本设备上，下一次轮到你禁用或选人时生效。'}</p>
+    </fieldset>
+  </section>`;
+};
 VIEWS.settings = () => {
   const tab = SET_TABS.some(([k])=>k===UI.setTab) ? UI.setTab : 'replays';
   return `<nav class="off-tabs set-tabs">${SET_TABS.map(([k,n])=>`<a data-a="setTab" data-t="${k}" class="${tab===k?'on':''}">${n}</a>`).join('')}</nav>
@@ -1143,7 +1172,7 @@ function champBadgeInfo(d, M, k){
   const metaText = `${ch.roles.map(r=>ROLE_CN[r]).join(' / ')} · ${DMG_CN[ch.dmg]||ch.dmg} · ${ch.tags.map(t=>TAG_CN[t]||t).join(' / ')}`;
   return { badges, metaText };
 }
-// 推进 BP：玩家回合开 30 秒时钟；对手回合排一个绑定 match + draft + step 的思考计时，同一步重复调用只保留一个
+// 推进 BP：玩家回合按设置时限开时钟；对手回合排一个绑定 match + draft + step 的思考计时，同一步重复调用只保留一个
 function queueAI(){
   const M=UI.match; if(!M||M.phase!=='draft'||!M.draft){ cancelAiDraft(); return; }
   const d=M.draft, cur=draftSide(d);
@@ -1851,7 +1880,7 @@ function endUserGame(g){
 
 // ================= 交互 =================
 const ACT = {
-  view:d=>{ if(['replays','rules','sys'].includes(d.v)){ UI.setTab=d.v; UI.view='settings'; } else UI.view=d.v; UI.evSel=null; render(); },
+  view:d=>{ if(['replays','game','rules','sys'].includes(d.v)){ UI.setTab=d.v; UI.view='settings'; } else UI.view=d.v; UI.evSel=null; render(); },
   setTab:d=>{ UI.setTab=d.t; render(); },
   dbRegion:d=>{ UI.db={region:d.r, team:null}; render(); },
   dbTeam:d=>{ const t=T(d.k); UI.db={region:t?t.region:(UI.db||{}).region, team:d.k}; render(); },
@@ -2156,6 +2185,7 @@ document.addEventListener('change', e=>{
   const el=e.target;
   if(el.dataset.f){ UI.mk[el.dataset.f] = el.type==='checkbox'? el.checked : el.value; render(); }
   if(el.dataset.d==='avail' && UI.match){ UI.match.onlyAvail = el.checked; render(); }
+  if(el.name==='bp-turn-sec'){ UI.bpTurnSaved = setBpTurnSeconds(el.value); render(); }
   if(el.dataset.o==='give'){ UI.offerGive=el.value; refreshOfferEval(el.dataset.p); }
   if(el.id==='imp' && el.files[0]){ el.files[0].text().then(t=>{ try{ S=migrateSave(JSON.parse(t)); save(); render(); toast('导入成功'); }catch(x){ toast('存档格式错误'); } }); }
 });

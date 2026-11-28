@@ -95,6 +95,15 @@ function migrateSave(s){
     });
   }
   s.playerDevelopment=1;
+  // 旧档一次性补上个人性格基线与偏移：保留全队的大方向（如连胜后的自信），让同队五人拉开差距
+  if(!s.moodVer && s.players){
+    Object.values(s.players).forEach(p=>{
+      if(p.retired) return;
+      p.form = Math.round(clamp(p.form + randn()*1.0, -5, 5)*100)/100;
+      p.mental = Math.round(clamp(p.mental*0.7 + mentalBase(p)*0.6 + randn()*0.7, -5, 5)*100)/100;
+    });
+  }
+  s.moodVer=1;
   if(!s.bonds || typeof s.bonds !== 'object'){
     s.bonds = {};
     const prevS = S; S = s;
@@ -142,6 +151,7 @@ function newGame(userTeam){
         const age = AGE_FIX[baseId] || p.age || (18 + Math.floor(r()*9));
         const pl = { pid, tag:baseId, name:p.name||baseId, role:p.role, nat:p.nat||(reg==='LPL'?'CN':reg==='LCK'?'KR':'--'),
           age, rating:p.rating||70, team:key, form:initialForm(baseId), mental:0, champs:[], sub:!!p.sub };
+        rollStartMood(pl);
         pl.pot = initialPotential(pl);
         pl.ratingYearStart = pl.rating;
         pl.salary = fairSalary(pl);
@@ -151,6 +161,7 @@ function newGame(userTeam){
     }
   }
   S.playerDevelopment=1;
+  S.moodVer=1;
   newPatch();
   Object.values(S.players).forEach(p=>genChampPool(p,srand(hash(p.pid)),S.meta));
   for(let i=0;i<24;i++) genRookie(2026);
@@ -210,6 +221,7 @@ function genRookie(year, forceRole, forceNat){
   const nat = forceNat || pick(['CN','CN','CN','KR']);
   const pl = { pid:id, tag:id, name:id+'（虚构新秀）', role, nat, age, rating, team:null, form:0, mental:0, champs:[], rookie:true, ratingYearStart:rating };
   pl.pot=initialPotential(pl);
+  rollStartMood(pl);
   pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl);
   S.players[id]=pl; return pl;
 }
@@ -287,6 +299,28 @@ const TIER_HI = {'-2':-3, '-1':-1, '0':0.99, '1':2.99, '2':5};
 function initialForm(tag){
   const T0 = (typeof TRAITS!=='undefined' && TRAITS) ? TRAITS[tag] : null;
   return T0 && T0.base ? Math.round(T0.base*100)/100 : 0;
+}
+// 隐藏性格基线：有人天生自信、有人容易紧张；由抗压特质、年龄资历、能力和按选手固定的随机数决定，心态平时向它回归
+function mentalBase(p){
+  if(!p) return 0;
+  const tr = playerTraits(p);
+  const r = srand(hash('mood:'+(p.tag||p.pid)));
+  r();
+  const age = p.age||21;
+  const exp = age>=25 ? 0.25 : age>=22 ? 0.1 : age<=18 ? -0.15 : 0;
+  const star = clamp(((p.rating||70)-80)*0.03, -0.3, 0.35);
+  const noise = (r()+r()+r()-1.5)*1.6;
+  return Math.round(clamp(((tr.res||1)-1)*1.6 + exp + star + noise, -1.8, 1.8)*100)/100;
+}
+// 开档/新秀的个人起点：状态围绕历来表现基线、心态围绕性格基线随机散开，同队五人各不相同
+function rollStartMood(p){
+  p.form = Math.round(clamp((p.form||0) + randn()*1.15, -4, 4)*100)/100;
+  p.mental = Math.round(clamp(mentalBase(p)*0.8 + randn()*0.9, -4, 4)*100)/100;
+}
+// 单局个人表现分（约 -1 ~ 1.6）：KDA 为主，MVP 额外加成
+function gamePerf(row, isMvp){
+  const kda = (row.k + row.a) / Math.max(1, row.d);
+  return clamp((kda-3)/3, -1, 1) + (isMvp?0.6:0);
 }
 // 把数值变化限制在“最多跨一档”
 function stepTier(oldV, newV){
@@ -1585,10 +1619,13 @@ function applyGameImpact(g, teamA, teamB){
       development.games++;
       development.performance+=perf;
       const f0 = p.form||0;
-      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn()*0.12);
-      // 小局胜负对心态的即时影响（系列赛结束时另有更大的结算）
+      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn()*0.3*tr.stab);
+      // 小局对心态的即时影响：胜负只占一部分，个人发挥（被打爆还是carry）同样关键，并向个人性格基线回归
       const m0 = p.mental||0;
-      p.mental = stepTier(m0, m0 + (won ? 0.22*tr.res : -0.3/tr.res) + randn()*0.05);
+      const ind = gamePerf(row, isMvp);
+      const dTeam = won ? 0.14*tr.res : -0.2/tr.res;
+      const dInd = ind >= 0 ? ind*0.32*tr.res : ind*0.38/tr.res;
+      p.mental = stepTier(m0, m0 + dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn()*0.15);
       // 英雄熟练度经验累积（每次出场累积熟练度数值，跨过档位线时晋升档位）
       if(row.c && CH[row.c]){
         const prev=champProfVal(p,row.c);
@@ -1662,15 +1699,40 @@ function settleSeriesMental(m, games){
     const t = T(key); if(!t) continue;
     t.streak = won ? Math.max(1,(t.streak||0)+1) : Math.min(-1,(t.streak||0)-1);
     const streakAmp = 1 + Math.min(2, Math.abs(t.streak)-1)*0.15;
-    for(const pid of Object.values(t.lineup)){
+    const starters = Object.values(t.lineup);
+    for(const pid of starters){
       const p = P(pid); if(!p) continue;
       const tr = playerTraits(p);
       const m0 = p.mental||0;
-      // 胜负对心态的冲击基本对称；抗压强的人输了掉得少、回到平常心更快
-      let dm = won ? 0.5*amp*streakAmp*(0.85+0.15*tr.res) : -0.5*amp*streakAmp/tr.res;
+      // 本系列赛个人表现：每局 KDA 与 MVP 的平均
+      let indSum = 0, indN = 0;
+      for(const g of games||[]){
+        const row = (g.sa||[]).concat(g.sb||[]).find(x=>x.pid===pid);
+        if(row){ indSum += gamePerf(row, g.mvp===pid); indN++; }
+      }
+      const ind = indN ? indSum/indN : 0;
+      // 胜负对心态的冲击基本对称；抗压强的人输了掉得少；个人发挥决定同队之间的差别
+      let dm = won ? 0.4*amp*streakAmp*(0.85+0.15*tr.res) : -0.4*amp*streakAmp/tr.res;
+      dm *= clamp(1 + (won?1:-1)*ind*0.35, 0.55, 1.45);
+      dm += ind >= 0 ? ind*0.45*tr.res : ind*0.5/tr.res;
       if(isFinal) dm += won ? 1.0 : -0.5/tr.res;
-      dm += (0 - m0) * 0.3 * tr.res;
-      p.mental = stepTier(m0, m0 + dm + randn()*0.08);
+      // 越接近顶点/谷底越难再推：同队一路夺冠时，能否到「无畏」取决于个人发挥与性格
+      if(dm*m0 > 0) dm *= Math.max(0.25, 1 - Math.abs(m0)/6.5);
+      dm += (mentalBase(p) - m0) * 0.3 * tr.res;
+      p.mental = stepTier(m0, m0 + dm + randn()*0.25);
+    }
+    // 替补：没有比赛的选手状态在基线附近漂移；实力够首发却坐板凳的人心态慢慢下滑
+    for(const pid of t.roster){
+      if(starters.includes(pid)) continue;
+      const p = P(pid); if(!p || p.retired) continue;
+      const tr = playerTraits(p);
+      const f0 = p.form||0, m0 = p.mental||0;
+      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn()*0.22*tr.stab);
+      const cur = P(t.lineup[p.role]);
+      const deserves = cur && p.rating >= cur.rating - 1;
+      const mb = mentalBase(p);
+      const dm = deserves && m0 > mb - 3 ? -0.28/tr.res : 0;
+      p.mental = stepTier(m0, m0 + dm + (mb - m0)*(deserves?0.03:0.1) + randn()*0.12);
     }
   }
 }
@@ -2182,7 +2244,7 @@ function splitEnd(split, order){
   // 成长、状态回正与赛段间英雄池小幅流转
   Object.values(S.players).forEach(p=>{ if(p.retired) return;
     settlePlayerDevelopment(p);
-    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.4*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + randn()*0.3, -5, 5)*100)/100;
+    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.8*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + mentalBase(p)*0.65 + randn()*0.6, -5, 5)*100)/100;
     evolveChampPool(p, S.meta, false);
   });
   addNews(`🔧 新版本 ${S.year%100}.${S.patchNo} 上线，英雄强度与选手日常英雄池随之变化。`);

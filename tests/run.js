@@ -122,6 +122,49 @@ section('状态与心态：五档、每局最多跨一档');
   ok(ctx[1] - ctx[3] > ctx[2] - ctx[0] + 3, '高压场合（国际赛淘汰赛决胜局）心态影响更大');
 }
 
+section('状态与心态：同队选手各不相同');
+{
+  const r = run(`(()=>{
+    const keep=S;
+    const sameShare=()=>{ let n=0, sf=0, sm=0;
+      for(const t of Object.values(S.teams)){ const ps=Object.values(t.lineup).map(P).filter(Boolean); if(ps.length<5) continue; n++;
+        if(new Set(ps.map(formTier)).size===1) sf++; if(new Set(ps.map(mentalTier)).size===1) sm++; }
+      return [sf/n, sm/n]; };
+    newGame('BLG');
+    const fresh=sameShare();
+    const off=Object.values(S.players).filter(p=>formTier(p)!==0 || mentalTier(p)!==0).length/Object.keys(S.players).length;
+    const baseStable=Object.values(S.players).slice(0,50).every(p=>mentalBase(p)===mentalBase(p));
+    // 一场系列赛后，同队首发的心态变化不应完全一样
+    const m=mkMatch('BLG','TES',5,'测试'); const pre={}; Object.values(T('BLG').lineup).forEach(id=>pre[id]=P(id).mental);
+    simSeries(m,false);
+    const deltas=new Set(Object.keys(pre).map(id=>Math.round((P(id).mental-pre[id])*100)));
+    // 旧档：全队数值一样的存档读取后被打散，且只处理一次
+    const old=JSON.parse(JSON.stringify(S)); delete old.moodVer;
+    Object.values(old.players).forEach(p=>{ p.form=0; p.mental=1.5; });
+    S=migrateSave(old);
+    const migrated=sameShare();
+    const snap=JSON.stringify(Object.values(S.players).map(p=>[p.form,p.mental]));
+    S=migrateSave(S);
+    const once=S.moodVer===1 && snap===JSON.stringify(Object.values(S.players).map(p=>[p.form,p.mental]));
+    // 实力够首发却坐板凳的替补，心态逐渐下滑
+    const t=T('BLG'); const starter=P(t.lineup.MID);
+    const bench={pid:'BenchTest', tag:'BenchTest', name:'BenchTest', role:'MID', nat:'CN', age:22, rating:starter.rating+2, team:'BLG', form:0, mental:0, champs:[], salary:10, contract:2028};
+    S.players.BenchTest=bench; t.roster.push('BenchTest'); const bm0=bench.mental;
+    for(let i=0;i<8;i++) settleSeriesMental(mkMatch('BLG','TES',3,'测试',{w:'BLG',l:'TES'}), []);
+    const benchDrop=bench.mental < bm0 - 0.5;
+    t.roster.pop(); delete S.players.BenchTest;
+    S=keep;
+    return {fresh, off, baseStable, deltaKinds:deltas.size, migrated, once, benchDrop};
+  })()`);
+  ok(r.fresh[0] < 0.2 && r.fresh[1] < 0.2, `新档同队五人状态/心态完全同档的队伍很少（${r.fresh.map(x => (x * 100).toFixed(0) + '%').join(' / ')}）`);
+  ok(r.off > 0.35 && r.off < 0.8, `新档约一半选手不在平稳/平常（${(r.off * 100).toFixed(0)}%）`);
+  ok(r.baseStable, '性格基线对同一选手固定');
+  ok(r.deltaKinds >= 3, `系列赛后同队心态变化因人而异（${r.deltaKinds} 种）`);
+  ok(r.migrated[0] < 0.4 && r.migrated[1] < 0.4, `旧档读取后同队数值被打散（${r.migrated.map(x => (x * 100).toFixed(0) + '%').join(' / ')}）`);
+  ok(r.once, '旧档打散只执行一次');
+  ok(r.benchDrop, '实力够首发却坐板凳的替补心态下滑');
+}
+
 // ---------------------------------------------------------------- 回放
 section('回放：终局采样与装备事件');
 {

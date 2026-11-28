@@ -1,7 +1,7 @@
 {
-  "version": "2.1.6",
+  "version": "2.1.7",
   "date": "2026-11-28",
-  "notes": "对手 BP 新增简单、普通、困难三档难度，任何难度都不会选让自己预估胜率下降的英雄",
+  "notes": "同队选手的状态和心态不再雷同：每人有自己的性格基线，个人发挥、上场时间都会影响心态",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

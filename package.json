@@ -1,6 +1,6 @@
 {
   "name": "rift-manager",
-  "version": "2.1.13",
+  "version": "2.1.14",
   "description": "峡谷经理人 · 英雄联盟电竞经理（跨平台 Tauri v2 客户端 + 网页单文件版）",
   "private": true,
   "scripts": {

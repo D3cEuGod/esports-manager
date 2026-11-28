@@ -1,0 +1,260 @@
+{
+ "uZent": {
+  "recent": [
+   "Nautilus",
+   "Rell",
+   "Leona",
+   "Karma",
+   "Neeko",
+   "Rakan"
+  ],
+  "confidence": "medium",
+  "source": "https://gol.gg/players/player-stats/5586/season-ALL/split-ALL/tournament-ALL/",
+  "notes": "gol.gg shows uZent as SUPPORT (not JUG); pool from gol.gg all seasons (Nautilus 20, Rell 16, Leona 15, Karma 11, Neeko 10, Rakan 8). Input role/team mismatch; LOUD in CBLOL 2026 per ExitLag."
+ },
+ "Ghost": {
+  "recent": [
+   "Braum",
+   "Alistar",
+   "Bard",
+   "Blitzcrank"
+  ],
+  "confidence": "low",
+  "source": "sheepesports.com player page / article; otherwise common knowledge",
+  "notes": "Veteran support (ex-Kingzone/DRX-era ADC/support); career list from memory; recent = our dataset only; web counts not retrievable."
+ },
+ "Daystar": {
+  "recent": [
+   "Akali",
+   "Ryze",
+   "Annie",
+   "Aurora",
+   "Hwei"
+  ],
+  "confidence": "low",
+  "source": "sheepesports.com player page / article; otherwise common knowledge",
+  "notes": "2026 LCK: 10 games (sheepesports). Pre-LCK CL data not found."
+ },
+ "Vincenzo": {
+  "recent": [
+   "Jhin",
+   "Mel",
+   "Miss Fortune",
+   "Ziggs"
+  ],
+  "confidence": "low",
+  "source": "sheepesports.com/us/articles/krx-vincenzo-cl-mvp-to-bot-laner",
+  "notes": "Jungler (CL MVP), 0 LCK games in dataset. Sheep Esports Aug 2026: forced to bot lane in CL Play-In, played Jhin/Mel/MF/Ziggs (not jungle pool; ADC role-swap). Jungle pool unverified."
+ },
+ "Seany": {
+  "recent": [
+   "Aurora",
+   "Azir",
+   "Akali",
+   "Cassiopeia"
+  ],
+  "confidence": "low",
+  "source": "none found; relied on 2025-26 dataset",
+  "notes": "career not researched (low-profile)"
+ },
+ "Zamudo": {
+  "recent": [
+   "Ambessa",
+   "Renekton",
+   "Rumble",
+   "Sion",
+   "Cho'Gath",
+   "Galio",
+   "Gangplank",
+   "Gnar"
+  ],
+  "confidence": "low",
+  "source": "common knowledge (unverified; web fetch blocked)",
+  "notes": "LYON academy/NLC-era top; thin data"
+ },
+ "Tactical": {
+  "recent": [
+   "Kai'Sa",
+   "Sivir",
+   "Corki",
+   "Ezreal",
+   "Zeri",
+   "Jinx"
+  ],
+  "confidence": "low",
+  "source": "common knowledge (unverified; web fetch blocked)",
+  "notes": "thin data; academy/Challengers era champs not verified"
+ },
+ "FIESTA": {
+  "recent": [
+   "Azir",
+   "Orianna",
+   "Syndra",
+   "Taliyah",
+   "Ryze",
+   "Viktor"
+  ],
+  "confidence": "low",
+  "source": "common knowledge + existing 2025-26 dataset; gol.gg/WebSearch gave no usable champion-pool data (unverified)",
+  "notes": "no 2025-26 data in dataset; pool is an estimate from role/style, not verified"
+ },
+ "Hans SamD": {
+  "recent": [
+   "Ezreal",
+   "Kai'Sa",
+   "Varus",
+   "Jinx",
+   "Caitlyn",
+   "Corki"
+  ],
+  "confidence": "low",
+  "source": "common knowledge + existing 2025-26 dataset; gol.gg/WebSearch gave no usable champion-pool data (unverified)",
+  "notes": "no 2025-26 data in dataset; pool is an estimate from role/style, not verified"
+ },
+ "Soboro": {
+  "recent": [
+   "Rumble",
+   "Renekton",
+   "K'Sante",
+   "Gwen",
+   "Jax",
+   "Jayce",
+   "Gnar",
+   "Ambessa"
+  ],
+  "confidence": "high",
+  "source": "gol.gg player 4232 (all seasons, LCK/LCK CL)",
+  "notes": "counts are all-time gol.gg; 0 games in our dataset"
+ },
+ "SlowQ": {
+  "recent": [
+   "Aurora",
+   "Annie",
+   "Hwei",
+   "LeBlanc",
+   "Ahri",
+   "Syndra"
+  ],
+  "confidence": "low",
+  "source": "common knowledge + existing 2025-26 dataset; gol.gg/WebSearch gave no usable champion-pool data (unverified)",
+  "notes": ""
+ },
+ "Daglas": {
+  "recent": [
+   "Nocturne",
+   "Xin Zhao",
+   "Aatrox",
+   "Jarvan IV",
+   "Vi",
+   "Pantheon"
+  ],
+  "confidence": "low",
+  "source": "common knowledge + existing 2025-26 dataset; gol.gg/WebSearch gave no usable champion-pool data (unverified)",
+  "notes": ""
+ },
+ "Grizzly": {
+  "recent": [
+   "Vi",
+   "Jarvan IV",
+   "Xin Zhao",
+   "Lee Sin",
+   "Nocturne",
+   "Wukong",
+   "Trundle",
+   "Naafiri"
+  ],
+  "confidence": "medium",
+  "source": "gol.gg player 5161 season S16",
+  "notes": "S16 counts only; earlier LCK CL seasons not tallied"
+ },
+ "5t5": {
+  "recent": [
+   "Xin Zhao",
+   "Pantheon",
+   "Skarner",
+   "Naafiri",
+   "Viego",
+   "Wukong",
+   "Vi",
+   "Jarvan IV"
+  ],
+  "confidence": "low",
+  "source": "dataset top + general knowledge, unverified",
+  "notes": "LDL/LPL jungler; no data found"
+ },
+ "fishone": {
+  "recent": [
+   "Jhin",
+   "Kai'Sa",
+   "Jinx",
+   "Senna",
+   "Sivir",
+   "Varus",
+   "Ezreal",
+   "Miss Fortune"
+  ],
+  "confidence": "low",
+  "source": "dataset top + general knowledge, unverified",
+  "notes": "name collision with Lee-Jung-tae-like Fisher on gol.gg ruled out; no data found"
+ },
+ "OvO": {
+  "recent": [
+   "Alistar",
+   "Rakan",
+   "Nautilus",
+   "Leona",
+   "Braum",
+   "Rell",
+   "Renata Glasc",
+   "Lulu"
+  ],
+  "confidence": "low",
+  "source": "dataset top + general knowledge, unverified",
+  "notes": "gol.gg lookup returned wrong player; no data found"
+ },
+ "Liangchen": {
+  "recent": [
+   "K'Sante",
+   "Sion",
+   "Renekton",
+   "Rumble",
+   "Gnar",
+   "Jayce",
+   "Ambessa",
+   "Gwen"
+  ],
+  "confidence": "low",
+  "source": "dataset top + general knowledge, unverified",
+  "notes": "gol.gg id 1323 is a different Liang (TW); not used"
+ },
+ "Ryan3": {
+  "recent": [
+   "Miss Fortune",
+   "Varus",
+   "Yunara",
+   "Corki",
+   "Aphelios",
+   "Jhin",
+   "Kai'Sa",
+   "Ezreal"
+  ],
+  "confidence": "low",
+  "source": "dataset top + general knowledge, unverified",
+  "notes": "no data found"
+ },
+ "Juhan": {
+  "recent": [
+   "Wukong",
+   "Jarvan IV",
+   "Pantheon",
+   "Malphite",
+   "Skarner",
+   "Vi",
+   "Xin Zhao",
+   "Naafiri"
+  ],
+  "confidence": "low",
+  "source": "dataset top + general knowledge, unverified",
+  "notes": "no data found; may be KR name overlap"
+ }
+}

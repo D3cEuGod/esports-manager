@@ -1,7 +1,7 @@
 {
-  "version": "2.1.13",
+  "version": "2.1.14",
   "date": "2026-11-28",
-  "notes": "选手年度成长从 1.5 倍回调到 1.25 倍，90 分以上的选手不会膨胀得那么快",
+  "notes": "按 2023–2026 职业比赛真实出场重做全部选手英雄池，补全 44 个缺失英雄（含琪亚娜），Clearlove7 调至 85",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

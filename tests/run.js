@@ -855,7 +855,7 @@ section('传奇自由选手与手工英雄池');
     newGame('BLG');
     const uzi=P('Uzi2018'), cl=P('Clearlove2017'), canyon=P('Canyon');
     const fresh=!!uzi && !!cl && !uzi.team && !cl.team && uzi.legend && playerTag(uzi)==='Uzi (2018)' &&
-      uzi.rating===94 && uzi.age===21 && cl.rating===87 && cl.pot===87 && cl.role==='JUG' && uzi.pot===uzi.rating;
+      uzi.rating===94 && uzi.age===21 && cl.rating===85 && cl.pot===85 && cl.role==='JUG' && uzi.pot===uzi.rating;
     const pools=uzi.champs[0].c==="Kai'Sa" && cl.champs[0].c==="Rek'Sai" &&
       canyon.champs.slice(0,2).map(e=>e.c).join()==='Lee Sin,Nidalee' && playerProfTier(uzi,"Kai'Sa").name===profTier(95).name;
     const traits=traitTags(playerTraits(uzi)).some(t=>t.t==='大赛爆发') && traitTags(playerTraits(cl)).some(t=>t.t==='抗压强');
@@ -871,7 +871,7 @@ section('传奇自由选手与手工英雄池');
     old.teams.BLG.roster=old.teams.BLG.roster.filter(x=>x!=='Uzi2018');
     old.players.Canyon.champs=[{c:'Xin Zhao',p:94},{c:'Vi',p:91},{c:'Nidalee',p:74},{c:'Olaf',p:40}];
     const m=migrateSave(old);
-    const migrated=!!m.players.Uzi2018 && !m.players.Uzi2018.team && m.legendsVer===1 && m.players.Clearlove2017?.rating===87 &&
+    const migrated=!!m.players.Uzi2018 && !m.players.Uzi2018.team && m.legendsVer===1 && m.players.Clearlove2017?.rating===85 &&
       m.players.Canyon.champs.find(e=>e.c==='Nidalee').p===94 && champProfVal(m.players.Canyon,'Olaf')===40 &&
       m.players.Canyon.champs.find(e=>e.c==='Xin Zhao').p===94;
     const again=migrateSave(JSON.parse(JSON.stringify(m)));
@@ -884,9 +884,9 @@ section('传奇自由选手与手工英雄池');
     const oldPool=JSON.stringify(oldCl.champs);
     const adjusted=migrateSave(v1).players.Clearlove2017;
     const reopened=migrateSave(JSON.parse(JSON.stringify(v1))).players.Clearlove2017;
-    const rebalanced=adjusted.rating===89.5 && adjusted.ratingYearStart===88 && adjusted.pot===87 &&
+    const rebalanced=adjusted.rating===87.5 && adjusted.ratingYearStart===86 && adjusted.pot===85 &&
       adjusted.ratingDelta===1.5 && adjusted.salary===842 && adjusted.contract===2028 &&
-      JSON.stringify(adjusted.champs)===oldPool && reopened.rating===89.5;
+      JSON.stringify(adjusted.champs)===oldPool && reopened.rating===87.5;
     return {fresh,pools,traits,aiSkip,atSetup,signed,migrated,once,rebalanced};
   })()`);
   ok(r.fresh,'新档有 Uzi (2018) 与 Clearlove7 (2017) 两位自由选手');

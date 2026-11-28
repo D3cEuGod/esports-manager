@@ -11,7 +11,12 @@ for f in sorted(glob.glob(os.path.join('data', '*.json'))):
 # Legend free agents and hand-set champion pools (data/legends/legends.json)
 lp = os.path.join('data', 'legends', 'legends.json')
 lj = json.load(open(lp, encoding='utf-8')) if os.path.exists(lp) else {}
-legends = {'legends': lj.get('legends', []), 'champOverrides': lj.get('champOverrides', {})}
+legends = {'legends': lj.get('legends', []), 'champOverrides': dict(lj.get('champOverrides', {}))}
+# Starting champion pools for every rostered player (data/pools/build_pools.py). Hand-set overrides win.
+pp = os.path.join('data', 'pools', 'pools.json')
+if os.path.exists(pp):
+    for tag, pool in json.load(open(pp, encoding='utf-8')).get('players', {}).items():
+        legends['champOverrides'].setdefault(tag, {'picks': pool['picks'], 'champs': pool['champs']})
 open(os.path.join('src', 'data.js'), 'w', encoding='utf-8').write(
     'window.ROSTER=' + json.dumps(d, ensure_ascii=False) + ';\n'
     + 'window.LEGENDS=' + json.dumps(legends, ensure_ascii=False) + ';\n'
@@ -71,7 +76,7 @@ manifest = {
 open(os.path.join('dist', 'manifest.webmanifest'), 'w', encoding='utf-8').write(
     json.dumps(manifest, ensure_ascii=False, indent=2)
 )
-sw_code = """const CACHE = 'rift-manager-v2.1.13';
+sw_code = """const CACHE = 'rift-manager-v2.1.14';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

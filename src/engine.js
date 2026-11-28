@@ -25,6 +25,130 @@ const playerTag = p => p ? (p.tag || p.pid) : '—';
 const AGE_FIX = {"Faker": 30, "Ruler": 28, "Chovy": 25, "Canyon": 25, "Kiin": 27, "Keria": 24, "Oner": 24, "Peyz": 21, "Doran": 26, "Zeus": 22, "Gumayusi": 24, "Kanavi": 26, "Zeka": 24, "ShowMaker": 26, "Viper": 26, "Bin": 23, "knight": 26, "XUN": 24, "ON": 23, "Flandre": 28, "Tarzan": 27, "Shanks": 25, "369": 25, "Tian": 26, "JackeyLove": 26, "Creme": 23, "TheShy": 26, "Rookie": 29, "Wei": 23, "Meiko": 28, "Xiaohu": 28, "Elk": 25, "Jiejie": 25, "GALA": 25, "Caps": 27, "BrokenBlade": 26, "Hans Sama": 27, "CoreJJ": 32, "Inspired": 24, "Berserker": 23, "Scout": 28, "Lehends": 28, "Bdd": 27, "Aiming": 26, "Cuzz": 27, "Pyosik": 26, "Teddy": 28, "Kingen": 26, "Lucid": 22, "Delight": 24, "Mikyx": 28, "Upset": 26, "Razork": 26, "Elyoya": 26, "Wunder": 28, "Blaber": 26, "Zven": 29, "Impact": 31, "Missing": 25, "Kael": 24, "Hope": 24, "Rich": 29, "Clozer": 23, "deokdam": 26, "Fisher": 22, "Duro": 24, "Kellin": 25, "Clear": 24, "Raptor": 22, "BuLLDoG": 22, "Croco": 26, "Breathe": 24, "Leave": 25, "Assum": 26, "Carzzy": 24, "Labrov": 24, "Canna": 26, "Busio": 22, "Jojopyun": 21, "Josedeodo": 26}; // 部分知名选手2026年龄（按出生年估算）
 let S = null; // 全局存档状态
 
+const ATTR_KEYS = ['lane','tf','react','macro','pool','ment'];
+const ATTR_CN = {lane:'对线',tf:'团战',react:'反应',macro:'运营',pool:'英雄池',ment:'心态'};
+const ATTR_W = {
+  TOP:{lane:.26,tf:.18,react:.18,macro:.18,pool:.10,ment:.10},
+  JUG:{lane:.10,tf:.20,react:.20,macro:.30,pool:.10,ment:.10},
+  MID:{lane:.24,tf:.20,react:.20,macro:.16,pool:.10,ment:.10},
+  ADC:{lane:.22,tf:.28,react:.18,macro:.12,pool:.10,ment:.10},
+  SUP:{lane:.14,tf:.24,react:.14,macro:.28,pool:.10,ment:.10}
+};
+const ATTR_OVERRIDES = window.ATTR_OVERRIDES || {};
+const attrWeights = role => ATTR_W[role] || ATTR_W.MID;
+const roundTenth = n => Math.round((n+1e-9)*10)/10;
+function attrMean(attrs, weights){
+  return ATTR_KEYS.reduce((sum,k)=>sum+weights[k]*attrs[k],0);
+}
+function ovrFromAttrs(attrs, role){ return roundTenth(attrMean(attrs,attrWeights(role))); }
+function recalcRating(p){ return p.rating=ovrFromAttrs(p.attrs,p.role); }
+function playerSpecialty(p){
+  if(!p?.attrs) return null;
+  const weights=attrWeights(p.role);
+  return ATTR_KEYS.slice(0,4).reduce((best,k)=>p.attrs[k]>p.attrs[best] ||
+    (p.attrs[k]===p.attrs[best] && weights[k]>weights[best]) ? k : best);
+}
+function validAttrs(attrs){
+  return !!attrs && ATTR_KEYS.every(k=>Number.isInteger(attrs[k]) && attrs[k]>=40 && attrs[k]<=99);
+}
+
+// Keep the continuous profile near the old OVR trajectory, including at the attribute bounds.
+function projectAttrs(values, weights, target){
+  const mean=attrMean(values,weights);
+  const adjusted=Object.fromEntries(ATTR_KEYS.map(k=>[k,values[k]+target-mean]));
+  if(ATTR_KEYS.every(k=>adjusted[k]>=40 && adjusted[k]<=99)) return adjusted;
+  let lo=-120, hi=120;
+  for(let i=0;i<34;i++){
+    const shift=(lo+hi)/2;
+    const sum=ATTR_KEYS.reduce((total,k)=>total+weights[k]*clamp(values[k]+shift,40,99),0);
+    if(sum<target) lo=shift; else hi=shift;
+  }
+  return Object.fromEntries(ATTR_KEYS.map(k=>[k,clamp(values[k]+(lo+hi)/2,40,99)]));
+}
+
+// Quantize with the least squared distortion among close integer profiles with the same displayed OVR.
+function integerAttrs(values, weights, target){
+  const result={};
+  const cents=ATTR_KEYS.map(k=>Math.round(weights[k]*100));
+  const tenth=Math.round(target*10);
+  let best, bestError=Infinity;
+  function search(i, sum, error, radius){
+    if(error>=bestError) return;
+    if(i===ATTR_KEYS.length){
+      if(Math.round(sum/10)===tenth){ best={...result}; bestError=error; }
+      return;
+    }
+    const k=ATTR_KEYS[i], value=values[k];
+    for(let n=Math.max(40,Math.floor(value)-radius); n<=Math.min(99,Math.ceil(value)+radius); n++){
+      result[k]=n;
+      search(i+1,sum+n*cents[i],error+(n-value)**2,radius);
+    }
+  }
+  // Each role has two 10% attributes, so nearby integer profiles can match every tenth.
+  for(let radius=0; !best; radius++) search(0,0,0,radius);
+  return best;
+}
+function developmentAttrs(p){
+  return Object.fromEntries(ATTR_KEYS.map(k=>[k,p.attrs[k]+(p.attrFrac?.[k]||0)]));
+}
+function setAttrProfile(p, values, target){
+  const weights=attrWeights(p.role);
+  const goal=roundTenth(clamp(target,40,99));
+  const profile=projectAttrs(values,weights,goal);
+  p.attrs=integerAttrs(profile,weights,goal);
+  p.attrFrac=Object.fromEntries(ATTR_KEYS.map(k=>[k,profile[k]-p.attrs[k]]));
+  recalcRating(p);
+  return profile;
+}
+function shiftRating(p, delta){
+  if(!validAttrs(p.attrs)) genAttrs(p);
+  setAttrProfile(p,developmentAttrs(p),p.rating+delta);
+}
+
+let starterDepths;
+function starterDepth(p){
+  // A neutral preseason patch makes the same roster produce the same ability profile in every save.
+  const base={...p,champs:[],attrs:null};
+  genChampPool(base,srand(hash(p.pid)),{});
+  return base.champs.filter(x=>x.p>=60).length;
+}
+function averageStarterDepth(role){
+  if(!starterDepths){
+    const totals=Object.fromEntries(ROLES.map(k=>[k,{n:0,sum:0}]));
+    for(const {teams} of Object.values(ROSTER)) for(const {players} of teams) for(const p of players){
+      const bucket=totals[p.role];
+      if(!bucket) continue;
+      const tag=String(p.id).trim();
+      bucket.sum+=starterDepth({...p,tag,pid:tag});
+      bucket.n++;
+    }
+    starterDepths=Object.fromEntries(ROLES.map(k=>[k,totals[k].sum/Math.max(1,totals[k].n)]));
+  }
+  return starterDepths[role] ?? 4;
+}
+function genAttrs(p, seed=hash('attrs:'+playerTag(p))){
+  const random=srand(seed);
+  const off=Object.fromEntries(ATTR_KEYS.map(k=>[k,clamp(randn(random)*3.5,-7,7)]));
+  const tr=(typeof TRAITS!=='undefined' && TRAITS) ? TRAITS[playerTag(p)] : null;
+  if(tr) off.ment=clamp(off.ment+((tr.res??1)-1)*25+(1-(tr.stab??1))*10,-8,8);
+  off.pool=clamp(off.pool+2*(starterDepth(p)-averageStarterDepth(p.role)),-8,8);
+  if(p.age<=20){ off.react+=2; off.macro-=2; }
+  if(p.age>=26){ off.macro+=2; off.ment+=1; off.react-=2; }
+  const overrides=ATTR_OVERRIDES[playerTag(p)];
+  const preset=p.legend ? LEGEND_BY_PID[p.pid]?.attrs : null;
+  const values=validAttrs(preset) ? preset : Object.fromEntries(ATTR_KEYS.map(k=>
+    [k,p.rating+off[k]+clamp(overrides?.[k]||0,-8,8)]));
+  setAttrProfile(p,values,p.rating);
+  return p.attrs;
+}
+function openingAttrs(p){
+  genAttrs(p);
+  p.attrsYearStart={...p.attrs};
+}
+const mentalStability = p => clamp(1-((p.attrs?.ment??75)-75)/100,.75,1.25);
+const masteryGain = p => clamp(.7+((p.attrs?.pool??75)-60)/50,.6,1.5);
+const masteryDecay = p => clamp(1.3-((p.attrs?.pool??78)-60)/60,.6,1.4);
+
 // ================= 英雄熟练度五档体系（0~100 连续经验值） =================
 // 0~24 生疏 | 25~44 略懂 | 45~64 熟练(✦) | 65~84 精通(◆) | 85~100 招牌(👑)
 function profTier(val){
@@ -100,6 +224,15 @@ function migrateSave(s){
     });
   }
   s.playerDevelopment=1;
+  if(s.players) for(const p of Object.values(s.players)){
+    if(!validAttrs(p.attrs)) genAttrs(p);
+    else recalcRating(p);
+    if(!validAttrs(p.attrsYearStart)){
+      const weights=attrWeights(p.role), target=roundTenth(clamp(p.ratingYearStart,40,99));
+      p.attrsYearStart=integerAttrs(projectAttrs(p.attrs,weights,target),weights,target);
+    }
+  }
+  s.attrsVer=1;
   // 旧档一次性补上个人性格基线与偏移：保留全队的大方向（如连胜后的自信），让同队五人拉开差距
   // v2.1.17：潜力不再低于当前能力（只执行一次）
   if(!s.potVer && s.players){
@@ -130,8 +263,11 @@ function migrateSave(s){
   // 单独记录已经应用的基线，旧客户端重写 legendsVer 时仍可识别。
   if(existingClearlove && existingClearlove.legendBaseRating==null && LEGEND_BY_PID.Clearlove2017){
     const base=LEGEND_BY_PID.Clearlove2017.rating, delta=base-92;
-    existingClearlove.rating+=delta;
-    existingClearlove.ratingYearStart+=delta;
+    shiftRating(existingClearlove,delta);
+    const cl=existingClearlove, weights=attrWeights(cl.role);
+    const yearStart=roundTenth(clamp(cl.ratingYearStart+delta,40,99));
+    cl.attrsYearStart=integerAttrs(projectAttrs(cl.attrsYearStart,weights,yearStart),weights,yearStart);
+    cl.ratingYearStart=ovrFromAttrs(cl.attrsYearStart,cl.role);
     existingClearlove.legendBaseRating=base;
     existingClearlove.pot=LEGEND_BY_PID.Clearlove2017.pot ?? base;
     if(!existingClearlove.team) existingClearlove.salary=fairSalary(existingClearlove);
@@ -184,6 +320,7 @@ function newGame(userTeam){
         const age = AGE_FIX[baseId] || p.age || (18 + Math.floor(r()*9));
         const pl = { pid, tag:baseId, name:p.name||baseId, role:p.role, nat:p.nat||(reg==='LPL'?'CN':reg==='LCK'?'KR':'--'),
           age, rating:p.rating||70, team:key, form:initialForm(baseId), mental:0, champs:[], sub:!!p.sub };
+        openingAttrs(pl);
         rollStartMood(pl);
         pl.pot = initialPotential(pl);
         pl.ratingYearStart = pl.rating;
@@ -197,6 +334,7 @@ function newGame(userTeam){
   S.moodVer=1;
   S.potVer=1;
   S.legendsVer=1;
+  S.attrsVer=1;
   newPatch();
   addLegends();
   Object.values(S.players).forEach(p=>genChampPool(p,srand(hash(p.pid)),S.meta));
@@ -239,8 +377,9 @@ function addLegends(){
     pl.ratingYearStart = pl.rating;
     pl.salary = fairSalary(pl);
     pl.contract = S.year;
+    openingAttrs(pl);
     rollStartMood(pl);
-    genChampPool(pl);
+    genChampPool(pl,srand(hash(pl.pid)));
     S.players[pl.pid] = pl;
   }
 }
@@ -269,7 +408,8 @@ function genChampPool(pl, r, meta=S?.meta||{}){
   }
   const history=professionalPicks(pl);
   const pool = PROFESSIONAL_HEROES[pl.role]?.length ? PROFESSIONAL_HEROES[pl.role] : CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
-  const depth = (pl.rating||70)>=86 ? 8 : 7;
+  const poolAttr=pl.attrs?.pool;
+  const depth = ((pl.rating||70)>=86 ? 8 : 7) + (poolAttr>=85?1:poolAttr<=60?-1:0);
   const signatures=Object.keys(history).filter(c=>history[c]>=4 && CH[c]?.roles.includes(pl.role)).slice(0,2);
   const candidates=pool.filter(c=>!signatures.includes(c)).map(c=>({c,score:(meta[c]||0)*proAffinity(pl,c)*1.7 + Math.log1p(history[c]||0)*0.72 + proAffinity(pl,c) + r()})).sort((a,b)=>b.score-a.score);
   const baseVals = [79,72,66,60,55,48,42,37];
@@ -291,8 +431,9 @@ function genRookie(year, forceRole, forceNat){
   const nat = forceNat || pick(['CN','CN','CN','KR']);
   const pl = { pid:id, tag:id, name:id+'（虚构新秀）', role, nat, age, rating, team:null, form:0, mental:0, champs:[], rookie:true, ratingYearStart:rating };
   pl.pot=initialPotential(pl);
+  openingAttrs(pl);
   rollStartMood(pl);
-  pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl);
+  pl.salary = fairSalary(pl); pl.contract = year+2; genChampPool(pl,srand(hash(pl.pid)));
   S.players[id]=pl; return pl;
 }
 // 生成版本更新详情（用于赛季末前瞻日志与新版本播报）
@@ -380,7 +521,7 @@ function mentalBase(p){
   const exp = age>=25 ? 0.25 : age>=22 ? 0.1 : age<=18 ? -0.15 : 0;
   const star = clamp(((p.rating||70)-80)*0.03, -0.3, 0.35);
   const noise = (r()+r()+r()-1.5)*1.6;
-  return Math.round(clamp(((tr.res||1)-1)*1.6 + exp + star + noise, -1.8, 1.8)*100)/100;
+  return Math.round(clamp(((tr.res||1)-1)*1.6 + exp + star + noise + ((p.attrs?.ment??75)-75)*.04, -1.8, 1.8)*100)/100;
 }
 // 开档/新秀的个人起点：状态围绕历来表现基线、心态围绕性格基线随机散开，同队五人各不相同
 function rollStartMood(p){
@@ -935,6 +1076,7 @@ function champFit(p, c, assignedRole){
   if(!p || !c || !CH[c]) return -5;
   const pv = champProfVal(p, c);
   let f = playerProfTier(p,c,pv).bonus*0.53;
+  if(f<0) f *= 1-clamp(((p.attrs?.pool??75)-75)/100,-.25,.4);
   // 同档位内部微调（让熟练度经验增长也能平滑体现细微收益）
   if(pv >= 25) f += ((pv - 25) / 75) * 0.27;
   const meta=S.meta[c]||0;
@@ -1970,17 +2112,18 @@ function applyGameImpact(g, teamA, teamB, random=rnd){
       development.games++;
       development.performance+=perf;
       const f0 = p.form||0;
-      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn(random)*0.3*tr.stab);
+      const stability=mentalStability(p);
+      p.form = stepTier(f0, f0 + (perf*0.9 + randn(random)*0.3)*tr.stab*stability + (tr.base - f0)*0.18);
       // 小局对心态的即时影响：胜负只占一部分，个人发挥（被打爆还是carry）同样关键，并向个人性格基线回归
       const m0 = p.mental||0;
       const ind = gamePerf(row, isMvp);
       const dTeam = won ? 0.14*tr.res : -0.2/tr.res;
       const dInd = ind >= 0 ? ind*0.32*tr.res : ind*0.38/tr.res;
-      p.mental = stepTier(m0, m0 + dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn(random)*0.15);
+      p.mental = stepTier(m0, m0 + (dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn(random)*0.15)*stability);
       // 英雄熟练度经验累积（每次出场累积熟练度数值，跨过档位线时晋升档位）
       if(row.c && CH[row.c]){
         const prev=champProfVal(p,row.c);
-        const gain = Math.round(3 + (won?3:1) + clamp((kda-2)*0.9, 0, 3) + (isMvp?2:0));
+        const gain = Math.round((3 + (won?3:1) + clamp((kda-2)*0.9, 0, 3) + (isMvp?2:0))*masteryGain(p));
         const next=prev>0?Math.min(100,prev+gain):clamp(16+gain+(CH[row.c].roles.includes(p.role)?6:0),18,42);
         const oldTier=playerProfTier(p,row.c,prev).tier;
         p.champGames ||= {};
@@ -2050,7 +2193,7 @@ function finishSeries(m, wa, wb, games, keep){
     w:g.w, dur:g.dur, kA:g.kA, kB:g.kB,
     turA:g.turA, turB:g.turB, dragA:g.dragA, dragB:g.dragB, baronA:g.baronA, baronB:g.baronB, goldDiff:g.goldDiff,
     mvp:g.mvp, mvpTag:g.mvpTag, picks:g.picks, bans:g.bans, blue:g.blue, events:g.events,
-    sa:g.sa, sb:g.sb, rid:g.rid||null, masteryChanges:g.masteryChanges||[]
+    sa:g.sa, sb:g.sb, lane14:g.lane14, rid:g.rid||null, masteryChanges:g.masteryChanges||[]
   }));
   // 英雄统计
   for(const g of games){
@@ -2089,7 +2232,7 @@ function settleSeriesMental(m, games){
       if(isFinal) dm += won ? 1.0 : -0.5/tr.res;
       // 越接近顶点/谷底越难再推：同队一路夺冠时，能否到「无畏」取决于个人发挥与性格
       if(dm*m0 > 0) dm *= Math.max(0.25, 1 - Math.abs(m0)/6.5);
-      dm += (mentalBase(p) - m0) * 0.3 * tr.res;
+      dm += (mentalBase(p) - m0) * 0.3 * tr.res / mentalStability(p);
       p.mental = stepTier(m0, m0 + dm + randn(random)*0.25);
     }
     // 替补：没有比赛的选手状态在基线附近漂移；实力够首发却坐板凳的人心态慢慢下滑
@@ -2098,7 +2241,7 @@ function settleSeriesMental(m, games){
       const p = P(pid); if(!p || p.retired) continue;
       const tr = playerTraits(p);
       const f0 = p.form||0, m0 = p.mental||0;
-      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn(random)*0.22*tr.stab);
+      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn(random)*0.22*tr.stab*mentalStability(p));
       const cur = P(t.lineup[p.role]);
       const deserves = cur && p.rating >= cur.rating - 1;
       const mb = mentalBase(p);
@@ -2530,12 +2673,13 @@ function toggleTrainChamp(pid, champKey){
 function evolveChampPool(p, metaTable, isOffseason){
   p.champs = Array.isArray(p.champs) ? p.champs : [];
   // 1. 自然遗忘衰减（老英雄长期不练会缓慢流失熟练度）
-  const baseDecay = isOffseason ? 8 : 3;
+  const decay=masteryDecay(p), learn=masteryGain(p);
+  const baseDecay = (isOffseason ? 8 : 3)*decay;
   const history=professionalPicks(p);
   const ov=champOverride(p);
   const signatures=ov?.champs ? topChamps(ov.champs,2) : Object.keys(history).filter(c=>history[c]>=4).slice(0,2);
   p.champs.forEach(e=>{
-    const d = Math.round(baseDecay + rnd() * (isOffseason ? 6 : 2));
+    const d = Math.round(baseDecay + rnd() * (isOffseason ? 6 : 2)*decay);
     const prev=migrateChampProf(e.p);
     e.p = Math.max(signatures.includes(e.c)?Math.min(prev,78):0,prev-d);
   });
@@ -2552,7 +2696,7 @@ function evolveChampPool(p, metaTable, isOffseason){
     const weighted = rolePool.map(c=>({c,w:(metaTable[c]||0)*1.6*proAffinity(p,c)+proAffinity(p,c)+rnd()*1.2})).sort((a,b)=>b.w-a.w);
     for(let i=0;i<nLearn && i<weighted.length;i++){
       const c = weighted[i].c;
-      const gain = Math.round((isOffseason ? 18 : 8) + rnd() * (isOffseason ? 14 : 6));
+      const gain = Math.round(((isOffseason ? 18 : 8) + rnd() * (isOffseason ? 14 : 6))*learn);
       const prev=champProfVal(p,c);
       rememberChampProf(p,c,prev?clamp(prev+gain,15,98):clamp(22+gain,25,68));
     }
@@ -2569,7 +2713,7 @@ function evolveChampPool(p, metaTable, isOffseason){
     }
     for(const c of targets){
       if(!CH[c]) continue;
-      const gain = Math.round(28 + (p.age<=22?6:0) + rnd()*10);
+      const gain = Math.round((28 + (p.age<=22?6:0) + rnd()*10)*learn);
       const prev=champProfVal(p,c);
       const value=prev?clamp(prev+gain,30,99):clamp(24+gain,46,72);
       rememberChampProf(p,c,value);
@@ -2584,7 +2728,18 @@ function evolveChampPool(p, metaTable, isOffseason){
 }
 
 function intlPrize(pl, table){ pl.forEach((t,i)=>{ if(t&&table[i]) T(t).budget+=table[i]; }); const u=pl.indexOf(S.user); if(u>=0&&table[u]) addNews(`💰 ${teamName(S.user)} 获得奖金 ${fmtMoney(table[u])}。`); }
+const GROWTH_BY_AGE = [
+  {lane:.25,tf:.20,react:.30,macro:.10,pool:.10,ment:.05},
+  {lane:.20,tf:.22,react:.18,macro:.18,pool:.12,ment:.10},
+  {lane:.10,tf:.15,react:0,macro:.35,pool:.15,ment:.25}
+];
+const AGING_BY_AGE = [
+  {lane:0,tf:0,react:0,macro:0,pool:0,ment:0},
+  {lane:.30,tf:.20,react:.50,macro:0,pool:0,ment:0},
+  {lane:.25,tf:.15,react:.60,macro:0,pool:0,ment:0}
+];
 function settlePlayerDevelopment(p){
+  if(!validAttrs(p.attrs)) openingAttrs(p);
   const games=p.development?.games||0;
   const team=p.team?T(p.team):null;
   const regionalStarter=team && team.region!=='LPL' && Object.values(team.lineup).includes(p.pid);
@@ -2598,8 +2753,22 @@ function settlePlayerDevelopment(p){
   const aging=p.age<27?0:(p.age-26)*0.13*(1-reps*0.42);
   let next=clamp(Math.round((p.rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
   if(next>p.rating && Number.isFinite(p.pot)) next=Math.min(next, Math.max(p.rating, p.pot+POT_OVER_CAP));
-  p.ratingDelta=Math.round((next-p.rating)*10)/10;
-  p.rating=next;
+  p.ratingDelta=roundTenth(next-p.rating);
+  const ageBand=p.age<=21?0:p.age<=25?1:2;
+  const weights=attrWeights(p.role), grow=GROWTH_BY_AGE[ageBand], decline=AGING_BY_AGE[ageBand];
+  const gainRate=growth/attrMean(grow,weights);
+  const lossRate=aging ? aging/attrMean(decline,weights) : 0;
+  const before=developmentAttrs(p);
+  const after=Object.fromEntries(ATTR_KEYS.map(k=>[k,before[k]+gainRate*grow[k]-lossRate*decline[k]]));
+  if(p.age>=26 && reps>=.5){
+    after.macro+=.3;
+    after.ment+=.3;
+    after.react-=.3*(weights.macro+weights.ment)/weights.react;
+  }
+  const settled=setAttrProfile(p,after,next);
+  const deltas=Object.fromEntries(ATTR_KEYS.map(k=>[k,roundTenth(settled[k]-before[k])]));
+  if(ATTR_KEYS.some(k=>deltas[k]!==0)) p.attrDelta=deltas;
+  else delete p.attrDelta;
   p.development={games:0,performance:0};
 }
 function splitEnd(split, order){
@@ -2619,7 +2788,7 @@ function splitEnd(split, order){
   // 成长、状态回正与赛段间英雄池小幅流转
   Object.values(S.players).forEach(p=>{ if(p.retired) return;
     settlePlayerDevelopment(p);
-    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.8*tr.stab, -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + mentalBase(p)*0.65 + randn()*0.6, -5, 5)*100)/100;
+    const tr = playerTraits(p); p.form = Math.round(clamp((p.form||0)*0.4 + tr.base*0.6 + randn()*0.8*tr.stab*mentalStability(p), -5, 5)*100)/100; p.mental = Math.round(clamp((p.mental||0)*0.35 + mentalBase(p)*0.65 + randn()*0.6, -5, 5)*100)/100;
     evolveChampPool(p, S.meta, false);
   });
   addNews(`🔧 新版本 ${S.year%100}.${S.patchNo} 上线，英雄强度与选手日常英雄池随之变化。`);
@@ -2923,7 +3092,7 @@ function finishOffseason(){
   Object.values(S.players).forEach(p=>{ if(!p.team && !p.retired && p.age>=29 && rnd()<0.5){ p.retired=true; } p.age++; });
   // 兑现新赛季版本 & 结算全员年度英雄池流转、定向冬训与团队化学反应
   S.year = y + 1;
-  Object.values(S.players).forEach(p=>{ p.ratingYearStart=p.rating; p.ratingDelta=0; });
+  Object.values(S.players).forEach(p=>{ p.ratingYearStart=p.rating; p.attrsYearStart={...p.attrs}; p.ratingDelta=0; delete p.attrDelta; });
   S.patchNo = 0;
   newPatch(np);
   S.nextPatch = null;

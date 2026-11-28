@@ -16,10 +16,13 @@ legends = {'legends': lj.get('legends', []), 'champOverrides': dict(lj.get('cham
 pp = os.path.join('data', 'pools', 'pools.json')
 if os.path.exists(pp):
     for tag, pool in json.load(open(pp, encoding='utf-8')).get('players', {}).items():
-        legends['champOverrides'].setdefault(tag, {'picks': pool['picks'], 'champs': pool['champs']})
+        legends['champOverrides'].setdefault(tag, {'picks': pool['picks'], 'champs': pool['champs'], 'generated': True})
+ap = os.path.join('data', 'attrs', 'overrides.json')
+attr_overrides = json.load(open(ap, encoding='utf-8'))
 open(os.path.join('src', 'data.js'), 'w', encoding='utf-8').write(
     'window.ROSTER=' + json.dumps(d, ensure_ascii=False) + ';\n'
     + 'window.LEGENDS=' + json.dumps(legends, ensure_ascii=False) + ';\n'
+    + 'window.ATTR_OVERRIDES=' + json.dumps(attr_overrides, ensure_ascii=False) + ';\n'
 )
 
 # 1b. Player traits (historical big-stage / knockout / stability / resilience research) -> src/traits.js

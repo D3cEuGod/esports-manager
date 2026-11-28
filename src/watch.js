@@ -218,7 +218,7 @@ const Watch = (()=>{
     for(const e of P0.towerEv){ if(e[0] > t) break; if(towers[e[2]] && P0.towers[e[2]].tier!==4 && P0.towers[e[2]].tier!==6) team[e[3]].towers++; }
     for(const e of P0.obj){ if(e[0] > t) break; const tm = team[e[3]]; if(e[2]==='drag'){ tm.drakes.push(e[4]); if(tm.drakes.length>=4) tm.soul = e[4]; } else if(e[2]==='baron'){ tm.barons++; tm.baronT = e[0]+180; } else if(e[2]==='elder') tm.elderT = e[0]+150; }
     champs.forEach(c=>team[c.side].kills += c.k);
-    const feed = []; for(const x of rec.feed){ if(x[0] > t) break; feed.push({t:fmtSec(x[0]), sec:x[0], side:x[1]||null, tag:x[2], text:x[3], hl:!!x[4]}); }
+    const feed = []; for(const x of rec.feed){ if(x[0] > t) break; feed.push({t:fmtSec(x[0]), sec:x[0], side:x[1]||null, tag:x[2], text:x[3], hl:!!x[4], attr:x[5]||null}); }
     const gs = rec.gs.filter(x=>x[0] <= t);
     const fx = P0.fights.filter(e=>e[0] <= t && e[0] > t-4).map(e=>({t:e[0], x:e[2], y:e[3], n:e[4]}));
     // 资源刷新状态（近似）：最近一次被拿的时间 + 刷新间隔
@@ -419,7 +419,7 @@ const Watch = (()=>{
   }
   function feedHtml(V){
     const list = V.feed.slice(-40).reverse();
-    return list.map((f,i)=>`<div class="w5-fl ${f.hl?'hl':''} ${f.side?(f.side===V.blueSide?'b':'r'):''} ${i===0?'new':''}"><span class="t">${esc(f.t)}</span><span class="tg">${esc(f.tag)}</span><span class="tx">${esc(f.text)}</span></div>`).join('') || '<div class="w5-fl"><span class="tx">比赛即将开始，双方选手正在进入召唤师峡谷……</span></div>';
+    return list.map((f,i)=>`<div class="w5-fl ${f.hl?'hl':''} ${f.side?(f.side===V.blueSide?'b':'r'):''} ${i===0?'new':''}"><span class="t">${esc(f.t)}</span><span class="tg">${esc(f.tag)}</span><span class="tx">${f.attr?`<span class="at-tag sp-${esc(f.attr)}">${esc(typeof attrCn==='function'?attrCn(f.attr):f.attr)}</span>`:''}${esc(f.text)}</span></div>`).join('') || '<div class="w5-fl"><span class="tx">比赛即将开始，双方选手正在进入召唤师峡谷……</span></div>';
   }
 
   // ---------------- 外壳 HTML（由 ui.js 的 matchScreen 输出） ----------------

@@ -701,7 +701,7 @@ function rosterCard(p, slot, win){
       <span class="rs-name"><b>${esc(playerTag(p))}</b><small>${esc(p.name||'')}</small></span>
       <span class="rs-more muted">详情 ›</span>
     </button>
-    <div class="rs-rt">${ovrBadge(p.rating||0)}${slot?`<small class="rs-eff" title="含状态与位置修正的出场能力">出场 ${Math.round(effRating(p,slot))}</small>`:''}</div>
+    <div class="rs-rt">${ovrBadge(p.rating||0)}${specialtyChip(p)}${slot?`<small class="rs-eff" title="含状态与位置修正的出场能力">出场 ${Math.round(effRating(p,slot))}</small>`:''}</div>
     ${dl?`<div class="rs-dl">${dl}</div>`:''}
     <div class="rs-chips">${formChip(p,true)}${mentalChip(p,true)}<span class="rs-bd" title="默契：与其余首发队友的平均羁绊">默契 <span class="bd-val ${bondCls(bd)}">${bd}</span></span></div>
     ${tr?`<div class="rs-trs">${tr}</div>`:''}
@@ -729,7 +729,10 @@ function marketEmbedHtml(limit){
   if(f.region!=='ALL') ps=ps.filter(p=>p.team&&T(p.team).region===f.region);
   if(f.role!=='ALL') ps=ps.filter(p=>p.role===f.role);
   if(f.q) ps=ps.filter(p=>(playerTag(p)+p.name+(p.team||'')).toLowerCase().includes(f.q.toLowerCase()));
-  const key={rating:p=>-p.rating, value:p=>-playerValue(p), age:p=>p.age, pot:p=>-p.pot}[f.sort];
+  const anyAttrs = ps.some(hasAttrs);
+  const keys={rating:p=>-p.rating, value:p=>-playerValue(p), age:p=>p.age, pot:p=>-p.pot};
+  if(anyAttrs) attrKeys().forEach(k=>{ keys['a_'+k] = p=>-(hasAttrs(p) ? Number(p.attrs[k]) : p.rating); });
+  const key=keys[f.sort] || keys.rating;
   ps.sort((a,b)=>(f.fa?(!!b.legend)-(!!a.legend):0) || key(a)-key(b));
   const open=transferWindowOpen();
   const maxShow = limit || 120;
@@ -739,7 +742,7 @@ function marketEmbedHtml(limit){
   <div class="filters">
     <select data-f="region">${['ALL',...REGIONS].map(r=>`<option ${f.region===r?'selected':''} value="${r}">${r==='ALL'?'全部赛区':r}</option>`).join('')}</select>
     <select data-f="role">${['ALL',...ROLES].map(r=>`<option ${f.role===r?'selected':''} value="${r}">${r==='ALL'?'全部位置':ROLE_CN[r]}</option>`).join('')}</select>
-    <select data-f="sort">${[['rating','按能力'],['value','按身价'],['pot','按潜力'],['age','按年龄']].map(([k,n])=>`<option ${f.sort===k?'selected':''} value="${k}">${n}</option>`).join('')}</select>
+    <select data-f="sort">${[['rating','按能力'],['value','按身价'],['pot','按潜力'],['age','按年龄'],...(anyAttrs?attrKeys().map(k=>['a_'+k,'按'+attrCn(k)]):[])].map(([k,n])=>`<option ${f.sort===k?'selected':''} value="${k}">${n}</option>`).join('')}</select>
     <label><input type="checkbox" data-f="fa" ${f.fa?'checked':''}> 只看自由球员/新秀</label>
     ${midWin&&!f.fa?`<label><input type="checkbox" data-f="hideLock" ${f.hideLock?'checked':''}> 隐藏季中非卖核心</label>`:''}
     <input data-f="q" placeholder="搜索选手/战队" value="${esc(f.q)}">
@@ -748,7 +751,7 @@ function marketEmbedHtml(limit){
   ${ps.slice(0,maxShow).map(p=>{
     const locked = isUntouchable(p);
     const crossMid = midWin && isCrossRegionFor(p, S.user);
-    return `<tr><td><button type="button" class="pl-link" data-a="mkPlayer" data-p="${esc(p.pid)}" title="查看选手资料"><b>${esc(playerTag(p))}</b></button>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
+    return `<tr><td><button type="button" class="pl-link" data-a="mkPlayer" data-p="${esc(p.pid)}" title="查看选手资料"><b>${esc(playerTag(p))}</b></button>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}${specialtyChip(p)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
     <td>${!open?'':locked?`<span class="nft-tag">${ico('lock')} 季中非卖</span>`:`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
   }).join('')}</table>
   ${ps.length>maxShow?`<p class="muted">共 ${ps.length} 人，当前显示前 ${maxShow} 人，请使用上方筛选缩小范围。</p>`:''}
@@ -928,6 +931,60 @@ function poolChipsHtml(p, opts={}){
     return `<span class="pl-${ti.cls}" title="${esc(ti.name)} ${Math.round(v)}/100">${ti.icon?ti.icon+' ':''}${esc(champName(e.c))}${opts.val?' '+Math.round(v):''}</span>`; }).join('');
   return html + (opts.limit && list.length>opts.limit ? `<span class="pl-more">+${list.length-opts.limit}</span>` : '');
 }
+// ================= 能力细分（引擎提供 p.attrs；缺失时整块隐藏，见 docs/CODEX_SUBSTATS_SPEC.md） =================
+const ATTR_ORDER = ['lane','tf','react','macro','pool','ment'];
+const ATTR_LABEL = {lane:'对线', tf:'团战', react:'反应', macro:'运营', pool:'英雄池', ment:'心态'};
+const ATTR_TIP = {lane:'前 14 分钟的补刀、换血、单杀，以及被抓时能否活下来', tf:'4v4 以上团战的站位、输出与存活', react:'小规模遭遇战、抓人与反蹲、躲关键技能、极限操作', macro:'龙与大龙的时机、转线支援、视野与带线决策', pool:'英雄熟练度涨得多快、掉得多快，被针对禁用时损失多少', ment:'心态与状态的稳定性，劣势和高压时刻的发挥'};
+const attrKeys = () => (typeof ATTR_KEYS!=='undefined' && Array.isArray(ATTR_KEYS) && ATTR_KEYS.length) ? ATTR_KEYS : ATTR_ORDER;
+const attrCn = k => (typeof ATTR_CN!=='undefined' && ATTR_CN && ATTR_CN[k]) || ATTR_LABEL[k] || k;
+const hasAttrs = p => !!(p && p.attrs && attrKeys().every(k=>Number.isFinite(Number(p.attrs[k]))));
+const attrCls = v => v>=90?'a-s':v>=82?'a-a':v>=74?'a-b':v>=66?'a-c':'a-d';
+const attrNorm = v => Math.max(0.04, Math.min(1, (Number(v)-40)/59));
+// 雷达图用更窄的刻度（50–99），让同为高分的选手也能看出形状差异
+const radarNorm = v => Math.max(0.06, Math.min(1, (Number(v)-50)/49));
+function specialtyOf(p){
+  if(!hasAttrs(p)) return null;
+  if(typeof playerSpecialty==='function'){ try{ const k = playerSpecialty(p); if(k && p.attrs[k]!=null) return k; }catch(e){} }
+  const w = (typeof ATTR_W!=='undefined' && ATTR_W && ATTR_W[p.role]) || {};
+  return ['lane','tf','react','macro'].reduce((b,k)=>{ const v=+p.attrs[k], bv=+p.attrs[b]; return v>bv || (v===bv && (w[k]||0)>(w[b]||0)) ? k : b; }, 'lane');
+}
+function specialtyChip(p){
+  const k = specialtyOf(p); if(!k) return '';
+  return `<small class="sp-chip sp-${k}" title="特长：${attrCn(k)} ${Math.round(p.attrs[k])}（${ATTR_TIP[k]||''}）">${attrCn(k)}</small>`;
+}
+function attrRadarSvg(p){
+  const keys = attrKeys(), n = keys.length, R = 58, cx = 84, cy = 80;
+  const pt = (i, r) => { const a = -Math.PI/2 + i*2*Math.PI/n; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; };
+  const poly = vals => vals.map((f,i)=>pt(i,R*f).map(x=>x.toFixed(1)).join(',')).join(' ');
+  const ys = p.attrsYearStart && keys.every(k=>Number.isFinite(Number(p.attrsYearStart[k]))) ? poly(keys.map(k=>radarNorm(p.attrsYearStart[k]))) : '';
+  const labels = keys.map((k,i)=>{ const [x,y] = pt(i,R+12); const anc = Math.abs(x-cx)<4 ? 'middle' : x>cx ? 'start' : 'end';
+    return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${anc}">${attrCn(k)}<tspan class="ar-v" dx="3">${Math.round(p.attrs[k])}</tspan></text>`; }).join('');
+  return `<svg class="attr-radar" viewBox="0 0 168 160" role="img" aria-label="能力雷达图">
+    ${[1,0.75,0.5,0.25].map(f=>`<polygon class="ar-ring" points="${poly(keys.map(()=>f))}"/>`).join('')}
+    ${keys.map((_,i)=>{ const [x,y] = pt(i,R); return `<line class="ar-axis" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('')}
+    ${ys?`<polygon class="ar-prev" points="${ys}"><title>赛季初</title></polygon>`:''}
+    <polygon class="ar-shape" points="${poly(keys.map(k=>radarNorm(p.attrs[k])))}"/>
+    ${labels}</svg>`;
+}
+function attrBarsHtml(p){
+  const ys = p.attrsYearStart || {}, seg = p.attrDelta || {};
+  const sp = specialtyOf(p);
+  return attrKeys().map(k=>{
+    const v = Number(p.attrs[k]);
+    const sd = Number.isFinite(Number(seg[k])) && Math.abs(seg[k])>=0.05 ? Number(seg[k]) : null;
+    const yd = Number.isFinite(Number(ys[k])) ? v - Number(ys[k]) : null;
+    const d = sd!=null ? sd : yd;
+    const dHtml = d!=null && Math.abs(d)>=0.05 ? `<small class="rt-d ${d>0?'up':'dn'}" title="${sd!=null?'本赛段变化':'相对赛季初'}">${fmtDelta(d)}</small>` : '';
+    return `<div class="ab-row ${k===sp?'is-sp':''}" title="${esc(ATTR_TIP[k]||'')}">
+      <span class="ab-k">${attrCn(k)}${k===sp?'<small>特长</small>':''}</span>
+      <span class="ab-bar"><i class="${attrCls(v)}" style="width:${Math.round(attrNorm(v)*100)}%"></i></span>
+      <b class="ab-v ${attrCls(v)}">${Math.round(v)}</b>${dHtml}</div>`;
+  }).join('');
+}
+function attrPanelHtml(p){
+  if(!hasAttrs(p)) return '';
+  return `<div class="attr-panel">${attrRadarSvg(p)}<div class="attr-bars">${attrBarsHtml(p)}</div></div>`;
+}
 // 能力变化：本赛段 p.ratingDelta 与相对赛季初 p.ratingYearStart（旧档可能缺省）
 const fmtDelta = v => { const r = Math.round(v*10)/10; return r>0 ? `+${r}` : r<0 ? `${r}` : '±0'; };
 function ratingDeltaHtml(p){
@@ -1070,7 +1127,7 @@ function dbSquad(t){
 function dbRow(p, roleLbl, off){
   return `<tr class="db-row" data-a="dbPlayer" data-p="${esc(p.pid)}">
     <td>${roleLbl}</td><td><b>${esc(playerTag(p))}</b>${off?' <em class="muted">非本位</em>':''}<br><small>${esc(p.name||'')}</small></td>
-    <td>${ovrBadge(p.rating||0)}</td><td>${formChip(p,true)}${mentalChip(p,true)}</td><td class="act"><span class="muted">详情 ›</span></td></tr>`;
+    <td>${ovrBadge(p.rating||0)}${specialtyChip(p)}</td><td>${formChip(p,true)}${mentalChip(p,true)}</td><td class="act"><span class="muted">详情 ›</span></td></tr>`;
 }
 VIEWS.db = () => {
   const { region, teams, team } = dbState();
@@ -1108,14 +1165,15 @@ function dbPlayerModal(pid, opts={}){
     const market = opts.market && p.team!==S.user ? marketActHtml(p) : '';
     return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}</h3>
       <p>${t ? `${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}${slot&&p.role!==slot?' <em class="muted">非本位</em>':''}` : '<span class="tagoff">自由球员</span>'}</p>
+      ${attrPanelHtml(p)}
       <table class="tbl db-kv">
         ${kv('位置', ROLE_CN[p.role]||esc(p.role||''))}
         ${kv('国籍', esc(p.nat||'—')+(isForeign(p)?'<small class="fx">外援</small>':''))}
         ${kv('年龄', p.age!=null?p.age:'—')}
         ${kv('能力', ovrBadge(p.rating||0)+(dl?` <span class="rs-dl">${dl}</span>`:''))}
         ${kv('潜力', p.pot!=null?p.pot:'—')}
-        ${kv('状态', formChip(p,true))}
-        ${kv('心态', mentalChip(p,true))}
+        ${kv('当前状态', formChip(p,true))}
+        ${kv('当前心态', mentalChip(p,true))}
         ${kv('特质', traitChips(p)||'<small class="muted">—</small>')}
         ${regional?kv('赛区表现', regional):''}
         ${t?kv('默契', `<span class="bd-val ${bondCls(bd)}">${bd}</span> <small class="muted">与其余首发队友的平均羁绊</small>`):''}
@@ -1922,13 +1980,18 @@ function matchScreen(){
     const lBar = leftSide==='A'?g.baronA:g.baronB, rBar = rightSide==='A'?g.baronA:g.baronB;
     const gDiff = leftSide==='A' ? g.goldDiff : -g.goldDiff;
 
+    // 14 分钟对线数据（引擎提供 g.lane14 与每行 cs14，缺失时不显示）
+    const has14 = !!(g.lane14 || (g.sa||[]).some(x=>x.cs14!=null));
+    const cs14Diff = (side, r) => { const v = g.lane14 && g.lane14.cs ? Number(g.lane14.cs[r]) : NaN; if(!Number.isFinite(v) || v===0) return ''; const s = side==='A' ? v : -v; return `<small class="${s>0?'up':'dn'}">(${s>0?'+':''}${s})</small>`; };
+    const gd14 = g.lane14 && Number.isFinite(Number(g.lane14.gold)) ? (leftSide==='A' ? Number(g.lane14.gold) : -Number(g.lane14.gold)) : null;
+
     const box = (side, isBlue) => {
       const rows = side==='A'?g.sa:g.sb;
       const totK = Math.max(1, side==='A'?g.kA:g.kB);
       return `<div class="res-team ${isBlue?'blue':'red'}">
         <div class="res-th">${teamTag(d[side])} <span>${g.w===side?'VICTORY':'DEFEAT'}</span></div>
         <table class="hex-tbl">
-          <tr><th>位置</th><th>选手</th><th>英雄</th><th>K/D/A</th><th>补刀</th><th>经济</th><th>参团</th></tr>
+          <tr><th>位置</th><th>选手</th><th>英雄</th><th>K/D/A</th><th>补刀</th>${has14?'<th title="14 分钟补刀，括号内为与对位的差">14分补刀</th>':''}<th>经济</th><th>参团</th></tr>
           ${rows.map(x=>{
             const kp = Math.min(100, Math.round((x.k+x.a)/totK*100));
             return `<tr class="${x.pid===g.mvp?'is-mvp':''}">
@@ -1937,6 +2000,7 @@ function matchScreen(){
               <td class="td-ch">${champAvatar(x.c,'xs')}<span>${esc(champName(x.c))}</span></td>
               <td class="td-kda">${x.k}/${x.d}/${x.a}</td>
               <td>${x.cs!=null?x.cs:'-'}</td>
+              ${has14?`<td class="cs14">${x.cs14!=null?x.cs14:'-'}${cs14Diff(side,x.r)}</td>`:''}
               <td>${x.gold!=null?(x.gold/1000).toFixed(1)+'k':'-'}</td>
               <td>${kp}%</td>
             </tr>`;
@@ -1955,6 +2019,7 @@ function matchScreen(){
           <span>🐉 小龙 ${lDrg} : ${rDrg}</span>
           <span>👾 大龙 ${lBar} : ${rBar}</span>
           <span>💰 经济差 ${gDiff>=0?teamName(leftTeam):teamName(rightTeam)} +${Math.abs(gDiff).toFixed(1)}k</span>
+          ${gd14!=null?`<span class="l14" title="14 分钟时的经济差">📊 14分经济 ${gd14>=0?teamName(leftTeam):teamName(rightTeam)} +${(Math.abs(gd14)/1000).toFixed(1)}k</span>`:''}
         </div>
       </div>
 

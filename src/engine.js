@@ -143,6 +143,7 @@ function genAttrs(p, seed=hash('attrs:'+playerTag(p))){
 }
 function openingAttrs(p){
   genAttrs(p);
+  p.ratingYearStart=p.rating;
   p.attrsYearStart={...p.attrs};
 }
 const mentalStability = p => clamp(1-((p.attrs?.ment??75)-75)/100,.75,1.25);
@@ -401,14 +402,21 @@ function proAffinity(p,c){
 function genChampPool(pl, r, meta=S?.meta||{}){
   r = r || rnd;
   const ov=champOverride(pl);
+  const poolAttr=pl.attrs?.pool;
+  const pool = PROFESSIONAL_HEROES[pl.role]?.length ? PROFESSIONAL_HEROES[pl.role] : CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
+  const history=professionalPicks(pl);
   if(ov?.champs){
     pl.champs = Object.entries(ov.champs).filter(([c])=>CH[c]).map(([c,p])=>({c,p})).sort((a,b)=>b.p-a.p);
+    if(ov.generated && poolAttr<=60 && pl.champs.length>2) pl.champs.pop();
+    if(ov.generated && poolAttr>=85){
+      const known=new Set(pl.champs.map(x=>x.c));
+      const next=pool.filter(c=>!known.has(c)).sort((a,b)=>(history[b]||0)-(history[a]||0) ||
+        (PRO_DATA.roles[pl.role]?.[b]||0)-(PRO_DATA.roles[pl.role]?.[a]||0))[0];
+      if(next) pl.champs.push({c:next,p:Math.min(55,pl.champs.at(-1)?.p??55)});
+    }
     pl.trainTargets = pl.trainTargets || [];
     return;
   }
-  const history=professionalPicks(pl);
-  const pool = PROFESSIONAL_HEROES[pl.role]?.length ? PROFESSIONAL_HEROES[pl.role] : CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
-  const poolAttr=pl.attrs?.pool;
   const depth = ((pl.rating||70)>=86 ? 8 : 7) + (poolAttr>=85?1:poolAttr<=60?-1:0);
   const signatures=Object.keys(history).filter(c=>history[c]>=4 && CH[c]?.roles.includes(pl.role)).slice(0,2);
   const candidates=pool.filter(c=>!signatures.includes(c)).map(c=>({c,score:(meta[c]||0)*proAffinity(pl,c)*1.7 + Math.log1p(history[c]||0)*0.72 + proAffinity(pl,c) + r()})).sort((a,b)=>b.score-a.score);
@@ -1961,7 +1969,11 @@ function draftPickReasons(before, after, side, champ, role){
     if(tier>=4) pros.push(`${playerTag(p)} 的招牌英雄`);
     else if(tier===3) pros.push(`${playerTag(p)} 精通该英雄`);
     else if(tier===1) cons.push(`${playerTag(p)} 只是略懂该英雄`);
-    else if(tier===0) cons.push(`${playerTag(p)} 对该英雄生疏`);
+    else if(tier===0){
+      cons.push(playerTag(p)+' 对该英雄生疏');
+      if(p.attrs?.pool>=85 && before.bans[opp].some(c=>champProfVal(p,c)>=85))
+        pros.push(playerTag(p)+' 英雄池深，被禁用招牌后仍有熟练度容错');
+    }
   }
   const meta=S.meta[champ]||0;
   if(meta>=2) pros.push('版本 T0 英雄');
@@ -2160,6 +2172,11 @@ function ensureSeriesForm(ctx){
   return ctx;
 }
 function seriesSimulationSeed(ctx,gameIndex){ return hash(ctx.simSeed+':game:'+gameIndex); }
+function seriesGameContext(match, wa, wb, gameIndex){
+  const ctx=match.ctx, need=Math.ceil(match.bo/2);
+  const pointA=match.bo>1 && wa===need-1, pointB=match.bo>1 && wb===need-1;
+  return {...ctx,decider:pointA&&pointB,matchPoint:pointA||pointB,gameSeed:seriesSimulationSeed(ctx,gameIndex)};
+}
 
 // 系列赛（AI 自动）
 function simSeries(m, keepGames){
@@ -2175,7 +2192,7 @@ function simSeries(m, keepGames){
     const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked,gameSeed);
     const blue = sidePick==='blue' ? chooser : other;
     const d=newDraft(m.a,m.b,blue,locked);
-    d.ctx = Object.assign({}, baseCtx, {decider: wa===need-1 && wb===need-1 && m.bo>1,gameSeed});
+    d.ctx = seriesGameContext(m,wa,wb,games.length);
     autoDraftRest(d);
     const g=playGame(d); games.push(g);
     if(g.w==='A')wa++; else wb++;

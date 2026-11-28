@@ -604,7 +604,7 @@ section('BP 反制权重与阵容实战对照');
   const r = run(`(()=>{
     newGame('TES');
     for(const key of ['TES','BLG']) for(const player of starters(key)){
-      player.rating=82; player.form=0; player.mental=0; player.champs=[];
+      player.attrs=Object.fromEntries(ATTR_KEYS.map(k=>[k,82])); player.attrFrac={}; recalcRating(player); player.form=0; player.mental=0; player.champs=[];
     }
     for(const champ of CHAMP_KEYS) S.meta[champ]=0;
     const d=newDraft('TES','BLG','A',[]);
@@ -665,7 +665,7 @@ section('克制只看超常威胁、下路类型配合与 BP 复盘');
     const risks=[]; draftTactics({ADC:'Draven',SUP:'Soraka'},{},undefined,[],risks);
 
     newGame('TES');
-    for(const key of ['TES','BLG']) for(const p of starters(key)){ p.rating=82; p.form=0; p.mental=0; p.champs=[]; }
+    for(const key of ['TES','BLG']) for(const p of starters(key)){ p.attrs=Object.fromEntries(ATTR_KEYS.map(k=>[k,82])); p.attrFrac={}; recalcRating(p); p.form=0; p.mental=0; p.champs=[]; }
     for(const c of CHAMP_KEYS) S.meta[c]=0;
     const d=newDraft('BLG','TES','A',[]);
     d.step=19;
@@ -698,7 +698,7 @@ section('AI BP：对位预判与能力权重');
   const r=run(`(()=>{
     newGame('TES');
     for(const key of ['TES','BLG']) for(const p of starters(key)){
-      p.rating=82; p.form=0; p.mental=0; p.champs=[];
+      p.attrs=Object.fromEntries(ATTR_KEYS.map(k=>[k,82])); p.attrFrac={}; recalcRating(p); p.form=0; p.mental=0; p.champs=[];
     }
     for(const c of CHAMP_KEYS) S.meta[c]=0;
     const d=newDraft('TES','BLG','A',[]);
@@ -720,8 +720,11 @@ section('AI BP：对位预判与能力权重');
       return Math.min(...aiDraftCandidates(next,3,false).map(reply=>evalDraft(draftAfterChoice(next,reply)).diff));
     };
     const considersReply=planned.c!==immediate.c && afterReply(planned)>afterReply(immediate)+0.3;
+    // Use familiar champions to isolate OVR from the low-mastery pool penalty.
+    const startersA=lineupMap('TES');
+    for(const [role,c] of Object.entries(d.picks.A)) startersA[role].champs=[{c,p:30}];
     const initial=evalDraft(d).diff;
-    for(const p of starters('TES')) p.rating+=10;
+    for(const p of starters('TES')) shiftRating(p,10);
     const gain=evalDraft(d).diff-initial;
     const game=createGame5(d);
     const c=game.champs[0], context=d.ctx;
@@ -879,6 +882,7 @@ section('传奇自由选手与手工英雄池');
     const v1=JSON.parse(JSON.stringify(S));
     const oldCl=v1.players.Clearlove2017;
     delete oldCl.legendBaseRating;
+    delete oldCl.attrs; delete oldCl.attrsYearStart; delete oldCl.attrFrac;
     Object.assign(oldCl,{rating:94.5,ratingYearStart:93,pot:92,ratingDelta:1.5,team:'BLG',salary:842,contract:2028});
     v1.teams.BLG.roster.push(oldCl.pid);
     const oldPool=JSON.stringify(oldCl.champs);

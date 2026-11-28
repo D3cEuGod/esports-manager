@@ -1253,9 +1253,7 @@ function matchCtx(M){
   const m = M.item.m;
   if(!m.ctx) m.ctx = findMatchCtx(m) || {intl:false, ko:false};
   ensureSeriesForm(m.ctx);
-  const need = Math.ceil(m.bo/2);
-  const gameSeed = typeof seriesSimulationSeed==='function' ? seriesSimulationSeed(m.ctx, M.games.length) : undefined;
-  return Object.assign({}, m.ctx, {decider: m.bo>1 && M.wa===need-1 && M.wb===need-1, gameSeed});
+  return seriesGameContext(m,M.wa,M.wb,M.games.length);
 }
 // 系列赛首局 1v1 的种子（与后端 simSeries 一致，gameIndex = -1）
 function soloSimOpts(M){

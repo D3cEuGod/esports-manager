@@ -89,12 +89,17 @@ async function main(){
       }
     }
     document.querySelector('main [data-a="dbPlayer"]').click();
-    const details=document.querySelector('.modal').innerText;
+    const panel=document.querySelector('.modal');
+    const attrs=panel.querySelectorAll('.attr-panel .ab-row').length===6 && !!panel.querySelector('.attr-radar');
+    const details=panel.innerText;
     ACT.closeModal();
-    return count===58 && /英雄池/.test(details) && /合同/.test(details);
+    return count===58 && attrs && /当前心态/.test(details) && /英雄池/.test(details) && /合同/.test(details);
   });
   const market=await run(()=>{
     ACT.view({v:'market'});
+    const sort=document.querySelector('[data-f="sort"]');
+    sort.value='a_lane'; sort.dispatchEvent(new Event('change',{bubbles:true}));
+    const visibleSort=document.querySelector('[data-f="sort"]').value==='a_lane' && !!document.querySelector('main .sp-chip');
     const candidate=freeAgents().find(p=>p.role==='TOP' && !isForeign(p));
     document.querySelector('[data-f="fa"]').click();
     const cardLink=document.querySelector('[data-a="mkPlayer"][data-p="Uzi2018"]');
@@ -134,7 +139,7 @@ async function main(){
     const cash=document.querySelector('[data-o="cash"]'); cash.value=String(price); cash.dispatchEvent(new Event('input',{bubbles:true}));
     ACT.doOffer({p:incoming.pid});
     const exchanged=P(incoming.pid).team===S.user && P(candidate.pid).team===previousTeam;
-    return {profile,regional,landed,started,released,legal:!lineupProblems(S.user).length,stable,purchase,sold,exchanged};
+    return {visibleSort,profile,regional,landed,started,released,legal:!lineupProblems(S.user).length,stable,purchase,sold,exchanged};
   });
   checks.market=Object.values(market).every(Boolean);
   assert.ok(checks.market,JSON.stringify(market));
@@ -173,9 +178,10 @@ async function main(){
     await until(()=>live.phase==='result');
     const game=live.games[0];
     const results=live.phase==='result' && game.masteryChanges.length===5 && !!game.rid;
-    const visible=document.querySelector('.match').innerText.includes('熟练度');
+    const visible=document.querySelector('.match').innerText.includes('熟练度') &&
+      !!document.querySelector('.l14') && document.querySelectorAll('td.cs14').length===10;
     ACT.autoSeries();
-    const summary=it.m.gm.length>=2 && it.m.gm.every(g=>g.masteryChanges.length===5) && !!UI.modal;
+    const summary=it.m.gm.length>=2 && it.m.gm.every(g=>g.masteryChanges.length===5 && g.lane14) && !!UI.modal;
     ACT.closeModal(); ACT.view({v:'settings'}); ACT.setTab({t:'replays'});
     ACT.keepReplay({id:game.rid}); const kept=findReplay(game.rid).kept;
     ACT.openReplay({id:game.rid}); const replay=!!document.querySelector('.replay-screen');

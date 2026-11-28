@@ -463,6 +463,11 @@ const CAMP_XP = [205,170,175,180,205,190];
 const DRAKES = [['infernal','炼狱亚龙'],['ocean','海洋亚龙'],['mountain','山脉亚龙'],['cloud','云端亚龙'],['hextech','海克斯科技亚龙'],['chemtech','化学科技亚龙']];
 const BRW = [10,10,12,12,14,16,20,25,28,32.5,35,37.5,40,42.5,45,47.5,50,52.5];
 const SIM5 = { TD:0.0075, FN:0.5, SK:74, IT:9000, LV:0.07, SPD:27, ENC:80, DT:3 };   // 战斗强度刻度（校准用）
+// 推塔强度的参考曲线只取决于时间，所有对局共用。
+const TOWER_NORM=Float64Array.from({length:3600/SIM5.DT+1},(_,i)=>{
+  const t=i*SIM5.DT;
+  return Math.exp(SIM5.LV*Math.min(18,1+t/110)+Math.log1p(Math.min(16000,t*6.8)/SIM5.IT)*1.18);
+});
 const dist = (a,b) => hyp(a.x-b.x, a.y-b.y);
 
 function buildTowers(){
@@ -498,6 +503,8 @@ function createGame5(d, opts){
     firstBlood:null, firstTower:null, lastKill:{}, laneT:{top:20, mid:18, bot:22}, planT:0,
     stance:{A:opts.stanceA||'auto', B:opts.stanceB||'auto'}   // 预留：全队倾向（战术指令接口）
   };
+  G.inhibitors=G.towers.filter(tower=>tower.tier===4);
+  G.baseTowers=G.towers.filter(tower=>tower.tier>=5);
   for(const side of ['A','B']){
     const blue = d.blue===side;
     const lu = lineupMap(d[side]);
@@ -531,7 +538,7 @@ function createGame5(d, opts){
         items:[], invest:0, coreIdx:0, bootsDone:false, supDone:false, streak:0,
         task:TK({k: r==='JUG'?'jungle':'lane', lane:LANE_OF[r]}), recall:0, lastBack:0, fightCd:0, camp:4, campT:0, campPlanT:0, pw:0, partial:0,
         laneCs:0, jungleCs:0, supportExecute:65,
-        powerLevel:0, powerInvest:0, powerBase:0
+        powerBase:0
       };
       for(const id of start){ cm.gold -= ITEMS[id][1]; cm.invest += ITEMS[id][1]; cm.items.push(id); }
       G.champs.push(cm);
@@ -565,25 +572,23 @@ function phaseAdj(G, side, t){
   else v = la;
   return v - G.avgSk[side] + (G.team[side].dayForm || 0);
 }
+function champBasePower(c){
+  if(!c.powerBase) c.powerBase=Math.exp((c.sk-80)/SIM5.SK+SIM5.LV*c.lvl+Math.log1p(c.invest/SIM5.IT)*1.18);
+  return c.powerBase*(0.3+0.7*c.hp);
+}
+function teamCombatBuff(tm,t){
+  return (tm.baronT>t?1.22:1)*(tm.elderT>t?1.35:1)*(1+tm.drakes.length*.025+(tm.soul ? .07 : 0));
+}
 function champPow(G, c, pressure, mode=1, attrPressure=0){
   if(!c.alive) return 0;
-  const tm = G.team[c.side];
-  if(c.powerLevel!==c.lvl || c.powerInvest!==c.invest){
-    c.powerLevel=c.lvl;
-    c.powerInvest=c.invest;
-    c.powerBase=Math.exp((c.sk-80)/SIM5.SK + SIM5.LV*c.lvl + Math.log1p(c.invest/SIM5.IT)*1.18);
-  }
   const phase=G.phasePower ? G.phasePower[c.side] : Math.exp(phaseAdj(G,c.side,G.t)/SIM5.SK);
-  let p = c.powerBase * phase * (0.3 + 0.7*c.hp) * mode;
-  if(attrPressure && c.at.ment) p*=Math.exp(c.at.ment*.012*attrPressure);
-  if(pressure && c.mental) p*=Math.exp(c.mental*1.4*pressure*DRAFT_RATING_WEIGHT/SIM5.SK);
-  if(tm.baronT > G.t) p *= 1.22;
-  if(tm.elderT > G.t) p *= 1.35;
-  p *= 1 + tm.drakes.length*0.025 + (tm.soul?0.07:0);
-  return p;
+  let power=champBasePower(c)*phase*mode;
+  if(attrPressure && c.at.ment) power*=Math.exp(c.at.ment*.012*attrPressure);
+  if(pressure && c.mental) power*=Math.exp(c.mental*1.4*pressure*DRAFT_RATING_WEIGHT/SIM5.SK);
+  return power*teamCombatBuff(G.team[c.side],G.t);
 }
-function teamPow(G, side){ let s=0; for(const c of G.champs) if(c.side===side) s += c.pw||0; return s; }
-function aliveN(G, side){ let n=0; for(const c of G.champs) if(c.side===side && c.alive) n++; return n; }
+function teamPow(G, side){ let s=0; for(const c of G.rosters[side]) s+=c.pw||0; return s; }
+function aliveN(G, side){ let n=0; for(const c of G.rosters[side]) if(c.alive) n++; return n; }
 
 function feed(G, side, tag, text, hl, attr){
   const t=fmtSec(G.t);
@@ -613,14 +618,17 @@ function step5(G){
   G.t += DT;
   const t = G.t;
   objTimers(G);
-  // 每个时间步缓存阵容阶段战力。
-  const adj = G.adj || (G.adj = {A:0, B:0});
-  adj.A = phaseAdj(G,'A',t); adj.B = phaseAdj(G,'B',t);
+  // 两段过渡期逐刻更新，固定阶段的阵容倍率可以跨步复用。
+  const band=t<720?1:t<1020?0:t<1440?2:t<1860?0:3;
   const power=G.phasePower||(G.phasePower={A:1,B:1});
-  power.A=Math.exp(adj.A/SIM5.SK); power.B=Math.exp(adj.B/SIM5.SK);
-  for(const c of G.champs){
-    c.pw = c.alive && c.recall===0 ? champPow(G, c, 0) : 0;
+  if(!band || band!==G.powerBand){
+    power.A=Math.exp(phaseAdj(G,'A',t)/SIM5.SK);
+    power.B=Math.exp(phaseAdj(G,'B',t)/SIM5.SK);
+    G.powerBand=band;
   }
+  const scaleA=power.A*teamCombatBuff(G.team.A,t), scaleB=power.B*teamCombatBuff(G.team.B,t);
+  for(const c of G.rosters.A) c.pw=c.alive && c.recall===0 ? champBasePower(c)*scaleA : 0;
+  for(const c of G.rosters.B) c.pw=c.alive && c.recall===0 ? champBasePower(c)*scaleB : 0;
   const aFirst=(t/DT&1)===0;
   if(t >= G.planT){
     G.planT = t + 9;
@@ -685,7 +693,7 @@ function objTimers(G){
   if(!o.baron.up && t >= o.baron.next){ o.baron.up = true; o.baron.prog = 0; if(t===1200) feed(G, null, '大龙刷新', '👾 20 分钟，纳什男爵在峡谷上方苏醒！'); }
   if(o.elder.next!=null && !o.elder.up && t >= o.elder.next){ o.elder.up = true; o.elder.prog = 0; feed(G, null, '远古龙', '🐲 远古巨龙降临峡谷，下一波团战将决定比赛走向！', true); }
   // 水晶（召唤水晶）重生
-  for(const tw of G.towers) if(!tw.alive && tw.tier===4 && tw.resp && t >= tw.resp){ tw.alive = true; tw.hp = 1; tw.resp = 0; G.towerDirty = true; if(G.rec) G.evs.push([t,'R',tw.id]); }
+  for(const tw of G.inhibitors) if(!tw.alive && tw.resp && t >= tw.resp){ tw.alive = true; tw.hp = 1; tw.resp = 0; G.towerDirty = true; if(G.rec) G.evs.push([t,'R',tw.id]); }
 }
 
 function farmCamp(G,c){
@@ -760,7 +768,7 @@ function contestLastHit(G,side,lane,x,y,minion){
   if(!farmer && support && G.random()<0.28) farmer=support;
   const push=G.front[lane]-0.5;
   const underPressure=G.team[side].blue?Math.min(0,push):Math.min(0,-push);
-  if(!farmer || (!execute && G.random()>=clamp(0.89+((early?farmer.skLane:farmer.skFarm)-80)*(early?.006:.004)+(farmer.hp-0.7)*0.16+underPressure*0.24,0.52,0.98))) return;
+  if(!farmer || (!execute && G.random()>=clamp(0.89+((early?farmer.skLane:farmer.skFarm)-80)*.004+(farmer.hp-0.7)*0.16+underPressure*0.24,0.52,0.98))) return;
   farmer.cs++; farmer.laneCs++; farmer.gold+=minion[0]; farmer.tg+=minion[0];
 }
 function lanePos(G, c, lane, off){
@@ -807,24 +815,29 @@ function tickChamp(G, c){
   else if(tk.k==='base'){ tx = fz[0]; ty = fz[1]; }
   // 视野判断：前方敌人明显更强且不是在守塔/抢资源时，原地后撤等待队友
   if(tk.k!=='base' && t > 120){
-    let ep = 0, ap = c.pw||0;
-    const group=G.champs, x=c.x, y=c.y, side=c.side;
-    for(let i=0;i<group.length;i++){
-      const o=group[i];
-      if(!o.pw || !o.alive || o===c || Math.abs(o.x-x)+Math.abs(o.y-y)>300) continue;
-      if(o.side===side) ap+=o.pw; else ep+=o.pw;
+    let ep=0, ap=c.pw||0;
+    const x=c.x, y=c.y, side=c.side, caution=tk.k==='defend'?2.3:1.7;
+    for(const enemy of G.rosters[other(side)]){
+      if(enemy.pw && enemy.alive && Math.abs(enemy.x-x)+Math.abs(enemy.y-y)<=300) ep+=enemy.pw;
     }
-    if(ep > ap*(tk.k==='defend'?2.3:1.7) && !(tk.k==='lane' && t<840 && ep < ap*2.6)){
-      const back = MAP5.fountain[c.blue?'blue':'red'];
-      const bx = back[0]-c.x, by = back[1]-c.y, bd = hyp(bx,by)||1;
-      tx = c.x + bx/bd*60*DT; ty = c.y + by/bd*60*DT;
+    if(ep>ap*caution){
+      for(const ally of G.rosters[side]){
+        if(ally!==c && ally.pw && ally.alive && Math.abs(ally.x-x)+Math.abs(ally.y-y)<=300) ap+=ally.pw;
+      }
+      if(ep>ap*caution && !(tk.k==='lane' && t<840 && ep<ap*2.6)){
+        const bx=fz[0]-x, by=fz[1]-y, bd=hyp(bx,by)||1;
+        tx=x+bx/bd*60*DT; ty=y+by/bd*60*DT;
+      }
     }
   }
-  const dx = tx-c.x, dy = ty-c.y, dd = hyp(dx,dy);
-  const spd = SIM5.SPD * (c.bootsDone?1.12:1) * (G.team[c.side].baronT>t?1.1:1);
-  if(dd > 1){ const m = Math.min(dd, spd*DT); c.x += dx/dd*m + (G.random()-0.5)*3; c.y += dy/dd*m + (G.random()-0.5)*3; }
+  const dx=tx-c.x, dy=ty-c.y, dd=hyp(dx,dy);
+  if(dd>1){
+    const spd=SIM5.SPD*(c.bootsDone?1.12:1)*(G.team[c.side].baronT>t?1.1:1);
+    const m=Math.min(dd,spd*DT);
+    c.x+=dx/dd*m+(G.random()-0.5)*3; c.y+=dy/dd*m+(G.random()-0.5)*3;
+  }
   if(t>65 && c.role==='SUP'){ c.gold+=0.55*DT; c.tg+=0.55*DT; }
-  while(c.lvl < 18 && c.xp >= XP_LV[c.lvl+1]) c.lvl++;
+  while(c.lvl<18 && c.xp>=XP_LV[c.lvl+1]){ c.lvl++; c.powerBase=0; }
   // 回城：残血或者钱够了
   const lowHp = c.hp < (t<840 && c.task.k==='lane' ? 0.36 : 0.3);
   const rich = t-c.lastBack>G.team[c.side].recallWait && (tk.k==='lane'||tk.k==='jungle'||tk.k==='split') && G.front[tk.lane||'mid']!==undefined && c.gold>=nextItemCost(c);
@@ -853,6 +866,7 @@ function nextItemCost(c){
 }
 // 回到泉水购物：按出装路线买成装，钱不够就先投资“合成中”的小件
 function shop(G, c){
+  c.powerBase=0;
   const b = c.build;
   const buy = id => { c.items.push(id); if(G.rec) G.evs.push([G.t,'B',c.i,id]); };
   const remove = slot => { c.items.splice(slot,1); if(G.rec) G.evs.push([G.t,'S',c.i,slot]); };
@@ -890,7 +904,15 @@ function shop(G, c){
 
 // ---------------- 团队宏观决策 ----------------
 function TK(o){ return {k:o.k, lane:o.lane||null, x:o.x||0, y:o.y||0, o:o.o||null, until:o.until||0}; }
-function setTask(c, task){ c.task = TK(task); }
+function setTask(c, task){
+  const current=c.task;
+  current.k=task.k;
+  current.lane=task.lane||null;
+  current.x=task.x||0;
+  current.y=task.y||0;
+  current.o=task.o||null;
+  current.until=task.until||0;
+}
 function lanePriority(G, side, lane){
   const direction=G.team[side].blue?1:-1;
   let value=(G.front[lane]-0.5)*direction*2;
@@ -1080,7 +1102,6 @@ function plan5(G, side){
     }
   }
 }
-function objUp(G, k){ const ob = G.obj[k]; return ob && (ob.up || (ob.next!=null && ob.next - G.t < 30 && ob.next > G.t)); }
 function firstAlive(G, color, lane){
   if(!G.towerDirty && G.first) return G.first[color][lane] || null;
   let best = null;
@@ -1125,14 +1146,28 @@ function laneTrades(G){
 }
 
 // ---------------- 遭遇检测 → 团战 / 抓人 ----------------
+function riverObjectiveReady(G,key){
+  const o=G.obj[key];
+  return o.up || (o.next!=null && o.next>G.t && o.next-G.t<=15 &&
+    (G.team.A.setup[key]?.spawn===o.next || G.team.B.setup[key]?.spawn===o.next));
+}
+function visionEdgeFor(G,side,key){
+  const tm=G.team[side], opponent=G.team[other(side)], setup=tm.setup[key];
+  if(!setup || tm.macro-opponent.macro<6 || setup.spawn-setup.t<30) return false;
+  const theirs=opponent.setup[key];
+  return theirs?.spawn!==setup.spawn || theirs.t-setup.t>=24;
+}
 function fightObjective(G, x, y){
   const atDragon=Math.abs(x-MAP5.dragon[0])+Math.abs(y-MAP5.dragon[1])<190;
-  if(atDragon && (G.obj.elder.up || G.obj.drag.up)) return G.obj.elder.up?'elder':'drag';
+  if(atDragon){
+    if(riverObjectiveReady(G,'elder')) return 'elder';
+    if(riverObjectiveReady(G,'drag')) return 'drag';
+  }
   const atBaron=Math.abs(x-MAP5.baron[0])+Math.abs(y-MAP5.baron[1])<190;
   if(atBaron){
-    if(G.obj.baron.up) return 'baron';
-    if(G.obj.herald.up) return 'herald';
-    if(G.obj.grubs.up) return 'grubs';
+    if(riverObjectiveReady(G,'baron')) return 'baron';
+    if(riverObjectiveReady(G,'herald')) return 'herald';
+    if(riverObjectiveReady(G,'grubs')) return 'grubs';
   }
   return null;
 }
@@ -1157,14 +1192,16 @@ function advanceEngagements(G,used){
 }
 function encounters(G){
   const cs = G.champs, R = SIM5.ENC, early = G.t < 840;
-  const offset=(G.t/SIM5.DT&1)*5;
+  const flipped=G.t/SIM5.DT&1;
+  const first=flipped ? G.rosters.B : G.rosters.A;
+  const second=flipped ? G.rosters.A : G.rosters.B;
   const used = G._used || (G._used = new Array(10));
-  for(let i=0;i<10;i++) used[i] = false;
+  used.fill(false);
   if(G.engagements.length) advanceEngagements(G,used);
-  for(let i=0;i<10;i++){
-    const c = cs[(i+offset)%10]; if(!c.alive || c.recall>0 || c.fightCd>0 || used[c.i]) continue;
-    for(let j=i+1;j<10;j++){
-      const o = cs[(j+offset)%10]; if(o.side===c.side || !o.alive || o.recall>0 || o.fightCd>0 || used[o.i]) continue;
+  for(const c of first){
+    if(!c.alive || c.recall>0 || c.fightCd>0 || used[c.i]) continue;
+    for(const o of second){
+      if(!o.alive || o.recall>0 || o.fightCd>0 || used[o.i]) continue;
       const dx = o.x-c.x, dy = o.y-c.y;
       if(dx > R || dx < -R || dy > R || dy < -R || dx*dx+dy*dy > R*R) continue;
       // 对线期：线上对峙由 laneTrades 处理，只有 Gank / 资源争夺 / 入侵才会爆发遭遇战
@@ -1269,10 +1306,10 @@ function resolveFight(G, A, B, kind, laneFight, battle){
     let p = 0;
     const pressure=pressSide(s);
     const behind=(s==='A' ? goldB-goldA : goldA-goldB)>3000;
-    const high=(big?.60:0)+(behind?.35:0)+seriesPressure*.45;
+    const high=(big ? .60 : 0)+(behind ? .35 : 0)+seriesPressure*.45+(G.d.ctx?.matchPoint && !G.d.ctx.decider ? .12 : 0);
     for(const c of L){
       const late=battle ? Math.min(2,(t-battle.arrival[c.i])/SIM5.DT) : 2;
-      const stress=omit==='ment'?0:high+(c.deathStreak>=2?.35:0);
+      const stress=omit==='ment'?0:high+(c.deathStreak>=2 ? .35 : 0);
       p += champPow(G,c,pressure,omit==='stage'?1:g5Mode(c),stress)*(0.90+late*0.05);
     }
     // 塔下防守优势
@@ -1299,6 +1336,10 @@ function resolveFight(G, A, B, kind, laneFight, battle){
   }
   const plBase = laneFight ? 0.2 : kind==='gank' ? 0.12 : kind==='team' ? 0.11 : 0.13;
   const deathsL = [], deathsW = [];
+  const facecheckRisk=L.length<=2 && battle?.resource && visionEdgeFor(G,W[0].side,battle.resource) ? .07 : 0;
+  const lateFight=teamfight && t>=1500;
+  const exposure=c=>clamp(-c.at.tf*.004,-.10,.10);
+  let facecheck=false;
   const lossProfile=aWin?profileB:profileA, winProfile=aWin?profileA:profileB;
   const stoppedDive=laneFight?0:Math.min(0.23,lossProfile.antiDash*winProfile.dash*0.075);
   for(const c of L){
@@ -1306,10 +1347,15 @@ function resolveFight(G, A, B, kind, laneFight, battle){
     if(c.side===gank) pl -= clamp((.275*c.at.lane+.425*c.at.react)*.007,-.08,.08);
     if(!laneFight) pl += Math.min(2,winProfile.control)*0.017 - c.combat.frontline*0.034 - c.combat.escape*0.026 - Math.min(2,lossProfile.protect)*0.013 - stoppedDive;
     if(laneFight && c.hp < 0.2) pl += 0.5;
-    if(G.random() < clamp(pl, 0.05, 0.95)) deathsL.push(c);
+    if(lateFight) pl+=exposure(c);
+    const casualtyRoll=G.random();
+    if(casualtyRoll<clamp(pl+facecheckRisk,.05,.95)){
+      deathsL.push(c);
+      if(facecheckRisk && casualtyRoll>=clamp(pl,.05,.95)) facecheck=true;
+    }
   }
   for(const c of W){
-    const pw = laneFight ? 0.02 : 0.03 + 0.22*(1-margin)*(kind==='team'?1:0.5) + (1-c.hp)*0.08;
+    const pw = laneFight ? 0.02 : 0.03 + 0.22*(1-margin)*(kind==='team'?1:0.5) + (1-c.hp)*0.08 + (lateFight ? exposure(c)*.5 : 0);
     if(G.random() < clamp(pw, 0.01, 0.4)) deathsW.push(c);
   }
   if(!deathsL.length && !laneFight && kind!=='skirm' && G.random() < 0.55-stoppedDive){ deathsL.push(wpick(L, c=>1.5-c.hp, G.random)); }
@@ -1336,7 +1382,9 @@ function resolveFight(G, A, B, kind, laneFight, battle){
   if(!laneFight){ G.planT = t; if(kind!=='gank'){ G.team.A.calmT = t + 75; G.team.B.calmT = t + 75; } }
   // 团灭 / 团战播报
   const lSide = L[0].side;
-  if(attr && (deathsL.length||deathsW.length)){
+  if(facecheck){
+    feed(G,W[0].side,'运营失误',G.team[lSide].name+' 无视野探河道，被 '+G.team[W[0].side].name+' 抓到。',true,'macro');
+  } else if(attr && (deathsL.length||deathsW.length)){
     const tag={lane:'对线压制',tf:'团战发挥',react:'极限操作',ment:'稳住心态'}[attr];
     const leader=W.reduce((a,b)=>b.at[attr]>a.at[attr]?b:a);
     feed(G,leader.side,tag,leader.tag+' 凭'+ATTR_CN[attr]+'优势帮助队伍赢下这次交锋。',true,attr);
@@ -1411,38 +1459,46 @@ function claimObjectiveBounty(G, side, amount, target){
   for(const c of G.rosters[side]){ c.gold+=share; c.tg+=share; }
   feed(G,side,'目标赏金',`${G.team[side].name} 拿下${target}，全队获得额外 ${amount} 金币。`,true);
 }
-function objectives(G){
-  const t = G.t, o = G.obj;
-  const check = (key, pt, need) => {
-    const ob = o[key]; if(!ob.up) return;
-    const groups={A:[],B:[]}, near={A:false,B:false};
-    for(const c of G.champs){
-      if(!c.alive || c.recall!==0) continue;
-      const dx=c.x-pt[0],dy=c.y-pt[1],distance=dx*dx+dy*dy;
-      if(distance<22500) near[c.side]=true;
-      if(distance<5625) groups[c.side].push(c);
+function tickObjective(G,key,pt,need){
+  const ob=G.obj[key];
+  if(!ob.up) return;
+  let maskA=0, maskB=0, nearA=false, nearB=false;
+  for(const c of G.champs){
+    if(!c.alive || c.recall!==0) continue;
+    const dx=c.x-pt[0], dy=c.y-pt[1], distance=dx*dx+dy*dy;
+    if(distance>=22500) continue;
+    if(c.side==='A'){
+      nearA=true;
+      if(distance<5625) maskA|=1<<c.i;
+    } else {
+      nearB=true;
+      if(distance<5625) maskB|=1<<c.i;
     }
-    let side = null, grp = null;
-    if(groups.A.length && !near.B){ side='A'; grp=groups.A; }
-    else if(groups.B.length && !near.A){ side='B'; grp=groups.B; }
-    if(!side){ return; }
-    if(ob.by && ob.by!==side) ob.prog = 0;
-    ob.by = side;
-    const rate = grp.reduce((s,c)=>s + Math.exp(SIM5.LV*c.lvl + c.invest/SIM5.IT)*(1+c.combat.sustained*0.10)*(c.role==='JUG'?1.12:1), 0) / need;
-    ob.prog += rate*SIM5.DT;
-    if(ob.prog >= 1) takeObj(G, key, side, false);
-  };
-  check('drag', MAP5.dragon, 22 + t/60*1.8);
-  check('elder', MAP5.dragon, 40);
-  check('grubs', MAP5.baron, 16);
-  check('herald', MAP5.baron, 26);
-  check('baron', MAP5.baron, 34 + Math.max(0,(t-1200)/60)*1.2);
+    if(nearA && nearB) return;
+  }
+  const side=maskA ? 'A' : maskB ? 'B' : null;
+  if(!side) return;
+  if(ob.by && ob.by!==side) ob.prog=0;
+  ob.by=side;
+  let rate=0;
+  const mask=maskA|maskB;
+  for(const c of G.rosters[side]) if(mask & (1<<c.i))
+    rate+=Math.exp(SIM5.LV*c.lvl+c.invest/SIM5.IT)*(1+c.combat.sustained*.10)*(c.role==='JUG'?1.12:1);
+  ob.prog+=rate/need*SIM5.DT;
+  if(ob.prog>=1) takeObj(G,key,side,false);
+}
+function objectives(G){
+  const t=G.t;
+  tickObjective(G,'drag',MAP5.dragon,22+t/60*1.8);
+  tickObjective(G,'elder',MAP5.dragon,40);
+  tickObjective(G,'grubs',MAP5.baron,16);
+  tickObjective(G,'herald',MAP5.baron,26);
+  tickObjective(G,'baron',MAP5.baron,34+Math.max(0,(t-1200)/60)*1.2);
 }
 function takeObj(G, key, side, steal, macroSteal=false){
   const t = G.t, o = G.obj[key], tm = G.team[side];
-  const opening=tm.setup[key], opposing=G.team[other(side)];
-  const visionEdge=tm.macro-opposing.macro>=6 && opening && opening.spawn-opening.t>=30 &&
-    (opposing.setup[key]?.spawn!==opening.spawn || opposing.setup[key].t-opening.t>=24);
+  const opposing=G.team[other(side)];
+  const visionEdge=visionEdgeFor(G,side,key);
   delete tm.setup[key]; delete opposing.setup[key];
   o.up = false; o.prog = 0; o.by = null;
   const nm = tm.name;
@@ -1517,8 +1573,9 @@ function towerDamageable(G, tw){ if(G.towerDirty || !G.first) refreshTowers(G); 
 function lanesAndTowers(G){
   const t = G.t, DT = SIM5.DT;
   if(G.towerDirty || !G.first) refreshTowers(G);
-  const norm = Math.exp(SIM5.LV*Math.min(18,1+t/110) + Math.log1p(Math.min(16000,t*6.8)/SIM5.IT)*1.18);
-  const champs = G.champs;
+  const norm=TOWER_NORM[t/DT], early=t<840;
+  const blueTeam=G.team[G.d.blue], redTeam=G.team[other(G.d.blue)];
+  const champs=G.champs;
   const alive=G.aliveN||(G.aliveN={blue:0,red:0});
   alive.blue=alive.red=0;
   for(const c of champs) if(c.alive) alive[c.blue?'blue':'red']++;
@@ -1531,7 +1588,7 @@ function lanesAndTowers(G){
       const c = champs[i];
       if(!c.pw) continue;
       if(Math.abs(c.x-fx) > 130 || Math.abs(c.y-fy) > 130) continue;
-      const power=t<840?c.pw*c.laneMul:c.pw;
+      const power=early ? c.pw*c.laneMul : c.pw;
       if(c.blue) pB += power; else pR += power;
     }
     const supB = G.supLane.red[lane] ? 1.6 : 0, supR = G.supLane.blue[lane] ? 1.6 : 0;
@@ -1544,11 +1601,10 @@ function lanesAndTowers(G){
     nf = nf < minS ? minS : nf > maxS ? maxS : nf;
     G.front[lane] = nf;
     for(let k=0;k<2;k++){
-      const tw = k===0 ? rT : bT, pw = k===0 ? pB : pR, atkColor = k===0 ? 'blue' : 'red';
+      const tw=k===0 ? rT : bT, pw=k===0 ? pB : pR;
       if(!tw || !tw.dmgable) continue;
-      if(atkColor==='blue' ? nf < tw.s - 0.02 : nf > tw.s + 0.02) continue;
-      const atkSide = G.team.A.color===atkColor ? 'A' : 'B';
-      const tm = G.team[atkSide];
+      if(k===0 ? nf<tw.s-.02 : nf>tw.s+.02) continue;
+      const tm=k===0 ? blueTeam : redTeam, atkSide=tm.side;
       let dmg = (0.0006 + Math.min(1, t/1800)*0.0022 + (pw/norm) * SIM5.TD * (1 + tm.grubs*0.04)) * DT;
       if(tm.baronT > t) dmg *= 2.2;
       if(tm.heraldT > t && tw.tier<=2 && pw>0 && G.random()<0.05*DT){ dmg += 0.3; tm.heraldT = 0; feed(G, atkSide, '先锋撞塔', `${tm.name} 放出峡谷先锋撞向${laneCN(lane)}防御塔！`); }
@@ -1565,8 +1621,8 @@ function lanesAndTowers(G){
     }
   }
   if(!G.inhibDown.blue && !G.inhibDown.red) return;
-  for(const tw of G.towers){
-    if(tw.tier < 5 || !tw.dmgable) continue;
+  for(const tw of G.baseTowers){
+    if(!tw.dmgable) continue;
     const atkSide = (tw.side==='blue') === (G.team.A.color==='red') ? 'A' : 'B';
     let p = 0;
     for(const c of champs){ if(c.side===atkSide && c.pw && Math.abs(c.x-tw.x)+Math.abs(c.y-tw.y)<160) p += c.pw; }

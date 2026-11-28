@@ -825,6 +825,28 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 .curve-row{display:grid;grid-template-columns:125px 1fr 78px;align-items:center;gap:10px;font-size:12px;color:var(--hex-mu)}
 .curve-row span:first-child{text-align:left;color:var(--hex-gold-l)}.curve-row span:last-child{font-family:var(--num);font-size:13px;text-align:right}
 .curve-bar{height:7px;display:flex;overflow:hidden;background:#091428}.curve-bar .bl{background:var(--hex-blue)}.curve-bar .rd{background:var(--hex-red)}
+/* 赛前 BP 复盘 */
+.bp-review{width:100%;max-width:760px;text-align:left;padding:10px 14px;background:rgba(1,10,19,.55);border:1px solid #22354f}
+.bp-review h4{margin:0 0 8px;font-size:15px;color:var(--hex-gold-l)}.bp-review h4 small{font-size:11px;color:var(--hex-mu);font-weight:400;margin-left:6px}
+.rv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:10px}
+.rc-chips .fb-chip,.rv-why .fb-chip{white-space:normal;line-height:16px;padding:1px 6px}
+.rv-box{padding:7px 9px;border:1px solid #263a56;background:rgba(4,14,28,.7);font-size:12px;color:#cdd6e0}
+.rv-box>b{display:block;font-size:12px;margin-bottom:3px}.rv-box.good>b{color:#9bf5ed}.rv-box.bad>b{color:#ff9ba8}.rv-box.hurt>b{color:var(--hex-gold)}
+.rv-box ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:3px}.rv-box li{line-height:1.45}.rv-box li b{color:#fff}
+.rv-box .rv-none{list-style:none;margin-left:-16px;color:var(--hex-mu)}
+.rv-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.rv-row{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border:1px solid #1c2c44;border-left:3px solid #4b6282;background:rgba(3,12,24,.65)}
+.rv-row.g-good{border-left-color:#0ac8b9}.rv-row.g-bad{border-left-color:#e84057}.rv-row.g-ok{border-left-color:#c89b3c}
+.rv-row .c-ava.sm{width:36px;height:36px;flex-shrink:0}
+.rv-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rv-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:12px;color:var(--hex-mu)}
+.rv-top b{color:#fff;font-size:13px}.rv-top em{font-style:normal;color:var(--hex-gold-l)}
+.rv-lbl{font-size:11px;padding:0 5px;border:1px solid #33496a;color:#9fb3c8}.rv-row.is-ban .rv-lbl{border-color:rgba(232,64,87,.5);color:#ff9ba8}
+.rv-grade{font-weight:800;font-size:12px}.g-good .rv-grade{color:#0ac8b9}.g-ok .rv-grade{color:#c89b3c}.g-bad .rv-grade{color:#e84057}
+.rv-num{font-family:var(--num);font-size:12px}.rv-gap{margin-left:auto;font-size:11px}
+.rv-why{display:flex;flex-wrap:wrap;gap:3px}
+.rv-better{font-size:12px;color:#f0e6d2;padding:3px 7px;background:rgba(200,155,60,.1);border:1px dashed rgba(200,155,60,.45)}.rv-better b{color:var(--hex-gold-l)}
+@media (max-width:760px){.rv-gap{margin-left:0}}
 .ready-actions{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:10px}
 /* 赛后结算/赛前确认的操作按钮吸底：无论屏幕多矮、内容多长，“确认/下一局”始终在可视区内可点 */
 .result-stage .ready-actions,.ready-stage .ready-actions{position:sticky;bottom:0;z-index:5;align-self:stretch;margin-top:auto;padding:12px 10px calc(10px + env(safe-area-inset-bottom));

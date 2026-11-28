@@ -1,7 +1,7 @@
 {
-  "version": "2.1.8",
+  "version": "2.1.9",
   "date": "2026-11-28",
-  "notes": "新增传奇自由选手 Uzi (2018) 与 Clearlove7 (2017)，开局即可签约；修正 Canyon 英雄池",
+  "notes": "BP 后新增逐步复盘，指出每一手的好坏与更好选择；武器大师、波比等克制只在对手明显吃这套机制时生效；AI 懂得给进攻型 ADC 配硬辅",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

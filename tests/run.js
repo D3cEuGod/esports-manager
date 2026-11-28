@@ -516,8 +516,58 @@ section('BP 反制权重与阵容实战对照');
       preview:preview.last?.champ==='Poppy' && !live.picks.A.JUG && preview.A.advantages.some(n=>n.includes('波比')),interact:defended<open};
   })()`);
   console.log('  波比对多突进，BP 胜率差', ((r.strong-r.weak)*100).toFixed(1)+' 个百分点，实战配对', `${r.wStrong}/240 vs ${r.wWeak}/240`);
-  ok(r.strong-r.weak>=0.075 && r.wStrong>r.wWeak,'提高强反制的评分，并在同条件实战观察到胜率改善');
+  ok(r.strong-r.weak>=0.04 && r.strong-r.weak<=0.09 && r.wStrong>r.wWeak,'强反制有分量但不过头（4–9 个百分点），同条件实战胜率改善');
   ok(r.ban && r.preview && r.interact, '选禁预览无副作用，局部反开随实际参战英雄生效');
+}
+
+section('克制只看超常威胁、下路类型配合与 BP 复盘');
+{
+  const r = run(`(()=>{
+    // 随机常规阵容里，武器大师/波比的克制提示只在少数局面出现
+    const pools={}; for(const role of ROLES) pools[role]=CHAMP_KEYS.filter(c=>CH[c].roles.includes(role));
+    let seed=7; const pick=a=>{ seed=(seed*1103515245+12345)%2147483648; return a[seed%a.length]; };
+    let jax=0, poppy=0, maxFight=0;
+    for(let i=0;i<1500;i++){
+      const e={}; for(const role of ROLES) e[role]=pick(pools[role]);
+      const t=draftThreats(e);
+      const sj=counterStrength(DRAFT_COUNTERS.Jax,t), sp=counterStrength(DRAFT_COUNTERS.Poppy,t);
+      if(sj>=0.30) jax++; if(sp>=0.30) poppy++; maxFight=Math.max(maxFight,sj,sp);
+    }
+    const notes=[]; draftTactics({TOP:'Jax'},{TOP:'Fiora',JUG:'Viego',MID:'Yone',ADC:'Jinx'},undefined,notes);
+    const named=notes.some(n=>n.startsWith('武器大师反击') && n.includes('剑姬'));
+    const sc=(own)=>draftTactics(own,{}).score;
+    const draven=['Leona','Nautilus','Rell'].every(s=>sc({ADC:'Draven',SUP:s})>sc({ADC:'Draven',SUP:'Soraka'})+0.5) &&
+      sc({ADC:"Kai'Sa",SUP:'Nautilus'})>sc({ADC:"Kai'Sa",SUP:'Yuumi'})+0.5 &&
+      sc({ADC:'Jinx',SUP:'Lulu'})>sc({ADC:'Jinx',SUP:'Leona'});
+    const risks=[]; draftTactics({ADC:'Draven',SUP:'Soraka'},{},undefined,[],risks);
+
+    newGame('TES');
+    for(const key of ['TES','BLG']) for(const p of starters(key)){ p.rating=82; p.form=0; p.mental=0; p.champs=[]; }
+    for(const c of CHAMP_KEYS) S.meta[c]=0;
+    const d=newDraft('BLG','TES','A',[]);
+    d.step=19;
+    d.picks.A={TOP:'Ornn',JUG:'Sejuani',MID:'Orianna',ADC:'Draven'};
+    d.picks.B={TOP:'Gnar',JUG:'Vi',MID:'Azir',ADC:'Jinx',SUP:'Lulu'};
+    d.first='B';
+    const aiSup=aiChoose(d,{lookahead:true});
+    const coach=coachSuggest(d,'A');
+
+    const full=newDraft('TES','BLG','A',[]);
+    autoDraftRest(full);
+    const t0=Date.now(); const rv=draftReview(full,'A'); const ms=Date.now()-t0;
+    const review = rv.steps.length===10 && rv.steps.filter(x=>x.kind==='ban').length===5 &&
+      rv.steps.every(x=>['good','ok','bad'].includes(x.grade) && Array.isArray(x.pros) && Array.isArray(x.cons) && x.gap>=0) &&
+      rv.steps.filter(x=>x.better).every(x=>x.better.gain>=0.02 && x.better.champ!==x.champ) &&
+      Math.abs(rv.pFinal-evalDraft(full).pA)<1e-9 && rv.hurt.length<=2;
+    return {jax:jax/1500, poppy:poppy/1500, maxFight, named, draven, softRisk:risks.some(x=>x.includes('缺少硬辅')),
+      aiSup:aiSup.c, aiHard:SUP_STYLE[aiSup.c]==='engage', coachHard:coach.length>0 && SUP_STYLE[coach[0].c]==='engage', review, ms};
+  })()`);
+  console.log(`  克制提示触发率 武器大师 ${(r.jax*100).toFixed(0)}% 波比 ${(r.poppy*100).toFixed(0)}%，德莱文 AI 补位辅助 ${r.aiSup}，复盘 ${r.ms}ms`);
+  ok(r.jax<=0.35 && r.poppy<=0.35 && r.maxFight<=1.0 + 1e-9, '武器大师、波比只在对手普攻/突进明显偏多时才算克制');
+  ok(r.named, '克制提示点名被克制的英雄');
+  ok(r.draven && r.softRisk, '进攻型 ADC 配硬辅加分，配软辅提示风险；后期核心配保护辅');
+  ok(r.aiHard && r.coachHard, 'AI 和教练给德莱文补硬开辅助');
+  ok(r.review && r.ms<1500, 'BP 复盘逐步评估我方 5 禁 5 选并给出更好选择');
 }
 
 section('AI BP：对位预判与能力权重');

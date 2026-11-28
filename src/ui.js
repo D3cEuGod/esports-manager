@@ -1433,6 +1433,58 @@ function bpFeedbackHtml(M, d, cur, leftSide){
   </div>`;
 }
 
+// 赛前 BP 复盘：后端 draftReview 逐步评估我方禁用/选择；按阵容缓存，换位后重算
+function bpReviewData(M, d){
+  if(!d || typeof draftReview!=='function') return null;
+  const key = JSON.stringify([d.step, d.bans, d.picks]);
+  if(M._review && M._review.key===key) return M._review.data;
+  let data = null;
+  try{ data = draftReview(d, M.me); }catch(e){ data = null; }
+  M._review = {key, data};
+  return data;
+}
+const RV_GRADE = {good:['好','good'], ok:['一般','ok'], bad:['失误','bad']};
+const pct1 = x => `${x>0?'+':''}${(x*100).toFixed(1)}%`;
+function bpReviewHtml(M, d){
+  const rv = bpReviewData(M, d);
+  if(!rv || !rv.steps.length) return '';
+  const chips = (pros, cons) => [...(pros||[]).map(t=>`<span class="fb-chip adv">${esc(t)}</span>`), ...(cons||[]).map(t=>`<span class="fb-chip risk">${esc(t)}</span>`)].join('');
+  const who = s => `${esc(s.label)} ${esc(champName(s.champ))}`;
+  const betterTxt = b => `更好的选择：<b>${esc(champName(b.champ))}</b>${b.role?`（${ROLE_CN[b.role]}）`:''} · 约 ${pct1(b.gain)}${b.pros.length?` · ${b.pros.map(esc).join('；')}`:''}`;
+  const sumLi = (s, good) => good
+    ? `<li><b>${who(s)}</b>：${s.pros.slice(0,2).map(esc).join('；')}</li>`
+    : `<li><b>${who(s)}</b>：${s.cons.length?esc(s.cons[0])+'；':''}${s.better?betterTxt(s.better):''}</li>`;
+  const goodList = rv.good.length ? rv.good.map(s=>sumLi(s,true)).join('') : '<li class="rv-none">没有特别亮眼的一手</li>';
+  const badList = rv.bad.length ? rv.bad.map(s=>sumLi(s,false)).join('') : '<li class="rv-none">每一步都接近当时的最佳选择</li>';
+  const hurtList = rv.hurt.length
+    ? rv.hurt.map(h=>`<li><b>${esc(champName(h.champ))}</b>${h.role?`（${ROLE_CN[h.role]}）`:''}：比对手的常规选择多拿约 ${pct1(h.impact)}${h.pros.length?`，${h.pros.map(esc).join('；')}`:''}</li>`).join('')
+    : '<li class="rv-none">对手没有特别针对我们的选择</li>';
+  const rows = rv.steps.map(s=>{
+    const [gTxt, gCls] = RV_GRADE[s.grade] || RV_GRADE.ok;
+    const num = s.kind==='ban'
+      ? `<span class="rv-num">对手受影响 ${(s.denied*100).toFixed(1)}%${s.cost>=0.005?` · 我方代价 ${(s.cost*100).toFixed(1)}%`:''}</span>`
+      : `<span class="rv-num">比常规选择 ${pct1(s.edge)}</span>`;
+    const gapTxt = s.gap>=0.005 ? `比当时最佳低 ${(s.gap*100).toFixed(1)}%` : '当时最佳';
+    return `<li class="rv-row g-${gCls} is-${s.kind}">
+      ${champAvatar(s.champ,'sm')}
+      <div class="rv-main">
+        <div class="rv-top"><span class="rv-lbl">${esc(s.label)}</span><b>${esc(champName(s.champ))}</b>${s.kind==='pick'&&s.role?`<em>${ROLE_CN[s.role]}</em>`:''}<span class="rv-grade">${gTxt}</span>${num}<span class="rv-gap">${gapTxt}</span></div>
+        <div class="rv-why">${chips(s.pros, s.cons) || '<span class="fb-none">没有明显的加分或扣分点</span>'}</div>
+        ${s.better?`<div class="rv-better">${betterTxt(s.better)}</div>`:''}
+      </div>
+    </li>`;
+  }).join('');
+  return `<div class="bp-review">
+    <h4>BP 复盘 <small>我方每一步与当时最佳选择的对比</small></h4>
+    <div class="rv-sum">
+      <div class="rv-box good"><b>做得好</b><ul>${goodList}</ul></div>
+      <div class="rv-box bad"><b>需要改进</b><ul>${badList}</ul></div>
+      <div class="rv-box hurt"><b>对手最伤我们的选择</b><ul>${hurtList}</ul></div>
+    </div>
+    <ol class="rv-steps">${rows}</ol>
+  </div>`;
+}
+
 function matchScreen(){
   const M=UI.match, m=M.item.m; const opp = M.me==='A'?'B':'A';
   const d = M.draft;
@@ -1798,6 +1850,7 @@ function matchScreen(){
         ${curveBar('中期资源 (14-24m)', leftE.mid, rightE.mid)}
         ${curveBar('后期团战 (25m+)', leftE.late, rightE.late)}
       </div>
+      ${bpReviewHtml(M, d)}
       <p class="hex-sub">提示：开赛前仍可在侧栏点击己方两个槽位进行摇摆换位，胜率与熟练度将实时重算。</p>
       <div class="ready-actions">
         <button class="lock-btn is-pick big-go" data-a="playGame">⚔ 进入召唤师峡谷 · 开始对局</button>

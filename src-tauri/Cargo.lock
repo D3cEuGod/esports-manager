@@ -2666,7 +2666,7 @@ dependencies = [
 
 [[package]]
 name = "rift-manager"
-version = "2.1.8"
+version = "2.1.9"
 dependencies = [
  "serde",
  "serde_json",

@@ -837,6 +837,28 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 .curve-row{display:grid;grid-template-columns:125px 1fr 78px;align-items:center;gap:10px;font-size:12px;color:var(--hex-mu)}
 .curve-row span:first-child{text-align:left;color:var(--hex-gold-l)}.curve-row span:last-child{font-family:var(--num);font-size:13px;text-align:right}
 .curve-bar{height:7px;display:flex;overflow:hidden;background:#091428}.curve-bar .bl{background:var(--hex-blue)}.curve-bar .rd{background:var(--hex-red)}
+/* 赛前 BP 复盘 */
+.bp-review{width:100%;max-width:760px;text-align:left;padding:10px 14px;background:rgba(1,10,19,.55);border:1px solid #22354f}
+.bp-review h4{margin:0 0 8px;font-size:15px;color:var(--hex-gold-l)}.bp-review h4 small{font-size:11px;color:var(--hex-mu);font-weight:400;margin-left:6px}
+.rv-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:10px}
+.rc-chips .fb-chip,.rv-why .fb-chip{white-space:normal;line-height:16px;padding:1px 6px}
+.rv-box{padding:7px 9px;border:1px solid #263a56;background:rgba(4,14,28,.7);font-size:12px;color:#cdd6e0}
+.rv-box>b{display:block;font-size:12px;margin-bottom:3px}.rv-box.good>b{color:#9bf5ed}.rv-box.bad>b{color:#ff9ba8}.rv-box.hurt>b{color:var(--hex-gold)}
+.rv-box ul{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:3px}.rv-box li{line-height:1.45}.rv-box li b{color:#fff}
+.rv-box .rv-none{list-style:none;margin-left:-16px;color:var(--hex-mu)}
+.rv-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.rv-row{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border:1px solid #1c2c44;border-left:3px solid #4b6282;background:rgba(3,12,24,.65)}
+.rv-row.g-good{border-left-color:#0ac8b9}.rv-row.g-bad{border-left-color:#e84057}.rv-row.g-ok{border-left-color:#c89b3c}
+.rv-row .c-ava.sm{width:36px;height:36px;flex-shrink:0}
+.rv-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rv-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:12px;color:var(--hex-mu)}
+.rv-top b{color:#fff;font-size:13px}.rv-top em{font-style:normal;color:var(--hex-gold-l)}
+.rv-lbl{font-size:11px;padding:0 5px;border:1px solid #33496a;color:#9fb3c8}.rv-row.is-ban .rv-lbl{border-color:rgba(232,64,87,.5);color:#ff9ba8}
+.rv-grade{font-weight:800;font-size:12px}.g-good .rv-grade{color:#0ac8b9}.g-ok .rv-grade{color:#c89b3c}.g-bad .rv-grade{color:#e84057}
+.rv-num{font-family:var(--num);font-size:12px}.rv-gap{margin-left:auto;font-size:11px}
+.rv-why{display:flex;flex-wrap:wrap;gap:3px}
+.rv-better{font-size:12px;color:#f0e6d2;padding:3px 7px;background:rgba(200,155,60,.1);border:1px dashed rgba(200,155,60,.45)}.rv-better b{color:var(--hex-gold-l)}
+@media (max-width:760px){.rv-gap{margin-left:0}}
 .ready-actions{margin-top:8px;display:flex;flex-direction:column;align-items:center;gap:10px}
 /* 赛后结算/赛前确认的操作按钮吸底：无论屏幕多矮、内容多长，“确认/下一局”始终在可视区内可点 */
 .result-stage .ready-actions,.ready-stage .ready-actions{position:sticky;bottom:0;z-index:5;align-self:stretch;margin-top:auto;padding:12px 10px calc(10px + env(safe-area-inset-bottom));
@@ -3681,19 +3703,54 @@ const COMBAT_PROFILES = Object.fromEntries(CHAMP_KEYS.map(c=>{
 }));
 const EMPTY_COMBAT_PROFILE = {frontline:0,control:0,engage:0,dash:0,protect:0,sustained:0,escape:0,antiDash:0,magic:0,antiMagic:0,antiAuto:0,projectile:0,guardProjectile:0};
 function draftCombatProfile(c){ return COMBAT_PROFILES[c] || EMPTY_COMBAT_PROFILE; }
+// [机制, 权重, 提示]：提示里的 {x} 换成对面真正吃这套机制的英雄。
+// 克制只看对手高出常规阵容的部分（见 draftThreats 的 z 值），普通阵容不会触发。
 const DRAFT_COUNTERS = {
-  Poppy: ['dash',0.22,'打断进场位移'],
-  Taliyah: ['dash',0.14,'限制进场位移'],
-  Cassiopeia: ['dash',0.13,'缚地限制位移'],
-  Galio: ['magic',0.17,'抵挡魔法伤害'],
-  Jax: ['autos',0.21,'反制依赖普攻的对手'],
-  Nilah: ['autos',0.19,'规避敌方普攻'],
-  Malphite: ['autos',0.12,'降低敌方攻速'],
-  Braum: ['projectiles',0.15,'遮挡关键弹道'],
-  Mel: ['projectiles',0.13,'反射关键弹道'],
-  Samira: ['projectiles',0.12,'拦截关键弹道'],
-  Yasuo: ['projectiles',0.14,'风墙拦截弹道']
+  Poppy: ['dash',0.22,'打断{x}的进场位移'],
+  Taliyah: ['dash',0.14,'用岩墙限制{x}的进场'],
+  Cassiopeia: ['dash',0.13,'缚地限制{x}的位移'],
+  Galio: ['magic',0.17,'抵挡{x}的魔法伤害'],
+  Jax: ['autos',0.21,'反击{x}的普攻'],
+  Nilah: ['autos',0.19,'规避{x}的普攻'],
+  Malphite: ['autos',0.12,'降低{x}的攻速'],
+  Braum: ['projectiles',0.15,'格挡{x}的弹道'],
+  Mel: ['projectiles',0.13,'反射{x}的弹道'],
+  Samira: ['projectiles',0.12,'拦截{x}的弹道'],
+  Yasuo: ['projectiles',0.14,'用风墙拦截{x}的弹道']
 };
+const COUNTER_Z_FLOOR = 0.25;   // 对手超出常规水平多少个标准差才开始算克制
+const COUNTER_SCALE = 2.6;
+const COUNTER_CAP = 1.0;        // 与一组优秀的下路联动相当
+// ADC / 辅助类型：进攻型 ADC 要硬辅开团，后期核心要保护，消耗型 ADC 配远程控制辅。
+const ADC_STYLE = {
+  "Draven":'aggro', "Kai'Sa":'aggro', "Kalista":'aggro', "Samira":'aggro', "Nilah":'aggro',
+  "Lucian":'aggro', "Tristana":'aggro', "Miss Fortune":'aggro',
+  "Jinx":'hyper', "Kog'Maw":'hyper', "Aphelios":'hyper', "Zeri":'hyper', "Twitch":'hyper',
+  "Vayne":'hyper', "Smolder":'hyper', "Yunara":'hyper', "Xayah":'hyper', "Sivir":'hyper',
+  "Ezreal":'poke', "Caitlyn":'poke', "Varus":'poke', "Jhin":'poke', "Ashe":'poke',
+  "Corki":'poke', "Senna":'poke', "Seraphine":'poke'
+};
+const SUP_STYLE = {
+  "Leona":'engage', "Nautilus":'engage', "Rell":'engage', "Alistar":'engage', "Rakan":'engage',
+  "Blitzcrank":'engage', "Thresh":'engage', "Pyke":'engage', "Amumu":'engage', "Maokai":'engage',
+  "Zac":'engage', "Gragas":'engage', "Malphite":'engage', "Galio":'engage', "Neeko":'engage', "Pantheon":'engage',
+  "Braum":'warden', "Taric":'warden', "Tahm Kench":'warden', "Poppy":'warden',
+  "Lulu":'enchanter', "Janna":'enchanter', "Milio":'enchanter', "Nami":'enchanter', "Soraka":'enchanter',
+  "Yuumi":'enchanter', "Sona":'enchanter', "Renata Glasc":'enchanter',
+  "Karma":'mage', "Zyra":'mage', "Brand":'mage', "Hwei":'mage', "Morgana":'mage', "Swain":'mage',
+  "Seraphine":'mage', "Senna":'mage', "Ashe":'mage', "Bard":'mage'
+};
+const ADC_STYLE_CN = {aggro:'进攻型', hyper:'后期核心', poke:'消耗型'};
+const SUP_STYLE_CN = {engage:'硬开辅', warden:'护卫辅', enchanter:'软辅', mage:'法师辅'};
+// [对线, 团战]：没有专属组合时按类型给下路配合。
+const BOT_STYLE_SYNERGY = {
+  aggro: {engage:[0.40,0.40], warden:[0.10,0.12], enchanter:[-0.18,-0.24], mage:[0.05,-0.12]},
+  hyper: {engage:[0.00,0.08], warden:[0.10,0.32], enchanter:[0.12,0.42], mage:[-0.06,-0.04]},
+  poke:  {engage:[0.00,0.04], warden:[0.00,0.06], enchanter:[0.14,0.08], mage:[0.34,0.24]}
+};
+// 开团＋跟进：可靠的先手开团配上范围大招跟进。
+const ENGAGE_STARTERS = new Set(['Alistar','Amumu','Diana','Galio','Gragas','Hecarim','Jarvan IV','Leona','Lissandra','Malphite','Maokai','Nautilus','Nocturne','Ornn','Rakan','Rell','Sejuani','Skarner','Vi','Wukong','Zac','Annie']);
+const AOE_FOLLOWUPS = new Set(['Orianna','Miss Fortune','Kennen','Yasuo','Yone','Diana','Rumble','Seraphine','Sona','Samira','Wukong','Galio','Azir']);
 const BOT_DUOS = {
   'Ezreal+Karma': [0.56,0.36,'EZ＋卡尔玛的远程换血'],
   'Ashe+Seraphine': [0.46,0.52,'寒冰减速衔接萨勒芬妮控制'],
@@ -3719,19 +3776,47 @@ const TOP_JUNGLE_DUOS = {
 };
 const TACTIC_DAMAGE_SHARE = {TOP:0.9,JUG:0.85,MID:1.05,ADC:1.15,SUP:0.3};
 
-function draftThreats(picks){
-  const out = {dash:0, magic:0, autos:0, engage:0, projectiles:0};
-  for(const role of ROLES){
-    const c = picks[role], kit = window.CHAMP_TACTICS[c];
-    if(!kit) continue;
-    const share = TACTIC_DAMAGE_SHARE[role];
-    out.dash += kit.dash;
-    out.magic += kit.magic * share;
-    out.autos += kit.autos * share * (1 - kit.range*kit.escape*0.10);
-    out.engage += kit.engage;
-    if(PROJECTILE_PRESSURE.has(c)) out.projectiles += share;
+const THREAT_KEYS = ['dash','magic','autos','engage','projectiles'];
+function champThreat(role, c){
+  const kit = window.CHAMP_TACTICS[c];
+  if(!kit) return null;
+  const share = TACTIC_DAMAGE_SHARE[role];
+  return {dash:kit.dash, magic:kit.magic*share, autos:kit.autos*share*(1 - kit.range*kit.escape*0.10),
+    engage:kit.engage, projectiles:PROJECTILE_PRESSURE.has(c) ? share : 0};
+}
+// 每个位置本位英雄池的平均威胁与方差，作为“常规阵容”的基准。
+const THREAT_BASE = Object.fromEntries(ROLES.map(role=>{
+  const rows = CHAMP_KEYS.filter(c=>CH[c].roles.includes(role)).map(c=>champThreat(role,c)).filter(Boolean);
+  const base = {};
+  for(const k of THREAT_KEYS){
+    const vals = rows.map(t=>t[k]), mean = vals.reduce((s,v)=>s+v,0)/Math.max(1,vals.length);
+    base[k] = {mean, v: vals.reduce((s,v)=>s+(v-mean)**2,0)/Math.max(1,vals.length)};
   }
+  return [role, base];
+}));
+function draftThreats(picks){
+  const out = {dash:0, magic:0, autos:0, engage:0, projectiles:0, z:{}};
+  const mean = {}, v = {};
+  for(const k of THREAT_KEYS){ mean[k]=0; v[k]=0; }
+  for(const role of ROLES){
+    const t = champThreat(role, picks[role]);
+    if(!t) continue;
+    for(const k of THREAT_KEYS){ out[k] += t[k]; mean[k] += THREAT_BASE[role][k].mean; v[k] += THREAT_BASE[role][k].v; }
+  }
+  for(const k of THREAT_KEYS) out.z[k] = v[k]>0 ? (out[k]-mean[k])/Math.sqrt(v[k]) : 0;
   return out;
+}
+function counterStrength(rule, threats){
+  const [key, weight] = rule;
+  return Math.min(COUNTER_CAP, weight * COUNTER_SCALE * Math.max(0, (threats.z?.[key]||0) - COUNTER_Z_FLOOR));
+}
+// 对面最吃这套机制的英雄（用于提示文字）
+function counterVictims(key, enemy){
+  const min = {dash:2, magic:1.6, autos:1.6, projectiles:0.85}[key] || 1;
+  const rows = ROLES.map(role=>({c:enemy[role], t:champThreat(role, enemy[role])})).filter(x=>x.t && x.t[key]>0)
+    .sort((a,b)=>b.t[key]-a.t[key]);
+  const hit = rows.filter(x=>x.t[key]>=min);
+  return (hit.length ? hit.slice(0,3) : rows.slice(0,2)).map(x=>CH[x.c].cn);
 }
 
 function laneTacticEdge(champ, enemy){
@@ -3754,10 +3839,12 @@ function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null, ris
     if(!kit) continue;
     const rule = DRAFT_COUNTERS[c];
     if(rule){
-      const [key, weight, label] = rule;
-      const strength = weight * threats[key] * 1.75;
-      fight += Math.min(2.40, strength);
-      if(notes && strength>=0.30) notes.push(CH[c].cn + label);
+      const strength = counterStrength(rule, threats);
+      fight += strength;
+      if(notes && strength>=0.30){
+        const victims = counterVictims(rule[0], enemy);
+        notes.push(CH[c].cn + rule[2].replace('{x}', victims.length ? victims.join('、') : '对手'));
+      }
     }
     if(role==='TOP' || role==='MID'){
       const edge=laneTacticEdge(c,enemy[role]);
@@ -3784,6 +3871,34 @@ function draftTactics(picks, enemy, threats=draftThreats(enemy), notes=null, ris
     lane += duo[0]*1.33;
     fight += duo[1]*1.42;
     if(notes) notes.push(duo[2]);
+  }
+  // 没有专属组合时，按 ADC / 辅助类型判断下路配合
+  const adcStyle = ADC_STYLE[picks.ADC], supStyle = SUP_STYLE[picks.SUP];
+  if(!bot && adcStyle && supStyle && picks.ADC!=='Ziggs' && picks.ADC!==picks.SUP){
+    const [bl, bf] = BOT_STYLE_SYNERGY[adcStyle][supStyle];
+    lane += bl*1.33;
+    fight += bf*1.42;
+    const pair = `${CH[picks.ADC].cn}＋${CH[picks.SUP].cn}`;
+    if(notes && bl+bf>=0.5){
+      notes.push(adcStyle==='aggro' ? `${pair}：硬辅先手，进攻型 ADC 打出击杀线`
+        : adcStyle==='hyper' ? `${pair}：辅助保护后期核心输出`
+        : `${pair}：下路远程消耗压制`);
+    }
+    if((risks||notes) && bl+bf<=-0.3) (risks||notes).push(`${pair}：进攻型 ADC 缺少硬辅开团`);
+  }
+  // 开团＋跟进：有可靠先手时，范围大招英雄能接上团战
+  const team = ROLES.map(r=>picks[r]).filter(Boolean);
+  const starters = team.filter(c=>ENGAGE_STARTERS.has(c));
+  const followers = team.filter(c=>AOE_FOLLOWUPS.has(c) && starters.some(s=>s!==c));
+  if(followers.length){
+    fight += 0.22*Math.min(2, followers.length);
+    if(notes){
+      const lead = starters.find(s=>!followers.includes(s)) || starters.find(s=>s!==followers[0]);
+      notes.push(`${CH[lead].cn}先手开团，${followers.filter(c=>c!==lead).slice(0,2).map(c=>CH[c].cn).join('、')}范围大招跟进`);
+    }
+  } else if(!starters.length && team.length>=4 && team.filter(c=>AOE_FOLLOWUPS.has(c)).length>=2){
+    fight -= 0.25;
+    if(risks||notes) (risks||notes).push('跟进型英雄多，但缺少先手开团');
   }
   if(picks.ADC==='Ashe' && picks.SUP==='Seraphine'){
     lane -= 0.39 * exposed;
@@ -4322,8 +4437,7 @@ function draftFeedback(d, champ, role){
     }
     if(last) base=evalDraft(previous);
   }
-  const sideNotes=power=>({advantages:power.comp.notes.filter(x=>!power.tactics.risks.includes(x) && !/缺乏|易出|不足|前排薄/.test(x)),
-    risks:power.comp.notes.filter(x=>power.tactics.risks.includes(x) || /缺乏|易出|不足|前排薄/.test(x))});
+  const sideNotes=draftNotesSplit;
   let banReason='';
   if(last?.kind==='ban' && last.champ){
     const c=last.champ, opponent=last.side==='A'?'B':'A';
@@ -4337,6 +4451,181 @@ function draftFeedback(d, champ, role){
   }
   return {pA:shown.pA, deltaA:shown.pA-base.pA, partial:d.step+(prospective?1:0)<DRAFT_SEQ.length,
     last,banReason,A:sideNotes(shown.a),B:sideNotes(shown.b)};
+}
+
+function draftNotesSplit(power){
+  const risky=x=>power.tactics.risks.includes(x) || /缺乏|易出|不足|前排薄/.test(x);
+  return {advantages:power.comp.notes.filter(x=>!risky(x)), risks:power.comp.notes.filter(risky)};
+}
+
+// ---------- BP 复盘 ----------
+// 按 DRAFT_SEQ 还原每一步：禁用依次对应 bans 数组，选人按 pickOrder.step 定位，位置取最终落位（含摇摆换位）。
+function draftTimeline(d){
+  const out=[], bi={A:0,B:0};
+  for(let s=0;s<Math.min(d.step,DRAFT_SEQ.length);s++){
+    const t=draftSide({...d,step:s});
+    if(t.kind==='ban'){ out.push({step:s,kind:'ban',side:t.side,champ:d.bans[t.side][bi[t.side]++]||null}); continue; }
+    const po=(d.pickOrder?.[t.side]||[]).find(x=>x.step===s);
+    const role=po ? (ROLES.find(r=>d.picks[t.side][r]===po.c) || po.r) : null;
+    out.push({step:s,kind:'pick',side:t.side,champ:po?po.c:null,role});
+  }
+  return out;
+}
+function draftStateAt(d, line, s){
+  const st={...d,step:s,pickOrder:null,bans:{A:[],B:[]},picks:{A:{},B:{}}};
+  for(const a of line){
+    if(a.step>=s) break;
+    if(!a.champ) continue;
+    if(a.kind==='ban') st.bans[a.side].push(a.champ); else st.picks[a.side][a.role]=a.champ;
+  }
+  return st;
+}
+const sideP=(st,side)=>{ const p=evalDraft(st).pA; return side==='A'?p:1-p; };
+function nextPickState(st, who){
+  for(let s=st.step+1;s<DRAFT_SEQ.length;s++){
+    const f={...st,step:s}, t=draftSide(f);
+    if(t.kind==='pick' && t.side===who) return f;
+  }
+  return null;
+}
+// 某方在 f 这一手的几个好选择及选后胜率（含 extra，便于衡量禁掉它的影响）
+function draftPickOutcomes(f, who, extra, limit=6){
+  if(!f) return [];
+  const ranked=aiDraftCandidates(f,limit,false);
+  if(extra && CH[extra] && !ranked.some(x=>x.c===extra) && !unavailable(f).has(extra)){
+    const role=bestRoleFor(f,who,extra,false);
+    if(role) ranked.push({c:extra,role,offrole:false});
+  }
+  return ranked.map(ch=>{
+    const next=draftAfterChoice(f,ch);
+    return next ? {c:ch.c, role:ch.role, p:sideP(next,who), next} : null;
+  }).filter(Boolean);
+}
+// 禁掉 c 让该方这一手的最好结果下降多少
+// （取前三个好选择的平均，避免“只要还有一个替代就算零影响”）
+function draftDenied(c, outcomes){
+  const top=list=>{ const v=list.map(o=>o.p).sort((a,b)=>b-a).slice(0,3); return v.length ? v.reduce((s,x)=>s+x,0)/v.length : 0; };
+  const rest=outcomes.filter(o=>o.c!==c);
+  return outcomes.length && rest.length ? Math.max(0, top(outcomes)-top(rest)) : 0;
+}
+// 这一手选人的理由：熟练度、版本、位置、对位、以及阵容提示的增减
+function draftPickReasons(before, after, side, champ, role){
+  const opp=side==='A'?'B':'A';
+  const pros=[], cons=[];
+  const p=lineupMap(before[side])[role];
+  if(p){
+    const tier=playerProfTier(p,champ).tier;
+    if(tier>=4) pros.push(`${playerTag(p)} 的招牌英雄`);
+    else if(tier===3) pros.push(`${playerTag(p)} 精通该英雄`);
+    else if(tier===1) cons.push(`${playerTag(p)} 只是略懂该英雄`);
+    else if(tier===0) cons.push(`${playerTag(p)} 对该英雄生疏`);
+  }
+  const meta=S.meta[champ]||0;
+  if(meta>=2) pros.push('版本 T0 英雄');
+  else if(meta>=1) pros.push('版本强势英雄');
+  else if(meta<0) cons.push('版本弱势英雄');
+  if(!CH[champ].roles.includes(role)) cons.push(`非本位英雄（打${ROLE_CN[role]}）`);
+  const foe=before.picks[opp][role];
+  if(foe && CH[foe]){
+    const edge=laneTacticEdge(champ,foe)-laneTacticEdge(foe,champ);
+    if(edge>=0.2) pros.push(`对位${CH[foe].cn}占优`);
+    else if(edge<=-0.2) cons.push(`对位被${CH[foe].cn}压制`);
+  }
+  const n0=draftNotesSplit(draftPower(before,side)), n1=draftNotesSplit(draftPower(after,side));
+  n1.advantages.filter(x=>!n0.advantages.includes(x)).forEach(x=>pros.push(x));
+  n0.risks.filter(x=>!n1.risks.includes(x)).forEach(x=>pros.push('补上短板：'+x));
+  n1.risks.filter(x=>!n0.risks.includes(x)).forEach(x=>cons.push(x));
+  const o0=draftNotesSplit(draftPower(before,opp)), o1=draftNotesSplit(draftPower(after,opp));
+  o0.advantages.filter(x=>!o1.advantages.includes(x)).forEach(x=>pros.push('化解对手：'+x));
+  o1.advantages.filter(x=>!o0.advantages.includes(x)).forEach(x=>cons.push('让对手受益：'+x));
+  return {pros:pros.slice(0,4), cons:cons.slice(0,3)};
+}
+const REVIEW_GOOD_GAP = 0.01, REVIEW_BAD_GAP = 0.035, REVIEW_BETTER_GAP = 0.02;
+function reviewGrade(gap){ return gap<=REVIEW_GOOD_GAP ? 'good' : gap>=REVIEW_BAD_GAP ? 'bad' : 'ok'; }
+
+// laterOwn：我方之后仍会拿到的英雄，不算作“更好的选择”（只是顺序不同）
+function reviewPickStep(before, act, laterOwn=new Set()){
+  const side=act.side;
+  const p0=sideP(before,side);
+  const after=draftAfterChoice(before,{c:act.champ,role:act.role,offrole:!CH[act.champ].roles.includes(act.role)});
+  if(!after) return null;
+  const p1=sideP(after,side);
+  const alts=draftPickOutcomes(before,side,null,8).filter(o=>o.c!==act.champ && !laterOwn.has(o.c));
+  const best=alts.reduce((a,b)=>!a||b.p>a.p?b:a,null);
+  const gap=best?Math.max(0,best.p-p1):0;
+  const edge=alts.length ? p1-alts.reduce((s,o)=>s+o.p,0)/alts.length : 0;
+  const why=draftPickReasons(before,after,side,act.champ,act.role);
+  let better=null;
+  if(best && gap>=REVIEW_BETTER_GAP){
+    const bw=draftPickReasons(before,best.next,side,best.c,best.role);
+    better={champ:best.c, role:best.role, gain:gap, pros:bw.pros.slice(0,2)};
+  }
+  return {...act, pBefore:p0, pAfter:p1, delta:p1-p0, edge, gap, grade:reviewGrade(gap), ...why, better};
+}
+
+function reviewBanStep(before, act){
+  const side=act.side, opp=side==='A'?'B':'A', c=act.champ;
+  const theirTurn=nextPickState(before,opp);
+  const theirs=draftPickOutcomes(theirTurn,opp,c);
+  const ours=draftPickOutcomes(nextPickState(before,side),side,c);
+  const value=x=>draftDenied(x,theirs)-draftDenied(x,ours);
+  const v=value(c), denied=draftDenied(c,theirs), cost=draftDenied(c,ours);
+  let best=null;
+  for(const o of theirs){ if(o.c===c) continue; const s=value(o.c); if(!best || s>best.s) best={c:o.c,role:o.role,s}; }
+  const gap=best?Math.max(0,best.s-v):0;
+  const pros=[], cons=[];
+  const oppLu=lineupMap(before[opp]);
+  const roles=openRolesFor(before,opp).filter(r=>CH[c].roles.includes(r));
+  const specialist=roles.map(r=>oppLu[r]).find(p=>p && playerProfTier(p,c).tier===4);
+  if(specialist) pros.push(`封锁 ${playerTag(specialist)} 的招牌`);
+  const meta=S.meta[c]||0;
+  if(meta>=2) pros.push('封掉版本 T0 英雄'); else if(meta>=1) pros.push('封掉版本强势英雄');
+  if(denied>=0.008) pros.push(`对手少了一手好牌（约 ${(denied*100).toFixed(1)}%）`);
+  const theirPick=theirs.find(o=>o.c===c);
+  if(theirPick && denied>=0.004){
+    const n0=draftNotesSplit(draftPower(theirTurn,opp)).advantages, n1=draftNotesSplit(draftPower(theirPick.next,opp)).advantages;
+    const gained=n1.find(x=>!n0.includes(x));
+    if(gained) pros.push('阻止对手：'+gained);
+  }
+  if(!roles.length) cons.push('对手已经没有能用它的空位');
+  else if(denied<0.003) cons.push(pros.length ? '但对手还有同等强度的替代选择' : '对手下一手不太会选它，影响很小');
+  if(cost>=0.008) cons.push(`它也是我方下一手的好选择，禁掉损失约 ${(cost*100).toFixed(1)}%`);
+  let better=null;
+  if(best && gap>=REVIEW_BETTER_GAP) better={champ:best.c, role:best.role, gain:gap, pros:[`对手下一手很可能拿它打${ROLE_CN[best.role]}`]};
+  // 禁用没有实际削弱对手时最多算“一般”
+  const grade=denied<0.003 && gap<REVIEW_BAD_GAP ? 'ok' : reviewGrade(gap);
+  return {...act, value:v, denied, cost, gap, grade, pros:pros.slice(0,4), cons:cons.slice(0,3), better};
+}
+
+// 赛前 BP 复盘：逐条评估 side 方的禁用和选择，并找出对手最伤我方的选择。
+function draftReview(d, side){
+  const line=draftTimeline(d), opp=side==='A'?'B':'A';
+  const steps=[], hurt=[];
+  let nb=0, np=0;
+  for(const act of line){
+    if(!act.champ || !CH[act.champ]) continue;
+    const before=draftStateAt(d,line,act.step);
+    if(act.side===side){
+      const laterOwn=new Set(line.filter(x=>x.side===side && x.kind==='pick' && x.step>act.step).map(x=>x.champ));
+      const r=act.kind==='ban' ? reviewBanStep(before,act) : reviewPickStep(before,act,laterOwn);
+      if(!r) continue;
+      r.label=act.kind==='ban' ? `禁用 ${++nb}` : `选择 ${++np}`;
+      steps.push(r);
+    } else if(act.kind==='pick'){
+      const after=draftAfterChoice(before,{c:act.champ,role:act.role,offrole:!CH[act.champ].roles.includes(act.role)});
+      if(!after) continue;
+      const alts=draftPickOutcomes(before,opp,null,5).filter(o=>o.c!==act.champ);
+      if(!alts.length) continue;
+      const impact=sideP(after,opp)-alts.reduce((s,o)=>s+o.p,0)/alts.length;
+      if(impact<0.01) continue;
+      hurt.push({...act, impact, pros:draftPickReasons(before,after,opp,act.champ,act.role).pros.slice(0,3)});
+    }
+  }
+  hurt.sort((a,b)=>b.impact-a.impact);
+  const good=steps.filter(s=>s.grade==='good' && s.pros.length)
+    .sort((a,b)=>(b.kind==='ban'?b.denied:b.edge)-(a.kind==='ban'?a.denied:a.edge)).slice(0,2);
+  const bad=steps.filter(s=>s.gap>=REVIEW_BETTER_GAP).sort((a,b)=>b.gap-a.gap).slice(0,2);
+  return {side, pFinal:sideP(d,side), steps, hurt:hurt.slice(0,2), good, bad};
 }
 
 // 严格按权重将整数 total 分配为 weights.length 个非负整数（保证总和 === total）
@@ -7360,7 +7649,7 @@ const CloudSync = {
 
 // ================= 云端版本自动更新检测 =================
 window.AppUpdater = {
-  currentVersion: '2.1.8',
+  currentVersion: '2.1.9',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null,
@@ -9536,6 +9825,58 @@ function bpFeedbackHtml(M, d, cur, leftSide){
   </div>`;
 }
 
+// 赛前 BP 复盘：后端 draftReview 逐步评估我方禁用/选择；按阵容缓存，换位后重算
+function bpReviewData(M, d){
+  if(!d || typeof draftReview!=='function') return null;
+  const key = JSON.stringify([d.step, d.bans, d.picks]);
+  if(M._review && M._review.key===key) return M._review.data;
+  let data = null;
+  try{ data = draftReview(d, M.me); }catch(e){ data = null; }
+  M._review = {key, data};
+  return data;
+}
+const RV_GRADE = {good:['好','good'], ok:['一般','ok'], bad:['失误','bad']};
+const pct1 = x => `${x>0?'+':''}${(x*100).toFixed(1)}%`;
+function bpReviewHtml(M, d){
+  const rv = bpReviewData(M, d);
+  if(!rv || !rv.steps.length) return '';
+  const chips = (pros, cons) => [...(pros||[]).map(t=>`<span class="fb-chip adv">${esc(t)}</span>`), ...(cons||[]).map(t=>`<span class="fb-chip risk">${esc(t)}</span>`)].join('');
+  const who = s => `${esc(s.label)} ${esc(champName(s.champ))}`;
+  const betterTxt = b => `更好的选择：<b>${esc(champName(b.champ))}</b>${b.role?`（${ROLE_CN[b.role]}）`:''} · 约 ${pct1(b.gain)}${b.pros.length?` · ${b.pros.map(esc).join('；')}`:''}`;
+  const sumLi = (s, good) => good
+    ? `<li><b>${who(s)}</b>：${s.pros.slice(0,2).map(esc).join('；')}</li>`
+    : `<li><b>${who(s)}</b>：${s.cons.length?esc(s.cons[0])+'；':''}${s.better?betterTxt(s.better):''}</li>`;
+  const goodList = rv.good.length ? rv.good.map(s=>sumLi(s,true)).join('') : '<li class="rv-none">没有特别亮眼的一手</li>';
+  const badList = rv.bad.length ? rv.bad.map(s=>sumLi(s,false)).join('') : '<li class="rv-none">每一步都接近当时的最佳选择</li>';
+  const hurtList = rv.hurt.length
+    ? rv.hurt.map(h=>`<li><b>${esc(champName(h.champ))}</b>${h.role?`（${ROLE_CN[h.role]}）`:''}：比对手的常规选择多拿约 ${pct1(h.impact)}${h.pros.length?`，${h.pros.map(esc).join('；')}`:''}</li>`).join('')
+    : '<li class="rv-none">对手没有特别针对我们的选择</li>';
+  const rows = rv.steps.map(s=>{
+    const [gTxt, gCls] = RV_GRADE[s.grade] || RV_GRADE.ok;
+    const num = s.kind==='ban'
+      ? `<span class="rv-num">对手受影响 ${(s.denied*100).toFixed(1)}%${s.cost>=0.005?` · 我方代价 ${(s.cost*100).toFixed(1)}%`:''}</span>`
+      : `<span class="rv-num">比常规选择 ${pct1(s.edge)}</span>`;
+    const gapTxt = s.gap>=0.005 ? `比当时最佳低 ${(s.gap*100).toFixed(1)}%` : '当时最佳';
+    return `<li class="rv-row g-${gCls} is-${s.kind}">
+      ${champAvatar(s.champ,'sm')}
+      <div class="rv-main">
+        <div class="rv-top"><span class="rv-lbl">${esc(s.label)}</span><b>${esc(champName(s.champ))}</b>${s.kind==='pick'&&s.role?`<em>${ROLE_CN[s.role]}</em>`:''}<span class="rv-grade">${gTxt}</span>${num}<span class="rv-gap">${gapTxt}</span></div>
+        <div class="rv-why">${chips(s.pros, s.cons) || '<span class="fb-none">没有明显的加分或扣分点</span>'}</div>
+        ${s.better?`<div class="rv-better">${betterTxt(s.better)}</div>`:''}
+      </div>
+    </li>`;
+  }).join('');
+  return `<div class="bp-review">
+    <h4>BP 复盘 <small>我方每一步与当时最佳选择的对比</small></h4>
+    <div class="rv-sum">
+      <div class="rv-box good"><b>做得好</b><ul>${goodList}</ul></div>
+      <div class="rv-box bad"><b>需要改进</b><ul>${badList}</ul></div>
+      <div class="rv-box hurt"><b>对手最伤我们的选择</b><ul>${hurtList}</ul></div>
+    </div>
+    <ol class="rv-steps">${rows}</ol>
+  </div>`;
+}
+
 function matchScreen(){
   const M=UI.match, m=M.item.m; const opp = M.me==='A'?'B':'A';
   const d = M.draft;
@@ -9901,6 +10242,7 @@ function matchScreen(){
         ${curveBar('中期资源 (14-24m)', leftE.mid, rightE.mid)}
         ${curveBar('后期团战 (25m+)', leftE.late, rightE.late)}
       </div>
+      ${bpReviewHtml(M, d)}
       <p class="hex-sub">提示：开赛前仍可在侧栏点击己方两个槽位进行摇摆换位，胜率与熟练度将实时重算。</p>
       <div class="ready-actions">
         <button class="lock-btn is-pick big-go" data-a="playGame">⚔ 进入召唤师峡谷 · 开始对局</button>

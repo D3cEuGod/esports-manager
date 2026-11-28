@@ -487,6 +487,7 @@ hr.sep{border:none;border-top:1px solid var(--ln2);margin:20px 0}
 .pb-clock{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
 #bp-clock-num{font-family:var(--num);font-size:28px;font-weight:800;line-height:.95;color:var(--hex-gold-l)}
 #bp-clock-num.urgent{color:#ff586e}
+.pb-level{font-size:11px;font-weight:700;letter-spacing:.8px;color:rgba(255,255,255,.7);white-space:nowrap}
 .pb-clock-bar{width:100%;height:4px;background:rgba(255,255,255,.15);overflow:hidden}
 #bp-clock-fill{display:block;height:100%;background:var(--hex-gold);transition:width .9s linear}
 .phase-banner.is-ban #bp-clock-fill{background:var(--hex-red)}
@@ -1303,4 +1304,5 @@ body.cb-lock{overflow:hidden}
 .seg-opt.on span,.seg-opt input:checked+span{background:var(--ink);color:#fff}.seg-opt.on span small{color:#c9c5be}
 .seg-opt input:focus-visible+span{outline:2px solid var(--hex-gold);outline-offset:-4px}
 .seg-note{margin-top:10px!important;font-size:12px}
+.seg-field+.seg-field{margin-top:30px}
 @media(max-width:600px){.seg{width:100%}.seg-opt span{min-width:0;padding:6px 8px}}

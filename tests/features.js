@@ -288,6 +288,29 @@ async function main(){
       document.querySelector('#bp-turn-90').click();
     }
   });
+  checks.aiBpLevel=await run(()=>{
+    ACT.view({v:'settings'});
+    document.querySelector('.set-tabs [data-t="game"]').click();
+    const options=[...document.querySelectorAll('input[name="ai-bp-level"]')];
+    const defaults=options.map(input=>input.value).join(',')==='easy,normal,hard' &&
+      document.querySelector('#ai-bp-normal').checked && aiBpLevel()==='normal';
+    let picked=null;
+    const original=window.aiChooseLevel;
+    try{
+      window.aiChooseLevel=(d,level)=>{ picked=level; return original(d,level); };
+      beginUserMatch({m:{a:'TES',b:'BLG',bo:3,label:'对手难度验收'}});
+      setupDraft('B'); render();
+      const M=UI.match, d=M.draft;
+      const label=document.querySelector('[data-testid="bp-ai-level"]')?.textContent==='对手 · 普通';
+      runAiDraftStep(M,d,d.step);
+      const usedNormal=picked==='normal' && d.step===1;
+      stopBpClock(); UI.match=null;
+      ACT.view({v:'settings'}); document.querySelector('.set-tabs [data-t="game"]').click();
+      document.querySelector('#ai-bp-hard').click();
+      const stored=localStorage.getItem('em_ai_bp_level')==='hard' && document.querySelector('#ai-bp-hard').checked;
+      return defaults && label && usedNormal && stored;
+    } finally { window.aiChooseLevel=original; stopBpClock(); UI.match=null; render(); }
+  });
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await send('Page.reload');
   await waitForApp();
@@ -302,7 +325,14 @@ async function main(){
     const M=UI.match, clock=document.querySelector('#bp-clock-num');
     const saved=M.clock===90 && M.clockMax===90 && clock?.textContent==='90';
     stopBpClock(); UI.match=null; render();
-    return settingsFit && saved;
+    ACT.view({v:'settings'}); document.querySelector('.set-tabs [data-t="game"]').click();
+    const levelBox=document.querySelector('[data-testid="ai-bp-level"]');
+    const levelSaved=aiBpLevel()==='hard' && levelBox.querySelector('#ai-bp-hard').checked && levelBox.getBoundingClientRect().right<=390;
+    beginUserMatch({m:{a:'TES',b:'BLG',bo:3,label:'本地难度恢复验收'}});
+    setupDraft('B'); render();
+    const hardLabel=document.querySelector('[data-testid="bp-ai-level"]')?.textContent==='对手 · 困难';
+    stopBpClock(); UI.match=null; render();
+    return settingsFit && saved && levelSaved && hardLabel;
   });
   for(const [name,passed] of Object.entries(checks)) assert.equal(passed,true,name);
   assert.deepEqual(exceptions,[],'unexpected app exceptions');

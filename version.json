@@ -1,7 +1,7 @@
 {
-  "version": "2.1.5",
+  "version": "2.1.6",
   "date": "2026-11-28",
-  "notes": "玩家每手 BP 时限可在设置中选择 30、60 或 90 秒，默认 30 秒",
+  "notes": "对手 BP 新增简单、普通、困难三档难度，任何难度都不会选让自己预估胜率下降的英雄",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

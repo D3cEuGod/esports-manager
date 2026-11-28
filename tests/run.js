@@ -518,6 +518,69 @@ section('AI BP：对位预判与能力权重');
   ok(Math.abs(r.gain-6.4)<0.05 && r.same,'全队能力升 10 分的净贡献为 6.4，比赛沿用同一权重');
 }
 
+section('对手 BP 难度：加权抽取与不选负收益');
+{
+  const r=run(`(()=>{
+    newGame('TES');
+    const keys=Object.keys(S.teams);
+    let states=0, violations=0, mutated=0, hardSame=0, hardTotal=0, fallbackOk=true;
+    const agree={easy:0,normal:0}, total={easy:0,normal:0}, distinct={easy:new Set(),normal:new Set()};
+    for(let i=0;i<36;i++){
+      const a=keys[i%keys.length], b=keys[(i*7+3)%keys.length]===a?keys[(i+1)%keys.length]:keys[(i*7+3)%keys.length];
+      const d=newDraft(a,b,i%2?'A':'B',[]);
+      const stop=i%20;
+      while(d.step<stop){ const c=aiChoose(d); if(!c.c || !draftAct(d,c.c,c.role,c.offrole)) break; }
+      if(!draftSide(d)) continue;
+      states++;
+      const before=JSON.stringify(d);
+      const hard=aiChoose(d,{lookahead:true});
+      hardTotal++; if(aiChooseLevel(d,'hard').c===hard.c) hardSame++;
+      for(const level of ['easy','normal']){
+        const {all,eligible}=aiDraftLevelOptions(d,level);
+        const okSet=new Set(eligible.map(x=>x.choice.c+'|'+x.choice.role));
+        for(let k=0;k<4;k++){
+          const ch=aiChooseLevel(d,level);
+          total[level]++; if(ch.c===hard.c) agree[level]++;
+          distinct[level].add(i+':'+ch.c);
+          if(eligible.length){ if(!okSet.has(ch.c+'|'+ch.role)) violations++; }
+          else if(all.length && ch.c!==all[0].choice.c) fallbackOk=false;
+          if(!draftAfterChoice(d,ch)) violations++;
+        }
+      }
+      if(JSON.stringify(d)!==before) mutated++;
+    }
+    // 固定一个开局 Ban 位，验证权重和注入随机数
+    const d=newDraft('TES','BLG','A',[]);
+    const opts=aiDraftLevelOptions(d,'normal').eligible.map(x=>x.choice.c);
+    const pickAt=v=>aiChooseLevel(d,'normal',()=>v).c;
+    const stub=opts.length===3 && pickAt(0)===opts[0] && pickAt(0.59)===opts[0] && pickAt(0.61)===opts[1] && pickAt(0.86)===opts[2] && pickAt(0.999)===opts[2];
+    let top=0; const N=600;
+    for(let k=0;k<N;k++) if(aiChooseLevel(d,'normal').c===opts[0]) top++;
+    const easyOpts=aiDraftLevelOptions(d,'easy').eligible;
+    // 负收益剔除：构造“禁掉自己下一手首选”的禁用
+    const own=newDraft('TES','BLG','A',[]); own.step=5;
+    const me=draftSide(own).side;
+    const firstPick=side=>{ for(let s=6;s<DRAFT_SEQ.length;s++){ const t=draftSide({...own,step:s}); if(t.kind==='pick' && t.side===side) return aiDraftCandidates({...own,step:s},3,false); } return []; };
+    const ownTop=firstPick(me), enemyTop=firstPick(me==='A'?'B':'A');
+    const ownBan=aiDraftAssess(own,[{c:ownTop[0].c,score:99}],false)[0];
+    const banSelfNegative=ownTop.length>=2 && ownTop[0].score>ownTop[1].score && enemyTop[0]?.c!==ownTop[0].c ? ownBan.gain<0 : true;
+    return {states,violations,mutated,hardSame,hardTotal,fallbackOk,stub,topShare:top/N,easyN:easyOpts.length,
+      agreeEasy:agree.easy/total.easy, agreeNormal:agree.normal/total.normal,
+      distinctEasy:distinct.easy.size, distinctNormal:distinct.normal.size, banSelfNegative,
+      levels:AI_DRAFT_LEVELS.join(',')};
+  })()`);
+  console.log('  难度与最优解一致率  简单', r.agreeEasy.toFixed(2), '普通', r.agreeNormal.toFixed(2), ` (${r.states} 个 BP 局面)`);
+  ok(r.levels==='easy,normal,hard','三档难度：easy / normal / hard');
+  ok(r.hardSame===r.hardTotal,'困难档与原深思考选择完全一致');
+  ok(r.violations===0 && r.fallbackOk,`简单 / 普通只从收益非负的候选里选（违规 ${r.violations}）`);
+  ok(r.banSelfNegative,'禁掉己方下一手首选记为负收益');
+  ok(r.mutated===0,'难度选择不修改当前 BP 状态');
+  ok(r.stub,'普通档按 60 / 25 / 15 权重在前三名中抽取');
+  ok(Math.abs(r.topShare-0.6)<0.07,`普通档首选占比约 60%（${r.topShare.toFixed(2)}）`);
+  ok(r.easyN===5,'简单档在前 5 名中抽取');
+  ok(r.agreeNormal<1 && r.agreeEasy<r.agreeNormal && r.distinctEasy>=r.distinctNormal,'难度越低越常偏离最优解');
+}
+
 section('职业英雄池、熟练度持久化与选手成长');
 {
   const r=run(`(()=>{

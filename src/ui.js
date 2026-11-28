@@ -199,6 +199,24 @@ function setBpTurnSeconds(v){
   _bpTurnSession = v;
   try{ localStorage.setItem(BP_TURN_KEY, String(v)); return true; }catch(e){ return false; }
 }
+// 对手 BP 难度（设置 › 对局）：简单 / 普通 / 困难，设备本地存储；缺失或无效值用「普通」。
+// 只影响玩家亲自 BP 时对手每手约 5 秒的思考；超时自动锁定、快速 / 自动 BP、AI 之间的模拟赛不受影响。
+const AI_BP_LEVEL_KEY = 'em_ai_bp_level', AI_BP_LEVEL_DEFAULT = 'normal';
+const AI_BP_LEVEL_OPTS = [['easy','简单'],['normal','普通'],['hard','困难']];
+let _aiBpLevelSession = null;
+const isAiBpLevel = v => AI_BP_LEVEL_OPTS.some(([k])=>k===v);
+function aiBpLevel(){
+  if(isAiBpLevel(_aiBpLevelSession)) return _aiBpLevelSession;
+  let v = null;
+  try{ v = localStorage.getItem(AI_BP_LEVEL_KEY); }catch(e){ v = null; }
+  return isAiBpLevel(v) ? v : AI_BP_LEVEL_DEFAULT;
+}
+function setAiBpLevel(v){
+  if(!isAiBpLevel(v)) return false;
+  _aiBpLevelSession = v;
+  try{ localStorage.setItem(AI_BP_LEVEL_KEY, v); return true; }catch(e){ return false; }
+}
+const aiBpLevelName = (v=aiBpLevel()) => (AI_BP_LEVEL_OPTS.find(([k])=>k===v)||AI_BP_LEVEL_OPTS[1])[1];
 // 顶部时钟：玩家回合按设置时限（默认 30 秒，归零自动锁定）；对手回合显示 AI 思考倒计时（归零不做任何玩家操作）
 // 绑定 match + draft + step：换步、换局、退出后旧时钟自行失效
 function resetBpClock(sec, ai){
@@ -974,7 +992,7 @@ VIEWS.replays = () => {
 const SET_TABS = [['replays','回放'],['game','对局'],['rules','规则'],['sys','账号与存档']];
 // 设置 › 对局：玩家每手 BP（禁用与选人）时限
 VIEWS.game = () => {
-  const cur = bpTurnSeconds();
+  const cur = bpTurnSeconds(), level = aiBpLevel();
   const saved = UI.bpTurnSaved;
   return `<section class="card set-game"><h2>对局</h2>
     <fieldset class="seg-field" data-testid="bp-turn-limit">
@@ -982,6 +1000,12 @@ VIEWS.game = () => {
       <p class="muted">轮到你禁用或选人时的倒计时，超时自动锁定预选或教练推荐英雄。对手 AI 每手仍约 5 秒。</p>
       <div class="seg" role="radiogroup" aria-label="BP 每手时限">${BP_TURN_OPTS.map(v=>`<label class="seg-opt ${v===cur?'on':''}"><input type="radio" name="bp-turn-sec" id="bp-turn-${v}" value="${v}" data-testid="bp-turn-${v}" ${v===cur?'checked':''}><span>${v} 秒${v===BP_TURN_DEFAULT?'<small>默认</small>':''}</span></label>`).join('')}</div>
       <p class="muted seg-note" data-testid="bp-turn-note" aria-live="polite">${saved===false?'本设备暂时无法保存设置，本次打开期间有效。':'设置保存在本设备上，下一次轮到你禁用或选人时生效。'}</p>
+    </fieldset>
+    <fieldset class="seg-field" data-testid="ai-bp-level">
+      <legend>对手 BP 难度</legend>
+      <p class="muted">简单和普通会在几个好选项里随机取舍，困难始终选最优解；任何难度都不会选让自己预估胜率下降的英雄。</p>
+      <div class="seg" role="radiogroup" aria-label="对手 BP 难度">${AI_BP_LEVEL_OPTS.map(([v,n])=>`<label class="seg-opt ${v===level?'on':''}"><input type="radio" name="ai-bp-level" id="ai-bp-${v}" value="${v}" data-testid="ai-bp-${v}" ${v===level?'checked':''}><span>${n}${v===AI_BP_LEVEL_DEFAULT?'<small>默认</small>':''}</span></label>`).join('')}</div>
+      <p class="muted seg-note" data-testid="ai-bp-note" aria-live="polite">${UI.aiBpSaved===false?'本设备暂时无法保存设置，本次打开期间有效。':'设置保存在本设备上，对手下一手 BP 时生效。'}</p>
     </fieldset>
   </section>`;
 };
@@ -1192,7 +1216,10 @@ function queueAI(){
   }, ms);
 }
 function aiDraftChoice(d, deep){
-  if(deep){ try{ const ch=aiChoose(d, {lookahead:true}); if(ch && ch.c) return ch; }catch(e){ if(typeof console!=='undefined') console.warn('[BP] 深思考选择失败，改用常规选择', e); } }
+  if(deep){ try{
+    const level=aiBpLevel();
+    const ch=(level!=='hard' && typeof aiChooseLevel==='function') ? aiChooseLevel(d, level) : aiChoose(d, {lookahead:true});
+    if(ch && ch.c) return ch; }catch(e){ if(typeof console!=='undefined') console.warn('[BP] 深思考选择失败，改用常规选择', e); } }
   return aiChoose(d);
 }
 function runAiDraftStep(M, d, step){
@@ -1572,6 +1599,7 @@ function matchScreen(){
         <b class="pb-msg">${myTurn ? (isBan?'轮到你禁用一名英雄':'轮到你选择一名英雄') : (isBan?`${teamName(d[cur.side])} 正在禁用…`:`${teamName(d[cur.side])} 正在选人…`)}</b>
       </div>
       <div class="pb-clock">
+        ${myTurn?'':`<small class="pb-level" data-testid="bp-ai-level">对手 · ${aiBpLevelName()}</small>`}
         <span id="bp-clock-num" class="${!M.clockAi && M.clock<=5?'urgent':''}">${String(M.clock).padStart(2,'0')}</span>
         <div class="pb-clock-bar"><i id="bp-clock-fill" style="width:${M.clock/(M.clockMax||30)*100}%"></i></div>
       </div>
@@ -2186,6 +2214,7 @@ document.addEventListener('change', e=>{
   if(el.dataset.f){ UI.mk[el.dataset.f] = el.type==='checkbox'? el.checked : el.value; render(); }
   if(el.dataset.d==='avail' && UI.match){ UI.match.onlyAvail = el.checked; render(); }
   if(el.name==='bp-turn-sec'){ UI.bpTurnSaved = setBpTurnSeconds(el.value); render(); }
+  if(el.name==='ai-bp-level'){ UI.aiBpSaved = setAiBpLevel(el.value); render(); }
   if(el.dataset.o==='give'){ UI.offerGive=el.value; refreshOfferEval(el.dataset.p); }
   if(el.id==='imp' && el.files[0]){ el.files[0].text().then(t=>{ try{ S=migrateSave(JSON.parse(t)); save(); render(); toast('导入成功'); }catch(x){ toast('存档格式错误'); } }); }
 });

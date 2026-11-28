@@ -1286,14 +1286,12 @@ function draftAfterChoice(d, choice){
   return draftAct(next,choice.c,choice.role,choice.offrole)?next:null;
 }
 
-function aiChoose(d,{lookahead=false}={}){
-  const ranked=aiDraftCandidates(d,lookahead?6:1,!lookahead);
-  if(!ranked.length) return {c:null};
-  if(!lookahead || ranked.length===1) return ranked[0];
-
+// 为候选打分：value 为决策分（lookahead=true 时含一步推演），gain 为这一手对己方的预估收益。
+// 选人 gain = 选后 − 选前的 BP 胜率估算分差（evalDraft.diff，己方视角，与胜率单调）；
+// 禁人不改变胜率估算，gain = 0.9×对手损失 − 0.85×己方损失（禁掉自己下一手的首选为负）。
+function aiDraftAssess(d, ranked, lookahead){
   const cur=draftSide(d), mine=cur.side, enemy=mine==='A'?'B':'A';
   const margin=state=>evalDraft(state).diff*(mine==='A'?1:-1);
-  let value;
   if(cur.kind==='ban'){
     const prospects=side=>{
       for(let step=d.step+1;step<DRAFT_SEQ.length;step++){
@@ -1304,22 +1302,65 @@ function aiChoose(d,{lookahead=false}={}){
     };
     const ours=prospects(mine), theirs=prospects(enemy);
     const loss=(rank,champ)=>rank.length>=2 && rank[0].c===champ?Math.max(0,rank[0].score-rank[1].score):0;
-    value=choice=>choice.score + 0.9*loss(theirs,choice.c) - 0.85*loss(ours,choice.c);
-  } else {
-    value=choice=>{
-      const next=draftAfterChoice(d,choice);
-      if(!next) return -Infinity;
-      const now=margin(next);
-      const turn=draftSide(next);
-      if(turn?.kind!=='pick') return choice.score*0.62 + now;
-      const responses=aiDraftCandidates(next,3,false).map(reply=>draftAfterChoice(next,reply)).filter(Boolean).map(margin);
-      const reaction=responses.length?(turn.side===mine?Math.max(...responses):Math.min(...responses)):now;
-      return choice.score*0.62 + now + (reaction-now)*0.65;
-    };
+    return ranked.map(choice=>{
+      const gain=0.9*loss(theirs,choice.c) - 0.85*loss(ours,choice.c);
+      return {choice, gain, value: lookahead ? choice.score + gain : choice.score};
+    });
   }
+  const before=margin(d);
+  return ranked.map(choice=>{
+    const next=draftAfterChoice(d,choice);
+    if(!next) return {choice, gain:-Infinity, value:-Infinity};
+    const now=margin(next), gain=now-before;
+    if(!lookahead) return {choice, gain, value:choice.score};
+    const turn=draftSide(next);
+    if(turn?.kind!=='pick') return {choice, gain, value:choice.score*0.62 + now};
+    const responses=aiDraftCandidates(next,3,false).map(reply=>draftAfterChoice(next,reply)).filter(Boolean).map(margin);
+    const reaction=responses.length?(turn.side===mine?Math.max(...responses):Math.min(...responses)):now;
+    return {choice, gain, value:choice.score*0.62 + now + (reaction-now)*0.65};
+  });
+}
+
+function aiChoose(d,{lookahead=false}={}){
+  const ranked=aiDraftCandidates(d,lookahead?6:1,!lookahead);
+  if(!ranked.length) return {c:null};
+  if(!lookahead || ranked.length===1) return ranked[0];
   let winner=ranked[0], best=-Infinity;
-  for(const choice of ranked){ const score=value(choice); if(score>best){ winner=choice; best=score; } }
+  for(const {choice,value} of aiDraftAssess(d,ranked,true)){ if(value>best){ winner=choice; best=value; } }
   return winner;
+}
+
+// 对手 BP 难度（仅玩家亲自 BP 时的对手使用）：
+// hard   = aiChoose 深思考，始终最优；
+// normal = 深思考后在前 3 名里按 60/25/15 加权抽取；
+// easy   = 不推演，在前 5 名里按分数 softmax（温度 1.5）加权抽取。
+// 普通 / 简单 都先剔除 gain < 0 的候选（会降低己方预估胜率的选人、伤自己多于伤对手的禁人）；
+// 全部为负时退回决策分最高的一手。rand 可注入，便于测试。
+const AI_DRAFT_LEVELS = ['easy','normal','hard'];
+const AI_DRAFT_LEVEL_RULES = {
+  easy:   {pool:8, take:5, lookahead:false, temp:1.5},
+  normal: {pool:6, take:3, lookahead:true,  weights:[0.6,0.25,0.15]},
+};
+function aiDraftLevelOptions(d, level){
+  const rule=AI_DRAFT_LEVEL_RULES[level];
+  if(!rule || !draftSide(d)) return {rule, all:[], eligible:[]};
+  const ranked=aiDraftCandidates(d,rule.pool,false);
+  const all=aiDraftAssess(d,ranked,rule.lookahead).sort((x,y)=>y.value-x.value);
+  const eligible=all.filter(x=>x.gain>=0 && x.value>-Infinity).slice(0,rule.take);
+  return {rule, all, eligible};
+}
+function aiChooseLevel(d, level='normal', rand=rnd){
+  if(!AI_DRAFT_LEVEL_RULES[level]) return aiChoose(d,{lookahead:true});
+  const {rule, all, eligible}=aiDraftLevelOptions(d, level);
+  if(!all.length) return {c:null};
+  if(!eligible.length) return all[0].choice;
+  const weights = rule.weights
+    ? eligible.map((_,i)=>rule.weights[i]||0)
+    : eligible.map(x=>Math.exp((x.value-eligible[0].value)/rule.temp));
+  const total=weights.reduce((s,w)=>s+w,0);
+  let r=rand()*total;
+  for(let i=0;i<eligible.length;i++){ r-=weights[i]; if(r<0) return eligible[i].choice; }
+  return eligible[eligible.length-1].choice;
 }
 
 function autoDraftRest(d){

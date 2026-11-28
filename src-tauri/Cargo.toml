@@ -1,6 +1,6 @@
 [package]
 name = "rift-manager"
-version = "2.1.9"
+version = "2.1.10"
 description = "峡谷经理人 · 英雄联盟电竞经理"
 authors = ["D3cEuGod"]
 edition = "2021"

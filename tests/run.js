@@ -467,7 +467,7 @@ section('英雄机制克制与分路联动');
       bot: ai.role==='SUP' && HARD_SUPPORTS.has(ai.c) && coach.length>0 &&
         coach.every(p=>HARD_SUPPORTS.has(p.c)) && manual && warning && aiWithSoft.role==='ADC' && aiWithSoft.c!=='Ziggs' && fallback,
       game: G.ev.pA===draftWith.pA && draftWith.pA>draftWithout.pA &&
-        Math.abs(phaseAdj(G,'A',0) - (draftWith.a.early+draftWith.blueEdge*0.3-G.avgSk.A)) < 1e-9
+        Math.abs(phaseAdj(G,'A',0) - (draftWith.a.early+draftWith.blueEdge*0.3-G.avgSk.A+G.team.A.dayForm)) < 1e-9
     };
   })()`);
   ok(r.covered, '全英雄拥有经过分级的技能机制');
@@ -516,7 +516,8 @@ section('BP 反制权重与阵容实战对照');
       preview:preview.last?.champ==='Poppy' && !live.picks.A.JUG && preview.A.advantages.some(n=>n.includes('波比')),interact:defended<open};
   })()`);
   console.log('  波比对多突进，BP 胜率差', ((r.strong-r.weak)*100).toFixed(1)+' 个百分点，实战配对', `${r.wStrong}/240 vs ${r.wWeak}/240`);
-  ok(r.strong-r.weak>=0.04 && r.strong-r.weak<=0.09 && r.wStrong>r.wWeak,'强反制有分量但不过头（4–9 个百分点），同条件实战胜率改善');
+  // v2.1.10 加入临场发挥后胜率曲线变平（DRAFT_WIN_SCALE 4.3→5.7），同一反制折算的百分点相应变小
+  ok(r.strong-r.weak>=0.03 && r.strong-r.weak<=0.09 && r.wStrong>r.wWeak,'强反制有分量但不过头（3–9 个百分点），同条件实战胜率改善');
   ok(r.ban && r.preview && r.interact, '选禁预览无副作用，局部反开随实际参战英雄生效');
 }
 
@@ -761,6 +762,29 @@ section('传奇自由选手与手工英雄池');
   ok(r.aiSkip,'AI 球队缺人时不会签走传奇选手');
   ok(r.atSetup && r.signed,'开局组队阶段可直接签下传奇选手');
   ok(r.migrated && r.once,'旧档补入传奇、Canyon 招牌英雄提升且保留旧英雄，只执行一次');
+}
+
+section('临场发挥与爆冷');
+{
+  const r = run(`(()=>{
+    newGame('LGD');
+    const m=mkMatch('BLG','TES',5,'测试',{ctx:{intl:true,ko:true}});
+    simSeries(m,false);
+    const sform=m.ctx.sform, shared=!!sform && Number.isFinite(sform.A) && Number.isFinite(sform.B);
+    const snap=JSON.stringify(S); let upsets=0, n=40, finite=true;
+    for(let i=0;i<n;i++){
+      S=JSON.parse(snap);
+      const d=newDraft('BLG','LGD',i%2?'A':'B',[]); d.ctx=ensureSeriesForm({intl:false,ko:false}); autoDraftRest(d);
+      const G=createGame5(d); finite=finite && Number.isFinite(G.team.A.dayForm) && Number.isFinite(G.team.B.dayForm);
+      while(!G.over) step5(G);
+      if(G.winner==='B') upsets++;
+    }
+    return {shared, finite, upsets, gap: teamOvr('BLG')-teamOvr('LGD')};
+  })()`);
+  console.log(`   BLG 对 LGD（战力差 ${r.gap.toFixed(1)}）40 局中弱队赢 ${r.upsets} 局`);
+  ok(r.shared, '系列赛共享一组临场发挥浮动，并写入比赛场合');
+  ok(r.finite, '每局为双方生成临场发挥浮动');
+  ok(r.upsets>=1 && r.upsets<=20, '大比分差距下弱队偶尔能爆冷，但强队仍占优');
 }
 
 console.log(fails ? `\n✗ ${fails} 项失败` : '\n✓ 全部通过');

@@ -1143,6 +1143,7 @@ function beginUserMatch(item){
 function matchCtx(M){
   const m = M.item.m;
   if(!m.ctx) m.ctx = findMatchCtx(m) || {intl:false, ko:false};
+  ensureSeriesForm(m.ctx);
   const need = Math.ceil(m.bo/2);
   return Object.assign({}, m.ctx, {decider: m.bo>1 && M.wa===need-1 && M.wb===need-1});
 }

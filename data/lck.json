@@ -14,7 +14,7 @@
      "role": "TOP",
      "nat": "KR",
      "age": 27,
-     "rating": 89,
+     "rating": 88,
      "sub": false
     },
     {
@@ -23,7 +23,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": 25,
-     "rating": 91,
+     "rating": 90,
      "sub": false
     },
     {
@@ -32,7 +32,7 @@
      "role": "MID",
      "nat": "KR",
      "age": 25,
-     "rating": 93,
+     "rating": 91,
      "sub": false
     },
     {
@@ -41,7 +41,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": 28,
-     "rating": 91,
+     "rating": 89,
      "sub": false
     },
     {
@@ -76,7 +76,7 @@
      "role": "JUG",
      "nat": "KR",
      "age": 24,
-     "rating": 90,
+     "rating": 89,
      "sub": false
     },
     {
@@ -103,7 +103,7 @@
      "role": "SUP",
      "nat": "KR",
      "age": 24,
-     "rating": 92,
+     "rating": 91,
      "sub": false
     }
    ]

@@ -1247,7 +1247,7 @@ const AI_DRAFT_WAIT_MS = 5000;
 const DRAFT_RATING_WEIGHT = 0.64;
 const DRAFT_COMPOSITION_WEIGHT = 1.20;
 const DRAFT_FIT_WEIGHT = 0.95;
-const DRAFT_WIN_SCALE = 4.3;
+const DRAFT_WIN_SCALE = 5.7;   // v2.1.10：加入临场发挥浮动后重新拟合（原 4.3），让 BP 预测胜率与实战一致
 function draftPlayerRating(p, role, ctx){
   return 80 + (matchRating(p,role,ctx)-80)*DRAFT_RATING_WEIGHT;
 }
@@ -1958,11 +1958,23 @@ function applyGameImpact(g, teamA, teamB){
   return impacts;
 }
 
+// 临场发挥（v2.1.10）：每队每局一个隐藏的整体发挥浮动，外加整个系列赛共享的一个较小浮动，
+// 单位与阵容强度（draftPower 各阶段）相同。用来制造合理的爆冷：
+// 队伍均分差 5 分时，强队单局胜率约 65%、BO5 约 78%；实力接近的对局仍约五五开。
+const FORM_SWING = { game:6, series:2.5 };
+const REGION_RANK_NOISE = 3;     // 非 LPL 赛区按战力 + 噪声排名
+const DEV_GROWTH_MUL = 1.5;
+function ensureSeriesForm(ctx){
+  if(ctx && !ctx.sform) ctx.sform = {A:randn()*FORM_SWING.series, B:randn()*FORM_SWING.series};
+  return ctx;
+}
+
 // 系列赛（AI 自动）
 function simSeries(m, keepGames){
   const need=Math.ceil(m.bo/2); let wa=0,wb=0; const games=[]; let locked=[];
   const baseCtx = m.ctx || findMatchCtx(m) || {intl:false, ko:false};
   m.ctx = baseCtx;
+  ensureSeriesForm(baseCtx);
   // 仅首局通过 1v1 决定选边权；此后 BO3/BO5 每打一把一律由上一局输方选边
   let chooser = simSolo1v1(m.a, m.b).winner;
   while(wa<need && wb<need){
@@ -2186,7 +2198,7 @@ const curEvent = () => S.events[S.evIdx];
 function regionRank(region, split){
   S.rr[region]=S.rr[region]||{};
   if(!S.rr[region][split]){
-    const ts=Object.values(S.teams).filter(t=>t.region===region).map(t=>[t.key, teamOvr(t.key)+randn()*2.2]);
+    const ts=Object.values(S.teams).filter(t=>t.region===region).map(t=>[t.key, teamOvr(t.key)+randn()*REGION_RANK_NOISE]);
     S.rr[region][split]=ts.sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   }
   return S.rr[region][split];
@@ -2529,7 +2541,8 @@ function settlePlayerDevelopment(p){
   const quality=games?clamp(p.development.performance/games,-0.8,1.2):0;
   const ageFactor=p.age<=22?1:p.age<=26?0.55:p.age<=29?0.24:0.10;
   const room=Math.max(0,p.pot-p.rating);
-  const growth=room*ageFactor*(0.035+reps*0.10)+quality*reps*ageFactor*0.80;
+  // 年度成长整体 ×1.5（v2.1.10：原先一年涨得太少）；90+ 选手不额外削减
+  const growth=(room*ageFactor*(0.035+reps*0.10)+quality*reps*ageFactor*0.80)*DEV_GROWTH_MUL;
   const aging=p.age<27?0:(p.age-26)*0.13*(1-reps*0.42);
   const next=clamp(Math.round((p.rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
   p.ratingDelta=Math.round((next-p.rating)*10)/10;

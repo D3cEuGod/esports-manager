@@ -76,6 +76,7 @@
 - `draftFeedback(d, champ?, role?)` 返回 A/B 两支队伍的优势与风险、A 方预测胜率 `pA`、相对上一步或候选操作的变化 `deltaA`、`partial`、`last` 和 `banReason`。同一方法用于实时和候选预览，调用不会修改 BP。未选完的阵容用暂估概率，禁用说明单独展示。
 - `draftReview(d, side)`（v2.1.9）返回赛前 BP 复盘：`steps` 为该方每一步禁用/选择（`label`、`kind`、`champ`、`role`、`grade` good/ok/bad、`gap` 与当时最佳的差距、`pros`/`cons`、`better` 更好的选择；选人另有 `edge` 比常规选择的差值，禁用另有 `denied`/`cost`），`hurt` 为对手最伤该方的 1–2 手，`good`/`bad` 为总结。纯函数，不修改 BP；`ui.js` 按阵容缓存。
 - 机制克制（`DRAFT_COUNTERS`）只按对手高出常规阵容的部分计分：`draftThreats` 额外返回每项威胁的 z 值（相对各位置本位英雄池的均值与方差），`counterStrength` 取 `weight×2.6×max(0, z−0.25)`，上限 1.0。下路无专属组合时按 `ADC_STYLE`×`SUP_STYLE` 类型给配合；`ENGAGE_STARTERS`＋`AOE_FOLLOWUPS` 给开团跟进加分。
+- 临场发挥（v2.1.10）：`ensureSeriesForm(ctx)` 在比赛场合 `m.ctx` 上写入 `sform:{A,B}`（系列赛共享浮动，随存档保存），`simSeries` 与 `ui.js` 的 `matchCtx` 都会调用；`createGame5` 为每队生成 `G.team[side].dayForm`（`FORM_SWING.game` 本局浮动 + `sform`），`phaseAdj` 把它加到全队阶段强度上。`DRAFT_WIN_SCALE` 4.3→5.7，`evalDraft().pA` 已按新的胜率曲线重新拟合。
 - `playGame` / `game5Result` 新增 `masteryChanges`。每条记录 `{pid, tag, champ, prev, next, gain}`，仅包含玩家所执教队伍。保留系列赛对局明细时，该字段也写入 `m.gm`。快模和观战共用结算。
 - `playerProfTier(p, champ, value?)` 供档案和 BP 展示经过职业记录或实战培养确认的招牌。`p.ratingDelta` 和 `p.ratingYearStart` 用于能力变化展示。旧存档可缺少这些显示字段。
 - `aiChoose(d, {lookahead:true})` 为实时 BP 提供对手应对和己方联动预判，`AI_DRAFT_WAIT_MS` 是每手 AI 禁选的展示时长。快模调用 `aiChoose(d)` 走单步评分。BP 与实战共用能力和阵容权重。

@@ -1,7 +1,7 @@
 {
-  "version": "2.1.9",
+  "version": "2.1.10",
   "date": "2026-11-28",
-  "notes": "BP 后新增逐步复盘，指出每一手的好坏与更好选择；武器大师、波比等克制只在对手明显吃这套机制时生效；AI 懂得给进攻型 ADC 配硬辅",
+  "notes": "强队不再年年包揽冠军：BLG/GEN/T1 主力能力微调（ON 上调），比赛加入临场发挥浮动，弱队更常爆冷；选手每年成长更多",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

@@ -14,7 +14,7 @@
      "role": "TOP",
      "nat": "CN",
      "age": null,
-     "rating": 92,
+     "rating": 90,
      "sub": false
     },
     {
@@ -32,7 +32,7 @@
      "role": "MID",
      "nat": "CN",
      "age": null,
-     "rating": 91,
+     "rating": 89,
      "sub": false
     },
     {
@@ -41,7 +41,7 @@
      "role": "ADC",
      "nat": "KR",
      "age": null,
-     "rating": 91,
+     "rating": 89,
      "sub": false
     },
     {
@@ -50,7 +50,7 @@
      "role": "SUP",
      "nat": "CN",
      "age": null,
-     "rating": 88,
+     "rating": 90,
      "sub": false
     }
    ]

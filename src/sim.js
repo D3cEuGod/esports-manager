@@ -490,7 +490,9 @@ function createGame5(d, opts){
     const dp = side==='A' ? ev.a : ev.b;
     G.team[side] = { side, blue, color: blue?'blue':'red', key:d[side], name:teamName(d[side]), dp,
       drakes:[], soul:null, baronT:0, elderT:0, heraldT:0, grubs:0, kills:0, towers:0, barons:0, gankT: 150 + rnd()*40, roamT: 300 + rnd()*120,
-      split: null, focus:null, comp: dp.comp, tags: dp.comp.tags, calmT:0 };
+      split: null, focus:null, comp: dp.comp, tags: dp.comp.tags, calmT:0,
+      // 临场发挥：本局浮动 + 系列赛共享浮动（见 engine.js FORM_SWING），叠加在全队阶段强度上
+      dayForm: randn()*FORM_SWING.game + ((d.ctx && d.ctx.sform && d.ctx.sform[side]) || 0) };
     ROLES.forEach(r=>{
       const p = lu[r], c = d.picks[side][r];
       const sk = draftPlayerRating(p,r,d.ctx) + (c ? champFit(p,c,r)*DRAFT_FIT_WEIGHT : 0);
@@ -531,7 +533,7 @@ function phaseAdj(G, side, t){
   else if(m < 24) v = mi;
   else if(m < 31) v = mi + (la-mi)*(m-24)/7;
   else v = la;
-  return v - G.avgSk[side];
+  return v - G.avgSk[side] + (G.team[side].dayForm || 0);
 }
 function champPow(G, c, pressure){
   if(!c.alive) return 0;

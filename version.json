@@ -1,7 +1,7 @@
 {
-  "version": "2.1.14",
+  "version": "2.1.16",
   "date": "2026-11-28",
-  "notes": "按 2023–2026 职业比赛真实出场重做全部选手英雄池，补全 44 个缺失英雄（含琪亚娜），Clearlove7 调至 85",
+  "notes": "修复客户端下载按钮无反应，Windows 安装版与 macOS 支持游戏内一键更新，安卓改为固定签名可覆盖安装",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

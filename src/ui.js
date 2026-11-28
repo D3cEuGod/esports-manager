@@ -274,7 +274,7 @@ function updateBannerHtml(){
   return `<div class="upd-banner">
     <span>${ico('update')} 发现云端新版本 <b>v${esc(u.version)}</b>${u.notes ? ` · ${esc(u.notes)}` : ''}</span>
     <div class="upd-acts">
-      <a class="btn sm" href="${esc(u.url)}" target="_blank" rel="noopener">前往下载更新</a>
+      <button class="btn sm" data-a="runAppUpdate" ${AppUpdater.busy?'disabled':''}>${esc(AppUpdater.actionLabel())}</button>
       <button class="btn sm ghost" data-a="dismissUpdate">稍后提醒</button>
     </div>
   </div>`;
@@ -897,11 +897,11 @@ VIEWS.sys = () => {
   return `<section class="card">
   ${accountPanelHtml()}
   <hr class="sep">
-  <h3>${ico('update')} 云端版本自动更新</h3>
+  <h3>${ico('update')} 版本更新</h3>
   <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.12')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
-    ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
+    ${upd && upd.available ? `<button class="btn big" data-a="runAppUpdate" ${upd.busy?'disabled':''}>${esc(upd.actionLabel())}</button>${upd.available.mode!=='reload' ? ` <a class="btn ghost" href="${esc(upd.available.url)}" target="_blank" rel="noopener">查看更新说明</a>` : ''}` : ''}
   </div>
   <hr class="sep">
   <h3>${ico('shield')} 本地存档管理</h3>
@@ -2161,6 +2161,12 @@ const ACT = {
     if(m && m.w) toast(`${teamName(m.a)} ${m.s[0]}:${m.s[1]} ${teamName(m.b)}（${m.label}）`);
   },
   dismissUpdate:()=>{ UI.hideUpdateBanner=true; render(); },
+  runAppUpdate:async()=>{
+    if(typeof AppUpdater === 'undefined') return;
+    const msg = await AppUpdater.run();
+    if(msg) toast(msg);
+    render();
+  },
   checkAppUpdate:async()=>{
     if(typeof AppUpdater === 'undefined') return;
     toast('正在检查云端版本…');

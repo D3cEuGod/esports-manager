@@ -46,7 +46,19 @@ jobs:
       - name: Install frontend CLI dependencies
         run: npm install
       - name: Build Windows Portable EXE & NSIS Setup Installer
-        run: npx tauri build --bundles nsis
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          # 没配置更新签名密钥时照常出包，只是不生成应用内更新文件
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+            npx tauri build --bundles nsis
+          } else {
+            Write-Warning "TAURI_SIGNING_PRIVATE_KEY 未配置：跳过应用内更新签名"
+            Set-Content -Path no-updater.json -Value '{"bundle":{"createUpdaterArtifacts":false}}'
+            npx tauri build --bundles nsis --config no-updater.json
+          }
       - name: Collect Windows release artifacts
         shell: pwsh
         env:
@@ -57,6 +69,9 @@ jobs:
           $nsis = Get-ChildItem "src-tauri/target/release/bundle/nsis" -Filter "*-setup.exe" | Select-Object -First 1
           if ($nsis) {
             Copy-Item $nsis.FullName "out-win/RiftManager-$env:TAG-Windows-Setup.exe" -Force
+            if (Test-Path "$($nsis.FullName).sig") {
+              Copy-Item "$($nsis.FullName).sig" "out-win/RiftManager-$env:TAG-Windows-Setup.exe.sig" -Force
+            }
           }
           Get-ChildItem out-win
       - uses: actions/upload-artifact@v4
@@ -84,7 +99,17 @@ jobs:
       - name: Install frontend CLI dependencies
         run: npm install
       - name: Build macOS Universal (.app)
-        run: npx tauri build --target universal-apple-darwin --bundles app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            npx tauri build --target universal-apple-darwin --bundles app
+          else
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY 未配置：跳过应用内更新签名"
+            echo '{"bundle":{"createUpdaterArtifacts":false}}' > no-updater.json
+            npx tauri build --target universal-apple-darwin --bundles app --config no-updater.json
+          fi
       - name: Package macOS Universal DMG (headless-safe drag-to-Applications)
         env:
           TAG: ${{ needs.resolve-version.outputs.tag }}
@@ -95,6 +120,12 @@ jobs:
           cp -R "$APP" dmg_stage/
           ln -s /Applications dmg_stage/Applications
           hdiutil create -volname "RiftManager-${TAG}" -srcfolder dmg_stage -ov -format UDZO "out-mac/RiftManager-${TAG}-macOS-Universal.dmg"
+          # 应用内更新包（.app.tar.gz + 签名）
+          TGZ=$(find src-tauri/target/universal-apple-darwin/release/bundle/macos -name "*.app.tar.gz" -maxdepth 2 | head -n 1)
+          if [ -n "$TGZ" ] && [ -f "$TGZ.sig" ]; then
+            cp "$TGZ" "out-mac/RiftManager-${TAG}-macOS-Universal.app.tar.gz"
+            cp "$TGZ.sig" "out-mac/RiftManager-${TAG}-macOS-Universal.app.tar.gz.sig"
+          fi
           ls -lh out-mac
       - uses: actions/upload-artifact@v4
         with:
@@ -121,19 +152,33 @@ jobs:
           python build_web.py
           mkdir -p mobile-android/app/src/main/assets
           cp dist/index.html mobile-android/app/src/main/assets/index.html
-      - name: Generate Android release signing keystore
+      - name: Prepare Android release signing keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          keytool -genkeypair -v -keystore /tmp/rift-release.jks \
-            -storepass riftmanager2026 -keypass riftmanager2026 \
-            -alias riftmanager -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=RiftManager, OU=Game, O=D3cEuGod, L=Shanghai, S=Shanghai, C=CN"
+          # 固定签名密钥：新版 APK 才能覆盖安装旧版。未配置时退回临时密钥（不能覆盖安装）。
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/rift-release.jks
+            echo "RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "RELEASE_KEY_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            ALIAS=$(keytool -list -v -keystore /tmp/rift-release.jks -storepass "$ANDROID_KEYSTORE_PASSWORD" | sed -n 's/^Alias name: //p' | head -n 1)
+            test -n "$ALIAS"
+            echo "RELEASE_KEY_ALIAS=$ALIAS" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 未配置：使用临时签名，APK 无法覆盖安装旧版"
+            keytool -genkeypair -v -keystore /tmp/rift-release.jks \
+              -storepass riftmanager2026 -keypass riftmanager2026 \
+              -alias riftmanager -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=RiftManager, OU=Game, O=D3cEuGod, L=Shanghai, S=Shanghai, C=CN"
+            echo "RELEASE_STORE_PASSWORD=riftmanager2026" >> "$GITHUB_ENV"
+            echo "RELEASE_KEY_PASSWORD=riftmanager2026" >> "$GITHUB_ENV"
+            echo "RELEASE_KEY_ALIAS=riftmanager" >> "$GITHUB_ENV"
+          fi
       - name: Build signed Android release APK
         working-directory: mobile-android
         env:
           RELEASE_STORE_FILE: /tmp/rift-release.jks
-          RELEASE_STORE_PASSWORD: riftmanager2026
-          RELEASE_KEY_ALIAS: riftmanager
-          RELEASE_KEY_PASSWORD: riftmanager2026
         run: gradle assembleRelease --no-daemon
       - name: Collect Android & Offline Web artifacts
         env:
@@ -157,6 +202,38 @@ jobs:
         with:
           path: all-assets
           merge-multiple: true
+      - name: Generate updater manifest (latest.json)
+        env:
+          TAG: ${{ needs.resolve-version.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, os, datetime, pathlib
+          tag = os.environ['TAG']; repo = os.environ['REPO']
+          base = f"https://github.com/{repo}/releases/download/{tag}/"
+          d = pathlib.Path('all-assets')
+          plat = {}
+          def add(keys, name):
+              sig = d / (name + '.sig')
+              if (d / name).exists() and sig.exists():
+                  entry = {'signature': sig.read_text().strip(), 'url': base + name}
+                  for k in keys: plat[k] = entry
+          add(['windows-x86_64'], f'RiftManager-{tag}-Windows-Setup.exe')
+          add(['darwin-aarch64', 'darwin-x86_64'], f'RiftManager-{tag}-macOS-Universal.app.tar.gz')
+          if plat:
+              notes = ''
+              try: notes = json.load(open('version.json', encoding='utf-8')).get('notes', '')
+              except Exception: pass
+              (d / 'latest.json').write_text(json.dumps({
+                  'version': tag.lstrip('v'), 'notes': notes,
+                  'pub_date': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                  'platforms': plat}, ensure_ascii=False, indent=2), encoding='utf-8')
+              print('latest.json platforms:', list(plat))
+          else:
+              print('no updater signatures found; skip latest.json')
+          PY
+          rm -f all-assets/*.sig
+          ls -lh all-assets
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

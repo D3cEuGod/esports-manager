@@ -627,14 +627,52 @@ const CloudSync = {
   }
 };
 
-// ================= 云端版本自动更新检测 =================
+// ================= 云端版本检测与更新 =================
+// - Windows 安装版 / macOS：Tauri updater 应用内下载、验签、安装并重启
+// - Windows 绿色版：直接下载最新 Portable.exe（便携版无法原地自更新）
+// - Android：下载最新 APK（固定签名，可覆盖安装）
+// - 在线网页 / PWA：网页本身已是最新，刷新即可；离线单文件版：下载最新 Web-Offline.html
+const RELEASES_PAGE = 'https://github.com/D3cEuGod/esports-manager/releases/latest';
+
+function isAndroidShell(){
+  return typeof location!=='undefined' && /appassets\.androidplatform\.net/i.test(location.hostname);
+}
+
+// 外链统一出口：Tauri 交给系统浏览器，安卓壳走原生 Intent，网页开新标签。
+async function openExternal(url){
+  if(!url) return false;
+  if(isTauriApp()){
+    try{ await tauriInvoke('plugin:opener|open_url', { url }); return true; }
+    catch(e){ console.warn('open_url failed:', e); return false; }
+  }
+  if(isAndroidShell()){ location.href = url; return true; }
+  const w = window.open(url, '_blank', 'noopener');
+  if(!w) location.href = url;
+  return true;
+}
+
+// Tauri 默认拦截新窗口，target=_blank 的链接点了没反应。这里统一接管。
+if(typeof document!=='undefined' && isTauriApp()){
+  document.addEventListener('click', e=>{
+    const a = e.target.closest && e.target.closest('a[href]');
+    if(!a) return;
+    const href = a.getAttribute('href') || '';
+    if(!/^https?:\/\//i.test(href)) return;
+    e.preventDefault();
+    openExternal(href);
+  }, true);
+}
+
 window.AppUpdater = {
   currentVersion: '2.1.14',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
-  available: null,
+  available: null, // { version, notes, url, assetUrl, mode }
   statusText: '尚未检查',
   lastCheckedAt: 0,
+  busy: false,
+  progress: null,
+  _kind: null,
 
   isNewer(remote, local){
     const a = String(remote||'').replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
@@ -646,25 +684,77 @@ window.AppUpdater = {
     return false;
   },
 
+  // tauri-installed | tauri-portable | tauri-mac | android | web-online | web-file
+  async platform(){
+    if(this._kind) return this._kind;
+    const ua = (typeof navigator!=='undefined' && navigator.userAgent) || '';
+    if(isTauriApp()){
+      if(/Macintosh|Mac OS/i.test(ua)) this._kind = 'tauri-mac';
+      else {
+        let kind = 'portable';
+        try{ kind = await tauriInvoke('install_kind'); }catch(e){}
+        this._kind = kind==='installed' ? 'tauri-installed' : 'tauri-portable';
+      }
+    } else if(isAndroidShell()) this._kind = 'android';
+    else if(typeof location!=='undefined' && /^https?:$/.test(location.protocol)) this._kind = 'web-online';
+    else this._kind = 'web-file';
+    return this._kind;
+  },
+
+  pickAsset(assets, kind){
+    const list = Array.isArray(assets) ? assets : [];
+    const re = {
+      'tauri-installed': /Windows-Setup\.exe$/i,
+      'tauri-portable': /Windows-Portable\.exe$/i,
+      'tauri-mac': /macOS.*\.dmg$/i,
+      'android': /Android\.apk$/i,
+      'web-file': /Web-Offline\.html$/i
+    }[kind];
+    const a = re && list.find(x=>re.test(x.name||''));
+    return a ? a.browser_download_url : null;
+  },
+
+  async fetchLatest(kind){
+    // 以 GitHub 最新 Release 为准：安装包都编译上传完才会出现，不会提前提示更新。
+    try{
+      const r = await fetch(this.releasesApi, { headers:{ Accept:'application/vnd.github+json' }, cache:'no-store' });
+      if(r.ok){
+        const j = await r.json();
+        if(j && j.tag_name && !j.draft && !j.prerelease){
+          return {
+            version: String(j.tag_name).replace(/^v/i,''),
+            notes: String(j.name||'').slice(0,80),
+            url: j.html_url || RELEASES_PAGE,
+            assetUrl: this.pickAsset(j.assets, kind)
+          };
+        }
+      }
+    }catch(e){}
+    // API 被限流时退回 version.json（只给发布页链接）
+    const r2 = await fetch(`${this.manifestUrl}?t=${Date.now()}`, { cache:'no-store' });
+    if(!r2.ok) throw new Error('HTTP ' + r2.status);
+    const j2 = await r2.json();
+    if(!j2 || !j2.version) return null;
+    return { version:String(j2.version), notes:j2.notes||'', url:RELEASES_PAGE, assetUrl:null };
+  },
+
   async check(manual){
+    if(this.busy) return { hasUpdate: !!this.available, msg:'正在更新…' };
     if(!manual && Date.now() - this.lastCheckedAt < 300000) return { hasUpdate: !!this.available };
     this.lastCheckedAt = Date.now();
     this.statusText = '正在检查云端版本…';
     try{
-      let info = null;
-      const r = await fetch(`${this.manifestUrl}?t=${Date.now()}`, { cache:'no-store' });
-      if(r.ok){
-        const j = await r.json();
-        if(j && j.version) info = { version: String(j.version), notes: j.notes || '', url: j.url || 'https://github.com/D3cEuGod/esports-manager/releases', date: j.date || '' };
-      }
-      if(!info){
-        const r2 = await fetch(this.releasesApi, { headers: { Accept:'application/vnd.github+json' } });
-        if(r2.ok){
-          const j2 = await r2.json();
-          if(j2 && j2.tag_name) info = { version: String(j2.tag_name).replace(/^v/i,''), notes: (j2.name||'').slice(0,80), url: j2.html_url || 'https://github.com/D3cEuGod/esports-manager/releases' };
-        }
-      }
+      const kind = await this.platform();
+      const info = await this.fetchLatest(kind);
       if(info && this.isNewer(info.version, this.currentVersion)){
+        info.mode = 'download';
+        if(kind==='web-online') info.mode = 'reload';
+        if(kind==='tauri-installed' || kind==='tauri-mac'){
+          try{
+            const u = await tauriInvoke('check_app_update');
+            if(u && u.version) info.mode = 'inapp';
+          }catch(e){ console.warn('check_app_update failed:', e); }
+        }
         this.available = info;
         this.statusText = `发现新版本 v${info.version}`;
         return { hasUpdate:true, version:info.version, info };
@@ -676,5 +766,61 @@ window.AppUpdater = {
       this.statusText = '离线模式（暂无法检测版本）';
       return { hasUpdate:false, msg:'网络暂不可用，稍后再试' };
     }
+  },
+
+  actionLabel(){
+    const u = this.available;
+    if(!u) return '';
+    if(this.busy) return this.progress!=null ? `正在下载更新 ${this.progress}%` : '正在更新…';
+    if(u.mode==='inapp') return `一键更新到 v${u.version}`;
+    if(u.mode==='reload') return `刷新到新版本 v${u.version}`;
+    return `下载最新版本 v${u.version}`;
+  },
+
+  // 返回给界面提示的文字
+  async run(){
+    const u = this.available;
+    if(!u || this.busy) return '';
+    if(u.mode==='reload'){
+      try{
+        const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+        if(reg) await reg.update();
+      }catch(e){}
+      location.reload();
+      return '正在刷新…';
+    }
+    if(u.mode==='inapp'){
+      this.busy = true; this.progress = null;
+      let unlisten = null;
+      try{
+        const ev = window.__TAURI__ && window.__TAURI__.event;
+        if(ev && ev.listen){
+          unlisten = await ev.listen('app-update-progress', ({payload})=>{
+            if(payload && payload.total){
+              this.progress = Math.min(100, Math.round(payload.downloaded*100/payload.total));
+              if(typeof render==='function') render();
+            }
+          });
+        }
+        if(typeof render==='function') render();
+        if(typeof StorageBridge!=='undefined') await StorageBridge._saveWrite;
+        await tauriInvoke('install_app_update'); // 成功会直接重启
+        return '已是最新版本';
+      }catch(e){
+        console.warn('install_app_update failed:', e);
+        u.mode = 'download';
+        const url = u.assetUrl || u.url;
+        await openExternal(url);
+        return '应用内更新失败，已改为在浏览器中下载安装包';
+      }finally{
+        this.busy = false; this.progress = null;
+        if(unlisten) try{ unlisten(); }catch(e){}
+        if(typeof render==='function') render();
+      }
+    }
+    const ok = await openExternal(u.assetUrl || u.url);
+    if(!ok) return '无法打开浏览器，请手动前往 GitHub Releases 下载';
+    if(this._kind==='android') return '下载完成后点开 APK 覆盖安装即可';
+    return u.assetUrl ? '已开始下载最新安装包' : '已打开下载页面';
   }
 };

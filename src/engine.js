@@ -110,6 +110,7 @@ function migrateSave(s){
   }
   s.moodVer=1;
   // 旧档一次性补上传奇自由选手，并把手工英雄池的招牌英雄提到新熟练度（已练出的其他英雄保留）
+  const existingClearlove = s.players?.Clearlove2017;
   if(!s.legendsVer && s.players){
     const prevS = S; S = s;
     addLegends();
@@ -120,6 +121,15 @@ function migrateSave(s){
       p.champs.sort((a,b)=>b.p-a.p);
     });
     S = prevS;
+  }
+  // 单独记录已经应用的基线，旧客户端重写 legendsVer 时仍可识别。
+  if(existingClearlove && existingClearlove.legendBaseRating==null && LEGEND_BY_PID.Clearlove2017){
+    const base=LEGEND_BY_PID.Clearlove2017.rating, delta=base-92;
+    existingClearlove.rating+=delta;
+    existingClearlove.ratingYearStart+=delta;
+    existingClearlove.legendBaseRating=base;
+    existingClearlove.pot=LEGEND_BY_PID.Clearlove2017.pot ?? base;
+    if(!existingClearlove.team) existingClearlove.salary=fairSalary(existingClearlove);
   }
   s.legendsVer=1;
   if(!s.bonds || typeof s.bonds !== 'object'){
@@ -207,6 +217,7 @@ function addLegends(){
     const pl = { pid:l.pid, tag:l.id, name:l.name||l.id, role:l.role, nat:l.nat||'CN', age:l.age||22, rating:l.rating||85,
       team:null, form:0, mental:0, champs:[], legend:true };
     pl.pot = l.pot || pl.rating;
+    pl.legendBaseRating = pl.rating;
     pl.ratingYearStart = pl.rating;
     pl.salary = fairSalary(pl);
     pl.contract = S.year;
@@ -2640,19 +2651,44 @@ function simUntilUser(limitAll){
     playAI(it); n++; if(n>2000) break; }
   return null;
 }
-function canSimRegularSeason(){
-  const ev=curEvent();
-  return !!ev && !ev.done && /^lpl_s[123]$/.test(ev.type) &&
-    (!ev.started || ev.stages[ev.si]?.kind==='rr');
+const EVENT_SKIP_PHASES = {
+  lpl_s1:{label:'跳过第一赛段常规赛',stopsAt:'骑士之路第一轮',first:0,count:1,kind:'rr'},
+  lpl_s2:{label:'跳过第二赛段常规赛',stopsAt:'骑士之路第一轮',first:0,count:1,kind:'rr'},
+  lpl_s3:{label:'跳过第三赛段常规赛',stopsAt:'骑士之路',first:0,count:1,kind:'rr'},
+  fst:{label:'跳过先锋赛小组赛',stopsAt:'半决赛',first:0,count:2,kind:'br'},
+  ewc:{label:'跳过 EWC 小组赛',stopsAt:'八强赛',first:0,count:4,kind:'br'},
+  worlds:{label:'跳过世界赛瑞士轮',stopsAt:'八强赛',first:1,count:1,kind:'swiss'}
+};
+function eventSkipPhase(ev=curEvent()){
+  if(!ev || ev.done || !Object.hasOwn(EVENT_SKIP_PHASES,ev.type)) return null;
+  const {label,stopsAt,first,count,kind}=EVENT_SKIP_PHASES[ev.type];
+  if(!ev.started) return first===0 ? {label,stopsAt,stages:[]} : null;
+  if(ev.si<first || ev.si>=first+count) return null;
+  const stages=ev.stages.slice(first,first+count);
+  if(stages.length!==count || stages.some(st=>st.kind!==kind || (kind==='br'&&!st.name?.startsWith('小组赛')))) return null;
+  return {label,stopsAt,stages};
 }
-function simRegularSeason(){
+function canAutoSeries(m){
+  const phase=eventSkipPhase();
+  return !!m && !m.w && userInvolved(m) && !!phase && phase.stages.some(st=>st.matches.includes(m));
+}
+function playNextAiMatch(){
+  const it=nextReadyMatch();
+  if(!it || userInvolved(it.m)) return null;
+  playAI(it);
+  return it.m;
+}
+function skipEventPhase(){
   const result={played:0, userMatches:[]};
-  if(!canSimRegularSeason()) return result;
+  const ev=curEvent();
+  if(!eventSkipPhase(ev)) return result;
   startEvent();
-  const ev=curEvent(), stage=ev.stages[ev.si];
-  while(canSimRegularSeason() && ev.stages[ev.si]===stage){
+  const phase=eventSkipPhase(ev);
+  if(!phase) return result;
+  // 固定小组范围。瑞士轮在同一阶段追加轮次；独立淘汰阶段是另一个对象。
+  while(curEvent()===ev && !ev.done){
     const it=nextReadyMatch();
-    if(!it || it.st!==stage) break;
+    if(!it || !phase.stages.includes(it.st)) break;
     playPhaseMatch(it, result);
   }
   return result;
@@ -2666,22 +2702,23 @@ function playPhaseMatch(it, result){
   addNews(`${won?'胜':'负'}：${teamName(m.a)} ${m.s[0]}:${m.s[1]} ${teamName(m.b)}（${m.label}）`);
   result.userMatches.push({a:m.a,b:m.b,s:m.s.slice(),won,label:m.label});
 }
-// 模拟当前单轮（常规赛仅推完本轮、瑞士轮仅推完本轮、淘汰赛仅推完本轮对阵），包含玩家本轮的比赛，本轮打完即止
+// 可跳过阶段内结算当前一轮，包含玩家该轮的比赛。
 function simCurrentRound(){
-  startEvent();
   const ev = curEvent();
-  if(!ev || ev.done) return { played:0, userMatches:[] };
+  const result={played:0,userMatches:[]};
+  const phase=eventSkipPhase(ev);
+  if(!phase || !ev.started) return result;
   const startSi = ev.si;
-  const firstPool = stageMatches(ev);
-  if(!firstPool.length) return { played:0, userMatches:[] };
+  const firstPool = stageMatches(ev).filter(it=>phase.stages.includes(it.st));
+  if(!firstPool.length) return result;
   const st0 = firstPool[0].st;
   const targetRnd = st0.kind==='rr' ? firstPool[0].m.rnd : st0.kind==='swiss' ? st0.round : null;
   const targetCol = st0.kind==='br' ? Math.min(...firstPool.map(x => x.m.col != null ? x.m.col : 0)) : null;
 
   let guard = 0;
-  const result={played:0,userMatches:[]};
   while(!ev.done && ev.si === startSi && guard++ < 200){
     const pool = stageMatches(ev).filter(({m, st}) => {
+      if(!phase.stages.includes(st)) return false;
       if(st.kind==='rr') return m.rnd === targetRnd;
       if(st.kind==='swiss') return st.round === targetRnd;
       if(st.kind==='br') return (m.col != null ? m.col : 0) === targetCol;

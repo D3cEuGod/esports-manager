@@ -575,7 +575,7 @@ VIEWS.home = () => {
   let stageCard = '';
   if(!ev.started){
     topBody = `<p class="muted">${ev.type==='lpl_s1'&&transferWindowOpen()?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
-      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button>${simRegularBtn()}<button class="btn ghost" data-a="simEvent" title="一直模拟到本项赛事全部结束（含季后赛）">快速模拟整项赛事（含季后赛）</button></div>`;
+      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button>${skipPhaseBtn()}</div>${skipPhaseHint()}`;
   } else if(ev.done){
     topBody = `<div class="done">${ico('check','g')} ${esc(info.name)}已结束 ${ev.res.champ?`· ${ico('trophy','gold')} 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
       <div class="btns"><button class="btn big" data-a="nextEvent">进入下一阶段 ${ico('play')}</button></div>`;
@@ -592,11 +592,11 @@ VIEWS.home = () => {
          <div class="vs"><div class="side">${teamTag(myNext.m.a,'big')}</div><em>VS</em><div class="side">${teamTag(myNext.m.b,'big')}</div></div></div>`:
         `<p class="muted">${inEvent?'等待本轮其他比赛结果…':'本队未参加此项赛事（或已止步），可模拟观看赛果。'}</p>`}
       <div class="btns">
-        ${myNext?`<button class="btn big" data-a="toMyMatch">${ico('play')} ${nxt&&userInvolved(nxt.m)?'进入比赛':'模拟至我的比赛'}</button>`:''}
-        <button class="btn" data-a="simStage" title="只模拟当前这一轮的比赛">${ico('skip')} 模拟本轮</button>
-        ${simRegularBtn()}
-        <button class="btn ghost" data-a="simEvent" title="一直模拟到本项赛事全部结束（含季后赛）">模拟整项赛事（含季后赛）</button>
+        ${nextMatchBtn(nxt)}
+        ${curSkipPhase()?`<button class="btn" data-a="simStage" title="只模拟当前这一轮的比赛">${ico('skip')} 模拟本轮</button>`:''}
+        ${skipPhaseBtn()}
       </div>
+      ${skipPhaseHint()}
       ${probs()}`;
     // 直接把当前赛事正在打的小组赛/瑞士轮/淘汰赛对阵放到主页下方
     const activeIdxs = ev.parallel && ev.si<=Math.max(...ev.parallel) ? ev.parallel : [ev.si];
@@ -612,11 +612,30 @@ VIEWS.home = () => {
     ${stageCard}
     ${S.news.length?`<section class="card compact-news"><h4>${ico('news')} 最新赛场动态</h4><ul class="news">${S.news.slice(0,5).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`:''}`;
 };
-// 模拟常规赛：引擎 canSimRegularSeason() 为真时显示，截止到季后赛开始前
-function simRegularBtn(){
-  let ok=false;
-  try{ ok = typeof canSimRegularSeason==='function' && typeof simRegularSeason==='function' && !!canSimRegularSeason(); }catch(e){ ok=false; }
-  return ok ? `<button class="btn" data-a="simRegular" title="模拟到常规赛全部结束，季后赛开始前停下">${ico('skip')} 模拟常规赛（到季后赛前）</button>` : '';
+// 可跳过的阶段（引擎 eventSkipPhase：LPL 常规赛、FST/EWC 小组、Worlds 瑞士轮；其余返回 null）
+function curSkipPhase(){
+  try{ return typeof eventSkipPhase==='function' && typeof skipEventPhase==='function' ? eventSkipPhase() : null; }catch(e){ return null; }
+}
+function skipPhaseBtn(){
+  const ph = curSkipPhase();
+  return ph ? `<button class="btn" data-a="skipPhase" title="${ph.stopsAt?`在「${esc(ph.stopsAt)}」开始前停下`:''}">${ico('skip')} ${esc(ph.label)}</button>` : '';
+}
+function skipPhaseHint(){
+  const ph = curSkipPhase();
+  return ph && ph.stopsAt ? `<p class="muted skip-hint">「${esc(ph.label)}」会在「${esc(ph.stopsAt)}」开始前停下</p>` : '';
+}
+// 每次只推进 nextReadyMatch 这一场：玩家比赛直接进入，AI 比赛逐场结算
+function nextMatchBtn(nxt){
+  if(!nxt || !nxt.m) return '';
+  if(userInvolved(nxt.m)) return `<button class="btn big" data-a="enterMatch">${ico('play')} 进入比赛</button>`;
+  if(typeof playNextAiMatch!=='function') return '';
+  const vs = nxt.m.a && nxt.m.b ? `${teamName(nxt.m.a)} vs ${teamName(nxt.m.b)}` : '';
+  return `<button class="btn big" data-a="nextAiMatch" title="${esc(vs)}">${ico('play')} 推进下一场 AI 对阵</button>`;
+}
+// BP 页「自动模拟剩余系列赛」：仅当引擎 canAutoSeries(m) 允许（系列赛属于可跳阶段）
+function canAutoSeriesNow(){
+  const M = UI.match;
+  try{ return !!(M && M.item && typeof canAutoSeries==='function' && canAutoSeries(M.item.m)); }catch(e){ return false; }
 }
 function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">${ico('warn')} ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
@@ -879,7 +898,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.11')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.12')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -1841,7 +1860,7 @@ function matchScreen(){
           </button>` : `<div class="ai-wait-pill">对手思考中…</div>`}
           <div class="dock-sub-btns">
             <button class="hex-btn sm ghost" data-a="dAuto">自动完成本局BP</button>
-            <button class="hex-btn sm ghost" data-a="autoSeries">自动模拟剩余系列赛</button>
+            ${canAutoSeriesNow()?`<button class="hex-btn sm ghost" data-a="autoSeries">自动模拟剩余系列赛</button>`:''}
           </div>
         </div>
       </div>
@@ -2126,10 +2145,20 @@ const ACT = {
   nextEvent:()=>{ advanceEvent(); save(); render(); },
   renew:d=>{ renewPlayer(d.p); save(); render(); },
   newSeason:()=>{ finishOffseason(); save(); render(); toast(`${S.year} 赛季开始！`); },
-  toMyMatch:()=>{
+  enterMatch:()=>{
+    const it = nextReadyMatch();
+    if(!it || !userInvolved(it.m)){ render(); return; }
     const ps = lineupProblems(S.user);
     if(ps.length){ toast('无法开赛：'+ps.join('；')); return; }
-    const it=simUntilUser(false); save(); if(it && userInvolved(it.m)) beginUserMatch(it); else render();
+    beginUserMatch(it);
+  },
+  nextAiMatch:()=>{
+    if(typeof playNextAiMatch!=='function') return;
+    const it = nextReadyMatch();
+    if(!it || userInvolved(it.m)){ render(); return; }
+    const m = playNextAiMatch();
+    save(); render();
+    if(m && m.w) toast(`${teamName(m.a)} ${m.s[0]}:${m.s[1]} ${teamName(m.b)}（${m.label}）`);
   },
   dismissUpdate:()=>{ UI.hideUpdateBanner=true; render(); },
   checkAppUpdate:async()=>{
@@ -2141,6 +2170,8 @@ const ACT = {
     render();
   },
   simStage:()=>{
+    const ev = curEvent();
+    if(!ev || !ev.started || !curSkipPhase()) return;
     const ps = lineupProblems(S.user);
     if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
     const res = simCurrentRound();
@@ -2152,19 +2183,16 @@ const ACT = {
       toast(`本轮 ${res.played} 场比赛模拟完毕`);
     }
   },
-  simRegular:()=>{
-    if(typeof canSimRegularSeason!=='function' || typeof simRegularSeason!=='function' || !canSimRegularSeason()) return;
+  skipPhase:()=>{
+    const ph = curSkipPhase();
+    if(!ph) return;
     const ps = lineupProblems(S.user);
     if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
-    const res = simRegularSeason();
+    const res = skipEventPhase() || {};
     save(); render();
-    const n = res && Number.isFinite(res.played) ? res.played : null;
-    toast(n!=null ? `常规赛模拟完毕（共 ${n} 场），季后赛即将开始` : '常规赛模拟完毕，季后赛即将开始');
-  },
-  simEvent:()=>{
-    const ps = lineupProblems(S.user);
-    if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
-    simUntilUser(true); save(); render();
+    const n = Number.isFinite(res.played) ? `（共 ${res.played} 场）` : '';
+    const u = Array.isArray(res.userMatches) && res.userMatches.length ? res.userMatches[res.userMatches.length-1] : null;
+    toast(`${ph.label}完成${n}${u?`，我方最后一场${u.won?'胜':'负'}：${teamName(u.a)} ${u.s[0]}:${u.s[1]} ${teamName(u.b)}`:''}${ph.stopsAt?`，停在「${ph.stopsAt}」开始前`:''}`);
   },
   evSel:d=>{ UI.evSel=+d.i; render(); },
   showMatch:d=>{ UI.modal=matchDetail(d.m); render(); },
@@ -2304,7 +2332,7 @@ const ACT = {
   nextGame:()=>{ const M=UI.match; enterNextGamePhase(M); render(); },
   autoSeries:()=>{
     const M=UI.match;
-    if(!M || M._autoSettling) return;   // 防止连点重复结算
+    if(!M || M._autoSettling || !canAutoSeriesNow()) return;   // 防止连点重复结算；仅可跳阶段的系列赛可自动模拟
     M._autoSettling = true;
     const m=M.item.m; const need=Math.ceil(m.bo/2);
     stopBpClock(); Watch.stop();

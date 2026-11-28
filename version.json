@@ -1,7 +1,7 @@
 {
-  "version": "2.1.11",
+  "version": "2.1.12",
   "date": "2026-11-28",
-  "notes": "逐波补刀与野怪清营、资源交战和快模一致性、跳过范围修复、转会资料卡与赛区对抗标签",
+  "notes": "各赛事独立跳过常规赛、小组赛或瑞士轮，关键系列赛逐局进行，调低 Clearlove7 基础能力与潜力",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

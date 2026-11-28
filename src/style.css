@@ -1333,6 +1333,7 @@ body.cb-lock{overflow:hidden}
 .pl-link{appearance:none;background:none;border:0;padding:0;margin:0;font:inherit;line-height:inherit;cursor:pointer;color:inherit;text-align:inherit;text-decoration:underline dotted rgba(200,155,60,.7);text-underline-offset:3px}
 .pl-link:focus-visible{outline:2px solid var(--hex-gold-l,#f0e6d2);outline-offset:2px;border-radius:2px}
 .pl-link:hover{color:var(--hex-gold-l,#f0e6d2);text-decoration-style:solid}
+.skip-hint{margin:6px 0 0;font-size:12px}
 .db-ovr{font-size:13px;font-weight:400;margin-left:8px;white-space:nowrap}
 .rg-tag{display:inline-flex;align-items:baseline;gap:4px;margin:0 6px 4px 0;padding:1px 7px;border:1px solid var(--ln,#33496a);border-radius:4px;font-size:12px}
 .rg-tag b{font-family:var(--num)}.rg-tag small{opacity:.7}

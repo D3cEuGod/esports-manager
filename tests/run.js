@@ -299,13 +299,46 @@ section('完整赛季：从 LPL 第一赛段到世界赛 + 休赛期');
 {
   const t0 = performance.now();
   const r = run(`(()=>{
-    newGame('BLG'); const log=[], champions={}; let guard=0;
+    newGame('BLG'); const log=[], champions={}, boundaries=[]; let guard=0;
+    const targets={lpl_s1:[54,1],lpl_s2:[71,1],lpl_s3:[68,1],fst:[10,2],ewc:[20,4],worlds:[33,2]};
+    const settled=ev=>ev.stages.flatMap(st=>st.matches).filter(m=>m.w).length;
     while(guard++<40){
       const ev=curEvent();
       if(isRosterSetup(ev)){ if(!finishRosterSetup().ok) throw new Error('组队失败'); log.push('setup'); continue; }
       if(ev.type==='off'){ finishOffseason(); log.push('off'); break; }
       if(ev.type==='window'){ ev.done=true; aiTransfers(4); advanceEvent(); log.push('window'); continue; }
-      simUntilUser(true);
+      const target=targets[ev.type];
+      let boundary=true;
+      if(!target || ev.type==='worlds'){
+        boundary=!eventSkipPhase() && skipEventPhase().played===0 && simCurrentRound().played===0 && !ev.started;
+        startEvent();
+        boundary=boundary && !eventSkipPhase() && skipEventPhase().played===0 && simCurrentRound().played===0 && settled(ev)===0;
+      }
+      if(ev.type==='worlds'){
+        while(ev.si===0 && nextReadyMatch()) playAI(nextReadyMatch());
+        boundary=boundary && ev.si===1 && settled(ev)===6 && !!eventSkipPhase();
+      }
+      if(target){
+        boundary=boundary && !!eventSkipPhase();
+        const before=settled(ev), result=skipEventPhase();
+        boundary=boundary && result.played===target[0] && settled(ev)-before===target[0] &&
+          ev.si===target[1] && !ev.done && !eventSkipPhase() && ev.stages[ev.si].matches.every(m=>!m.w);
+      }
+      const first=nextReadyMatch(), count=settled(ev);
+      boundary=boundary && skipEventPhase().played===0 && simCurrentRound().played===0 && settled(ev)===count &&
+        !!first && !canAutoSeries(first.m);
+      while(nextReadyMatch()){
+        const next=nextReadyMatch(), before=settled(ev);
+        const moved=playNextAiMatch();
+        if(userInvolved(next.m)){
+          boundary=boundary && moved===null && settled(ev)===before;
+          playAI(next); // 仅供无界面测试，代替逐局手动结算。
+        } else {
+          boundary=boundary && moved===next.m && settled(ev)===before+1;
+          if(!moved) throw new Error('AI 对阵无法推进：'+ev.type);
+        }
+      }
+      boundaries.push([ev.type,boundary]);
       if(!ev.done) throw new Error('赛事未完成：'+ev.type);
       champions[ev.type]=ev.res.champ;
       log.push(ev.type+':'+(ev.res.champ||'-'));
@@ -314,11 +347,13 @@ section('完整赛季：从 LPL 第一赛段到世界赛 + 休赛期');
     const ser=JSON.stringify(S); const S2=migrateSave(JSON.parse(ser));
     const history=S.history[0];
     const historyOk=['fst','msi','ewc','worlds'].every(type=>champions[type] && history?.[type]===champions[type]);
-    return {log, year:S.year, ok: !!S2 && S2.year===S.year, size: ser.length, historyOk, nextEvent:curEvent().type};
+    return {log, boundaries, year:S.year, ok: !!S2 && S2.year===S.year, size: ser.length, historyOk, nextEvent:curEvent().type};
   })()`);
   console.log('  ', r.log.join(' → '), ` 用时 ${((performance.now() - t0) / 1000).toFixed(1)}s  存档 ${(r.size / 1024).toFixed(0)}KB`);
   ok(r.log.includes('off') && r.year === 2027 && r.nextEvent === 'lpl_s1', '赛季顺利结束，下一年保留原赛程');
   ok(r.historyOk, '插入组队事件后，国际赛冠军正确写入赛季历史');
+  ok(r.boundaries.length===8 && r.boundaries.every(([,valid])=>valid),
+    '八项赛制的阶段跳过、单场 AI 推进和手动比赛边界：'+JSON.stringify(r.boundaries));
   ok(r.ok, '存档序列化与迁移正常');
 }
 
@@ -820,7 +855,7 @@ section('传奇自由选手与手工英雄池');
     newGame('BLG');
     const uzi=P('Uzi2018'), cl=P('Clearlove2017'), canyon=P('Canyon');
     const fresh=!!uzi && !!cl && !uzi.team && !cl.team && uzi.legend && playerTag(uzi)==='Uzi (2018)' &&
-      uzi.rating===94 && uzi.age===21 && cl.rating===92 && cl.role==='JUG' && uzi.pot===uzi.rating;
+      uzi.rating===94 && uzi.age===21 && cl.rating===87 && cl.pot===87 && cl.role==='JUG' && uzi.pot===uzi.rating;
     const pools=uzi.champs[0].c==="Kai'Sa" && cl.champs[0].c==="Rek'Sai" &&
       canyon.champs.slice(0,2).map(e=>e.c).join()==='Lee Sin,Nidalee' && playerProfTier(uzi,"Kai'Sa").name===profTier(95).name;
     const traits=traitTags(playerTraits(uzi)).some(t=>t.t==='大赛爆发') && traitTags(playerTraits(cl)).some(t=>t.t==='抗压强');
@@ -836,12 +871,23 @@ section('传奇自由选手与手工英雄池');
     old.teams.BLG.roster=old.teams.BLG.roster.filter(x=>x!=='Uzi2018');
     old.players.Canyon.champs=[{c:'Xin Zhao',p:94},{c:'Vi',p:91},{c:'Nidalee',p:74},{c:'Olaf',p:40}];
     const m=migrateSave(old);
-    const migrated=!!m.players.Uzi2018 && !m.players.Uzi2018.team && m.legendsVer===1 &&
+    const migrated=!!m.players.Uzi2018 && !m.players.Uzi2018.team && m.legendsVer===1 && m.players.Clearlove2017?.rating===87 &&
       m.players.Canyon.champs.find(e=>e.c==='Nidalee').p===94 && champProfVal(m.players.Canyon,'Olaf')===40 &&
       m.players.Canyon.champs.find(e=>e.c==='Xin Zhao').p===94;
     const again=migrateSave(JSON.parse(JSON.stringify(m)));
     const once=Object.keys(again.players).length===Object.keys(m.players).length;
-    return {fresh,pools,traits,aiSkip,atSetup,signed,migrated,once};
+    const v1=JSON.parse(JSON.stringify(S));
+    const oldCl=v1.players.Clearlove2017;
+    delete oldCl.legendBaseRating;
+    Object.assign(oldCl,{rating:94.5,ratingYearStart:93,pot:92,ratingDelta:1.5,team:'BLG',salary:842,contract:2028});
+    v1.teams.BLG.roster.push(oldCl.pid);
+    const oldPool=JSON.stringify(oldCl.champs);
+    const adjusted=migrateSave(v1).players.Clearlove2017;
+    const reopened=migrateSave(JSON.parse(JSON.stringify(v1))).players.Clearlove2017;
+    const rebalanced=adjusted.rating===89.5 && adjusted.ratingYearStart===88 && adjusted.pot===87 &&
+      adjusted.ratingDelta===1.5 && adjusted.salary===842 && adjusted.contract===2028 &&
+      JSON.stringify(adjusted.champs)===oldPool && reopened.rating===89.5;
+    return {fresh,pools,traits,aiSkip,atSetup,signed,migrated,once,rebalanced};
   })()`);
   ok(r.fresh,'新档有 Uzi (2018) 与 Clearlove7 (2017) 两位自由选手');
   ok(r.pools,'传奇与 Canyon 使用手工英雄池，招牌英雄可达到顶级熟练度');
@@ -849,6 +895,7 @@ section('传奇自由选手与手工英雄池');
   ok(r.aiSkip,'AI 球队缺人时不会签走传奇选手');
   ok(r.atSetup && r.signed,'开局组队阶段可直接签下传奇选手');
   ok(r.migrated && r.once,'旧档补入传奇、Canyon 招牌英雄提升且保留旧英雄，只执行一次');
+  ok(r.rebalanced,'Clearlove7 老档基础值只调整一次，成长、熟练度及现有合同保留');
 }
 
 section('临场发挥与爆冷');

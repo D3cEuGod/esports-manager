@@ -193,13 +193,36 @@ async function main(){
     const round=!!item.m.w && item.m.gm.every(g=>g.masteryChanges.length===5);
     const ev=curEvent(), phase=ev.stages[ev.si];
     const pending=phase.matches.filter(m=>!m.w).length;
-    document.querySelector('[data-a="simRegular"]').click();
+    const skip=document.querySelector('[data-a="skipPhase"]');
+    if(!skip || !skip.textContent.includes('第一赛段')) return false;
+    skip.click();
     const regular=pending>0 && phase.matches.every(m=>m.w) && curEvent()===ev && !ev.done &&
       ev.stages[ev.si].kind!=='rr' && !!nextReadyMatch() && !nextReadyMatch().m.w &&
-      !document.querySelector('[data-a="simRegular"]');
-    ACT.simEvent(); const complete=curEvent().done && !!curEvent().res.champ;
+      !document.querySelector('[data-a="skipPhase"],[data-a="simStage"],[data-a="simEvent"]');
+    const matchup=nextReadyMatch(), original=S.user;
+    S.user=matchup.m.a;
+    render();
+    const button=text=>[...document.querySelectorAll('main button[data-a]')].find(b=>b.textContent.includes(text));
+    button('进入比赛')?.click();
+    const entered=UI.match?.item.m===matchup.m;
+    if(entered){
+      setupDraft('A'); render();
+      ACT.autoSeries();
+    }
+    const protectedMatch=entered && !matchup.m.w && !UI.match.games.length &&
+      !document.querySelector('[data-a="autoSeries"]');
+    stopBpClock(); Watch.stop(); UI.match=null;
+    S.user=Object.keys(S.teams).find(k=>k!==matchup.m.a && k!==matchup.m.b);
+    render();
+    const settled=()=>ev.stages.flatMap(st=>st.matches).filter(m=>m.w).length;
+    const baseline=settled();
+    button('下一场 AI 对阵')?.click();
+    const one=!!matchup.m.w && settled()===baseline+1;
+    S.user=original;
+    while(nextReadyMatch()) playAI(nextReadyMatch());
+    const complete=curEvent().done && !!curEvent().res.champ;
     ACT.nextEvent();
-    return round && regular && complete && curEvent().type==='fst';
+    return round && regular && protectedMatch && one && complete && curEvent().type==='fst';
   });
   checks.progressionViews=await run(()=>{
     const names=[['events','赛事'],['meta','版本'],['news','新闻'],['settings','账号与存档']];

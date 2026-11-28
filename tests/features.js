@@ -245,12 +245,21 @@ async function main(){
     for(let i=0;i<30 && S.year!==date;i++) await new Promise(resolve=>setTimeout(resolve,25));
     const imported=S.year===date && S.user==='TES';
     await StorageBridge.writeSaveText(JSON.stringify(S)); S=null; const reopened=await load() && S.user==='TES';
-    const original=window.fetch;
-    window.fetch=async()=>new Response(JSON.stringify({version:'99.0.0',url:'https://example.test/release',notes:'测试更新'}),{status:200});
+    const originalFetch=window.fetch, originalOpen=window.open;
+    const asset='https://example.test/web.html';
+    let opened;
+    window.fetch=async()=>new Response(JSON.stringify({
+      tag_name:'v99.0.0',name:'测试更新',html_url:'https://example.test/release',
+      assets:[{name:'RiftManager-v99.0.0-Web-Offline.html',browser_download_url:asset}]
+    }),{status:200});
+    window.open=url=>{ opened=url; return {}; };
     try{
       const update=await AppUpdater.check(true); render();
-      return imported && reopened && update.hasUpdate && document.querySelector('a[href="https://example.test/release"]')?.textContent.includes('更新');
-    } finally { window.fetch=original; }
+      const action=document.querySelector('[data-a="runAppUpdate"]');
+      if(!action?.textContent.includes('下载最新版本 v99.0.0')) return false;
+      await AppUpdater.run();
+      return imported && reopened && update.hasUpdate && opened===asset;
+    } finally { window.fetch=originalFetch; window.open=originalOpen; }
   });
   checks.offseason=await run(()=>{
     S.evIdx=S.events.findIndex(e=>e.type==='off'); UI.view='home'; UI.offTab='train'; render();

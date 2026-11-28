@@ -40,9 +40,11 @@ const r=run(`(()=>{
     let maxError=0, consistent=true;
     for(let year=0;year<5;year++,p.age++){
       const factor=p.age<=22?1:p.age<=26?.55:p.age<=29?.24:.10;
-      const growth=(Math.max(0,pot-rating)*factor*.135+.6*factor*.80)*DEV_GROWTH_MUL;
+      let growth=(Math.max(0,pot-rating)*factor*.135+.6*factor*.80)*DEV_GROWTH_MUL*potentialGrowthMul(pot);
+      if(growth>0 && rating>=pot) growth*=POT_OVER_RATE;
       const aging=p.age<27?0:(p.age-26)*.13*.58;
-      rating=clamp(Math.round((rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
+      const target=clamp(Math.round((rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);
+      rating=target>rating ? Math.min(target,Math.max(rating,pot+POT_OVER_CAP)) : target;
       p.development={games:12,performance:7.2};
       settlePlayerDevelopment(p);
       consistent&&=coherent(p);

@@ -1,7 +1,7 @@
 {
-  "version": "2.1.17",
+  "version": "2.1.18",
   "date": "2026-11-28",
-  "notes": "成长看潜力：潜力高的长得快，到达潜力后放缓且最多超出 2 分；职业选手潜力不再低于当前能力",
+  "notes": "新增选手能力细分、对局阶段倾向、解说标签与 14 分钟补刀和经济数据",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

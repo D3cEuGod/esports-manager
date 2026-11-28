@@ -555,6 +555,7 @@ VIEWS.home = () => {
         ${setup?'':`<button class="btn big" style="margin-left:auto" data-a="endWindow">结束转会窗，继续赛程 ▶</button>`}
       </div>
       ${probs()}
+      ${legendStripHtml()}
       ${setup?`<div class="btns"><button class="btn big" data-a="finishSetup">完成组队，进入第一赛段 ▶</button></div>`:''}
     </section>
     <section class="card">${marketEmbedHtml(45)}</section>`;
@@ -684,6 +685,14 @@ function rosterCard(p, slot, win){
   </div>`;
 }
 
+// 转会窗口里置顶展示尚未签约的传奇自由选手（只有玩家能签）
+function legendStripHtml(){
+  const ls=Object.values(S.players).filter(p=>p.legend && !p.team && !p.retired);
+  if(!ls.length) return '';
+  return `<div class="legend-strip"><b>传奇自由选手</b><span class="muted">无需转会费，只付年薪；AI 球队不会签约</span>
+    ${ls.map(p=>`<span class="legend-card"><b>${esc(playerTag(p))}</b> <small>${ROLE_CN[p.role]} · ${p.age}岁</small> ${ovrBadge(p.rating)} <small class="muted">${p.champs.slice(0,3).map(x=>CH[x.c]?.cn||x.c).join('、')}</small> <small>年薪 ${fmtMoney(Math.round(p.salary*1.1))}</small>${transferWindowOpen()?` <button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">签约</button>`:''}</span>`).join('')}
+  </div>`;
+}
 // ---------- 转会市场（含季中建队非卖品过滤） ----------
 function marketEmbedHtml(limit){
   const f=UI.mk;
@@ -695,7 +704,7 @@ function marketEmbedHtml(limit){
   if(f.role!=='ALL') ps=ps.filter(p=>p.role===f.role);
   if(f.q) ps=ps.filter(p=>(playerTag(p)+p.name+(p.team||'')).toLowerCase().includes(f.q.toLowerCase()));
   const key={rating:p=>-p.rating, value:p=>-playerValue(p), age:p=>p.age, pot:p=>-p.pot}[f.sort];
-  ps.sort((a,b)=>key(a)-key(b));
+  ps.sort((a,b)=>(f.fa?(!!b.legend)-(!!a.legend):0) || key(a)-key(b));
   const open=transferWindowOpen();
   const maxShow = limit || 120;
   return `<div class="mk-wrap">
@@ -713,7 +722,7 @@ function marketEmbedHtml(limit){
   ${ps.slice(0,maxShow).map(p=>{
     const locked = isUntouchable(p);
     const crossMid = midWin && isCrossRegionFor(p, S.user);
-    return `<tr><td><b>${esc(playerTag(p))}</b>${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
+    return `<tr><td><b>${esc(playerTag(p))}</b>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
     <td>${!open?'':locked?`<span class="nft-tag">${ico('lock')} 季中非卖</span>`:`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
   }).join('')}</table>
   ${ps.length>maxShow?`<p class="muted">共 ${ps.length} 人，当前显示前 ${maxShow} 人，请使用上方筛选缩小范围。</p>`:''}

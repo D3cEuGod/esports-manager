@@ -676,5 +676,42 @@ section('职业英雄池、熟练度持久化与选手成长');
   ok(r.grow && r.chemistry, '潜力独立，实战出场加快成长，历史搭档有默契基础');
 }
 
+section('传奇自由选手与手工英雄池');
+{
+  const r=run(`(()=>{
+    newGame('BLG');
+    const uzi=P('Uzi2018'), cl=P('Clearlove2017'), canyon=P('Canyon');
+    const fresh=!!uzi && !!cl && !uzi.team && !cl.team && uzi.legend && playerTag(uzi)==='Uzi (2018)' &&
+      uzi.rating===94 && uzi.age===21 && cl.rating===92 && cl.role==='JUG' && uzi.pot===uzi.rating;
+    const pools=uzi.champs[0].c==="Kai'Sa" && cl.champs[0].c==="Rek'Sai" &&
+      canyon.champs.slice(0,2).map(e=>e.c).join()==='Lee Sin,Nidalee' && playerProfTier(uzi,"Kai'Sa").name===profTier(95).name;
+    const traits=traitTags(playerTraits(uzi)).some(t=>t.t==='大赛爆发') && traitTags(playerTraits(cl)).some(t=>t.t==='抗压强');
+    // AI 缺人时不会签走传奇
+    const t=T('JDG'); const adc=t.lineup.ADC; t.roster=t.roster.filter(x=>P(x).role!=='ADC'); P(adc).team=null; delete t.lineup.ADC;
+    ensureRoster('JDG');
+    const aiSkip=!uzi.team && t.roster.some(x=>P(x).role==='ADC');
+    const atSetup=isRosterSetup(curEvent()) && transferWindowOpen();
+    const signed=makeOffer('Uzi2018',0).ok && uzi.team==='BLG';
+    // 旧档：去掉传奇、Canyon 回到旧英雄池，读档后补回
+    const old=JSON.parse(JSON.stringify(S));
+    delete old.legendsVer; delete old.players.Uzi2018; delete old.players.Clearlove2017;
+    old.teams.BLG.roster=old.teams.BLG.roster.filter(x=>x!=='Uzi2018');
+    old.players.Canyon.champs=[{c:'Xin Zhao',p:94},{c:'Vi',p:91},{c:'Nidalee',p:74},{c:'Olaf',p:40}];
+    const m=migrateSave(old);
+    const migrated=!!m.players.Uzi2018 && !m.players.Uzi2018.team && m.legendsVer===1 &&
+      m.players.Canyon.champs.find(e=>e.c==='Nidalee').p===94 && champProfVal(m.players.Canyon,'Olaf')===40 &&
+      m.players.Canyon.champs.find(e=>e.c==='Xin Zhao').p===94;
+    const again=migrateSave(JSON.parse(JSON.stringify(m)));
+    const once=Object.keys(again.players).length===Object.keys(m.players).length;
+    return {fresh,pools,traits,aiSkip,atSetup,signed,migrated,once};
+  })()`);
+  ok(r.fresh,'新档有 Uzi (2018) 与 Clearlove7 (2017) 两位自由选手');
+  ok(r.pools,'传奇与 Canyon 使用手工英雄池，招牌英雄可达到顶级熟练度');
+  ok(r.traits,'传奇选手带有设定的性格特质');
+  ok(r.aiSkip,'AI 球队缺人时不会签走传奇选手');
+  ok(r.atSetup && r.signed,'开局组队阶段可直接签下传奇选手');
+  ok(r.migrated && r.once,'旧档补入传奇、Canyon 招牌英雄提升且保留旧英雄，只执行一次');
+}
+
 console.log(fails ? `\n✗ ${fails} 项失败` : '\n✓ 全部通过');
 process.exit(fails ? 1 : 0);

@@ -8,8 +8,13 @@ d = {}
 for f in sorted(glob.glob(os.path.join('data', '*.json'))):
     j = json.load(open(f, encoding='utf-8'))
     d[j['region']] = {'teams': j['teams']}
+# Legend free agents and hand-set champion pools (data/legends/legends.json)
+lp = os.path.join('data', 'legends', 'legends.json')
+lj = json.load(open(lp, encoding='utf-8')) if os.path.exists(lp) else {}
+legends = {'legends': lj.get('legends', []), 'champOverrides': lj.get('champOverrides', {})}
 open(os.path.join('src', 'data.js'), 'w', encoding='utf-8').write(
     'window.ROSTER=' + json.dumps(d, ensure_ascii=False) + ';\n'
+    + 'window.LEGENDS=' + json.dumps(legends, ensure_ascii=False) + ';\n'
 )
 
 # 1b. Player traits (historical big-stage / knockout / stability / resilience research) -> src/traits.js
@@ -66,7 +71,7 @@ manifest = {
 open(os.path.join('dist', 'manifest.webmanifest'), 'w', encoding='utf-8').write(
     json.dumps(manifest, ensure_ascii=False, indent=2)
 )
-sw_code = """const CACHE = 'rift-manager-v2.1.7';
+sw_code = """const CACHE = 'rift-manager-v2.1.8';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

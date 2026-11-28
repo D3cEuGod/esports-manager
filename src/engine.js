@@ -6,6 +6,11 @@ const REGION_STR = {LCK:6,LPL:6,LEC:4,LCS:3,LCP:2,CBLOL:1};
 const CH = {}; CHAMPS.forEach(([k,cn,roles,tags,dmg])=>CH[k]={k,cn,roles,tags,dmg});
 const CHAMP_KEYS = Object.keys(CH);
 const PRO_DATA = window.PRO_PLAYER_DATA || {players:{}, roles:{}, pairs:{}};
+// 传奇选手（如 Uzi (2018)）与个别选手的手工英雄池，见 data/legends/legends.json
+const LEGENDS = window.LEGENDS || {legends:[], champOverrides:{}};
+const LEGEND_BY_PID = Object.fromEntries((LEGENDS.legends||[]).map(l=>[l.pid,l]));
+function champOverride(p){ return p ? (p.legend ? LEGEND_BY_PID[p.pid] : LEGENDS.champOverrides?.[p.tag||p.pid]) || null : null; }
+function topChamps(table,n){ return Object.keys(table||{}).filter(c=>CH[c]).sort((a,b)=>table[b]-table[a]).slice(0,n); }
 const PROFESSIONAL_HEROES = Object.fromEntries(ROLES.map(r=>[r,CHAMP_KEYS.filter(c=>CH[c].roles.includes(r) && (PRO_DATA.roles[r]?.[c]||0)>=6)]));
 const rnd = () => Math.random();
 const randn = () => { let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
@@ -104,6 +109,19 @@ function migrateSave(s){
     });
   }
   s.moodVer=1;
+  // 旧档一次性补上传奇自由选手，并把手工英雄池的招牌英雄提到新熟练度（已练出的其他英雄保留）
+  if(!s.legendsVer && s.players){
+    const prevS = S; S = s;
+    addLegends();
+    Object.values(s.players).forEach(p=>{
+      const ov = !p.legend && LEGENDS.champOverrides?.[p.tag||p.pid];
+      if(!ov || p.retired) return;
+      for(const [c,v] of Object.entries(ov.champs||{})) if(CH[c] && champProfVal(p,c) < v) rememberChampProf(p,c,v);
+      p.champs.sort((a,b)=>b.p-a.p);
+    });
+    S = prevS;
+  }
+  s.legendsVer=1;
   if(!s.bonds || typeof s.bonds !== 'object'){
     s.bonds = {};
     const prevS = S; S = s;
@@ -162,7 +180,9 @@ function newGame(userTeam){
   }
   S.playerDevelopment=1;
   S.moodVer=1;
+  S.legendsVer=1;
   newPatch();
+  addLegends();
   Object.values(S.players).forEach(p=>genChampPool(p,srand(hash(p.pid)),S.meta));
   for(let i=0;i<24;i++) genRookie(2026);
   Object.values(S.teams).forEach(t=>autoLineup(t.key));
@@ -179,7 +199,22 @@ function initialPotential(p){
   return Math.round(clamp(57 + talent*40 + (p.age<=21?7:p.age<=24?2:0),55,98));
 }
 const styleForPlayer=new Map();
-function professionalPicks(p){ return PRO_DATA.players[String(playerTag(p)).toLowerCase()] || {}; }
+function professionalPicks(p){ return champOverride(p)?.picks || PRO_DATA.players[String(playerTag(p)).toLowerCase()] || {}; }
+// 传奇选手作为自由球员加入（只有玩家能签，AI 不会签约）；已存在则跳过
+function addLegends(){
+  for(const l of LEGENDS.legends||[]){
+    if(S.players[l.pid]) continue;
+    const pl = { pid:l.pid, tag:l.id, name:l.name||l.id, role:l.role, nat:l.nat||'CN', age:l.age||22, rating:l.rating||85,
+      team:null, form:0, mental:0, champs:[], legend:true };
+    pl.pot = l.pot || pl.rating;
+    pl.ratingYearStart = pl.rating;
+    pl.salary = fairSalary(pl);
+    pl.contract = S.year;
+    rollStartMood(pl);
+    genChampPool(pl);
+    S.players[pl.pid] = pl;
+  }
+}
 function playerStyle(p){
   const id=playerTag(p).toLowerCase();
   if(!styleForPlayer.has(id)){
@@ -197,6 +232,12 @@ function proAffinity(p,c){
 }
 function genChampPool(pl, r, meta=S?.meta||{}){
   r = r || rnd;
+  const ov=champOverride(pl);
+  if(ov?.champs){
+    pl.champs = Object.entries(ov.champs).filter(([c])=>CH[c]).map(([c,p])=>({c,p})).sort((a,b)=>b.p-a.p);
+    pl.trainTargets = pl.trainTargets || [];
+    return;
+  }
   const history=professionalPicks(pl);
   const pool = PROFESSIONAL_HEROES[pl.role]?.length ? PROFESSIONAL_HEROES[pl.role] : CHAMP_KEYS.filter(k=>CH[k].roles.includes(pl.role));
   const depth = (pl.rating||70)>=86 ? 8 : 7;
@@ -528,7 +569,7 @@ function playerTraits(p){
   const hit = _trCache[cacheKey];
   if(hit && hit._v === ver) return hit;
   const tagKey = p.tag || p.pid;
-  const T0 = (typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null;
+  const T0 = ((typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null) || (p.legend ? LEGEND_BY_PID[p.pid]?.traits : null);
   let tr;
   if(T0){ tr = {stab:T0.stab, big:T0.big, ko:T0.ko, res:T0.res, base:T0.base||0, n:T0.n||0, src:'data'}; }
   else {
@@ -786,7 +827,7 @@ function ensureRoster(key){
   }
   if(key!==S.user) autoLineup(key);
 }
-function freeAgents(){ return Object.values(S.players).filter(p=>!p.team && !p.retired); }
+function freeAgents(){ return Object.values(S.players).filter(p=>!p.team && !p.retired && !p.legend); }
 function signPlayer(pid,key,salary,contract){
   const p=P(pid); if(!p) return;
   const transferred=p.team!==key;
@@ -2161,7 +2202,8 @@ function evolveChampPool(p, metaTable, isOffseason){
   // 1. 自然遗忘衰减（老英雄长期不练会缓慢流失熟练度）
   const baseDecay = isOffseason ? 8 : 3;
   const history=professionalPicks(p);
-  const signatures=Object.keys(history).filter(c=>history[c]>=4).slice(0,2);
+  const ov=champOverride(p);
+  const signatures=ov?.champs ? topChamps(ov.champs,2) : Object.keys(history).filter(c=>history[c]>=4).slice(0,2);
   p.champs.forEach(e=>{
     const d = Math.round(baseDecay + rnd() * (isOffseason ? 6 : 2));
     const prev=migrateChampProf(e.p);

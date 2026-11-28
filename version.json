@@ -1,7 +1,7 @@
 {
-  "version": "2.1.7",
+  "version": "2.1.8",
   "date": "2026-11-28",
-  "notes": "同队选手的状态和心态不再雷同：每人有自己的性格基线，个人发挥、上场时间都会影响心态",
+  "notes": "新增传奇自由选手 Uzi (2018) 与 Clearlove7 (2017)，开局即可签约；修正 Canyon 英雄池",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

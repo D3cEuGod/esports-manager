@@ -1,0 +1,35 @@
+{
+ "sourceNotes": "Champion game counts from gol.gg player stats, fetched 2026-11-28 (Leaguepedia and Liquipedia refused automated fetches). Uzi: player 171, season S8 (2018), 114 games. Clearlove7: player 179, season S7 (2017), 61 games tracked, which is not the full season, so counts are only relative weights. Canyon: player 1909, all seasons. Proficiency values (champs) and traits are hand-set from those counts and are estimates, not statistics.",
+ "legends": [
+  {
+   "pid": "Uzi2018",
+   "id": "Uzi (2018)",
+   "name": "Jian Zi-Hao（简自豪）",
+   "role": "ADC",
+   "nat": "CN",
+   "age": 21,
+   "rating": 94,
+   "traits": {"big": 1.4, "ko": 0.8, "stab": 0.95, "res": 1.0},
+   "picks": {"Kai'Sa": 21, "Varus": 16, "Ezreal": 15, "Xayah": 14, "Kog'Maw": 13, "Ashe": 7, "Lucian": 7, "Caitlyn": 6, "Vayne": 5, "Tristana": 4, "Kalista": 3, "Sivir": 2},
+   "champs": {"Kai'Sa": 95, "Varus": 93, "Ezreal": 92, "Xayah": 91, "Kog'Maw": 88, "Vayne": 86, "Ashe": 80, "Lucian": 78, "Caitlyn": 76, "Tristana": 72, "Sivir": 72}
+  },
+  {
+   "pid": "Clearlove2017",
+   "id": "Clearlove7 (2017)",
+   "name": "Ming Kai（明凯）",
+   "role": "JUG",
+   "nat": "CN",
+   "age": 24,
+   "rating": 92,
+   "traits": {"big": 0.3, "ko": 0.6, "stab": 0.76, "res": 1.28},
+   "picks": {"Rek'Sai": 14, "Kha'Zix": 10, "Sejuani": 8, "Jarvan IV": 8, "Elise": 6, "Gragas": 3, "Maokai": 3, "Nidalee": 2, "Lee Sin": 1},
+   "champs": {"Rek'Sai": 94, "Kha'Zix": 91, "Sejuani": 88, "Jarvan IV": 85, "Elise": 84, "Gragas": 82, "Maokai": 76, "Nidalee": 74, "Lee Sin": 72}
+  }
+ ],
+ "champOverrides": {
+  "Canyon": {
+   "picks": {"Lee Sin": 118, "Xin Zhao": 64, "Sejuani": 61, "Nidalee": 60, "Vi": 52, "Wukong": 51, "Jarvan IV": 51, "Skarner": 43, "Trundle": 39, "Maokai": 37, "Pantheon": 36, "Graves": 36, "Viego": 31, "Nocturne": 30, "Karthus": 17, "Taliyah": 16, "Lillia": 15},
+   "champs": {"Lee Sin": 95, "Nidalee": 94, "Xin Zhao": 90, "Graves": 86, "Skarner": 85, "Vi": 84, "Wukong": 82, "Pantheon": 80, "Jarvan IV": 78, "Karthus": 72, "Taliyah": 68}
+  }
+ }
+}

@@ -1,7 +1,7 @@
 {
-  "version": "2.1.12",
+  "version": "2.1.13",
   "date": "2026-11-28",
-  "notes": "各赛事独立跳过常规赛、小组赛或瑞士轮，关键系列赛逐局进行，调低 Clearlove7 基础能力与潜力",
+  "notes": "选手年度成长从 1.5 倍回调到 1.25 倍，90 分以上的选手不会膨胀得那么快",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

@@ -1988,7 +1988,7 @@ function applyGameImpact(g, teamA, teamB, random=rnd){
 // 队伍均分差 5 分时，强队单局胜率约 65%、BO5 约 78%；实力接近的对局仍约五五开。
 const FORM_SWING = { game:6, series:2.5 };
 const REGION_RANK_NOISE = 3;     // 非 LPL 赛区按战力 + 噪声排名
-const DEV_GROWTH_MUL = 1.5;
+const DEV_GROWTH_MUL = 1.25;
 function ensureSeriesForm(ctx){
   if(!ctx) return ctx;
   if(ctx.simSeed==null) ctx.simSeed=rnd()*0x100000000>>>0;
@@ -2574,7 +2574,7 @@ function settlePlayerDevelopment(p){
   const quality=games?clamp(p.development.performance/games,-0.8,1.2):0;
   const ageFactor=p.age<=22?1:p.age<=26?0.55:p.age<=29?0.24:0.10;
   const room=Math.max(0,p.pot-p.rating);
-  // 年度成长整体 ×1.5（v2.1.10：原先一年涨得太少）；90+ 选手不额外削减
+  // 年度成长整体 ×1.25（v2.1.10 提到 1.5 后 90+ 选手膨胀过快，按用户要求回调）；90+ 选手不额外削减
   const growth=(room*ageFactor*(0.035+reps*0.10)+quality*reps*ageFactor*0.80)*DEV_GROWTH_MUL;
   const aging=p.age<27?0:(p.age-26)*0.13*(1-reps*0.42);
   const next=clamp(Math.round((p.rating+clamp(growth-aging,-1.6,3.5))*10)/10,45,98);

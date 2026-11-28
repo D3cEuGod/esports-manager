@@ -13,7 +13,7 @@ function champOverride(p){ return p ? (p.legend ? LEGEND_BY_PID[p.pid] : LEGENDS
 function topChamps(table,n){ return Object.keys(table||{}).filter(c=>CH[c]).sort((a,b)=>table[b]-table[a]).slice(0,n); }
 const PROFESSIONAL_HEROES = Object.fromEntries(ROLES.map(r=>[r,CHAMP_KEYS.filter(c=>CH[c].roles.includes(r) && (PRO_DATA.roles[r]?.[c]||0)>=6)]));
 const rnd = () => Math.random();
-const randn = () => { let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+const randn = (random=rnd) => { let u=0,v=0; while(!u)u=random(); while(!v)v=random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
 const pick = a => a[Math.floor(rnd()*a.length)];
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
 const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
@@ -569,7 +569,8 @@ function playerTraits(p){
   const hit = _trCache[cacheKey];
   if(hit && hit._v === ver) return hit;
   const tagKey = p.tag || p.pid;
-  const T0 = ((typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null) || (p.legend ? LEGEND_BY_PID[p.pid]?.traits : null);
+  const hist=(typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null;
+  const T0=hist?.stab!=null ? hist : p.legend ? LEGEND_BY_PID[p.pid]?.traits : null;
   let tr;
   if(T0){ tr = {stab:T0.stab, big:T0.big, ko:T0.ko, res:T0.res, base:T0.base||0, n:T0.n||0, src:'data'}; }
   else {
@@ -693,6 +694,14 @@ function traitTags(tr){
   if(tr.stab <= 0.8) out.push({t:'稳定输出', c:'up'}); else if(tr.stab >= 1.22) out.push({t:'起伏较大', c:'down'});
   if(tr.res >= 1.22) out.push({t:'抗压强', c:'up'}); else if(tr.res <= 0.8) out.push({t:'容易上头', c:'down'});
   return out;
+}
+
+function playerRegionalTags(p){
+  if(!p || typeof TRAITS==='undefined') return [];
+  const id=String(playerTag(p));
+  return ((TRAITS[id] || TRAITS[id.toLowerCase()])?.regionEdge || []).map(([region,games,edge])=>({
+    region, games, edge, label:region+' 杀手'
+  }));
 }
 // 比赛场合：intl 国际赛、ko 淘汰赛、decider 决胜局
 function pressureOf(ctx){
@@ -1206,7 +1215,7 @@ function draftBotPairFilter(picks, unavailableChamps){
 }
 
 // 经典职业选边 AI 决策（蓝色方 = 固定 BP 先手；红色方 = 固定 BP 后手拿五楼康特位）
-function aiChooseSide(meKey, oppKey, locked){
+function aiChooseSide(meKey, oppKey, locked, gameSeed){
   const un = new Set(locked||[]);
   const t0Left = CHAMP_KEYS.filter(c=>!un.has(c) && (S.meta[c]||0)>=2);
   const lu = lineupMap(meKey);
@@ -1216,7 +1225,8 @@ function aiChooseSide(meKey, oppKey, locked){
   }
   // 版本强势多或常规情况下绝大多数选蓝色方先手，少数情况选红色方抢五楼康特
   const pBlue = clamp(0.68 + t0Fit*0.06, 0.62, 0.88);
-  return rnd() < pBlue ? 'blue' : 'red';
+  const random=gameSeed==null ? rnd : srand(hash(gameSeed+':side'));
+  return random() < pBlue ? 'blue' : 'red';
 }
 
 // 赛前峡谷 1v1 SOLO 选边赛：默认推选本队最佳 SOLO 选手与英雄
@@ -1350,7 +1360,11 @@ function draftAct(d, c, role, allowOffrole){
   d.step++; return true;
 }
 
+function draftSimulationRandom(d){
+  return d.ctx?.gameSeed==null ? rnd : srand(hash(d.ctx.gameSeed+':bp:'+d.step));
+}
 function aiDraftCandidates(d, limit=1, varied=true){
+  const random=varied ? draftSimulationRandom(d) : rnd;
   const cur=draftSide(d); if(!cur) return [];
   const un=unavailable(d);
   const me=cur.side, opp= me==='A'?'B':'A';
@@ -1396,7 +1410,7 @@ function aiDraftCandidates(d, limit=1, varied=true){
         const myMatch = myOpen.filter(r=>CH[c].roles.includes(r));
         if(myMatch.length && Math.max(...myMatch.map(r=>champFit(myLu[r],c,r)))>=5) s -= 2.5;
       }
-      if(varied) s += rnd()*1.05;
+      if(varied) s += random()*1.05;
       consider(c,s);
     }
     if(!ranked.length){
@@ -1442,7 +1456,7 @@ function aiDraftCandidates(d, limit=1, varied=true){
       if(earlyPhase && CH[c].roles.length>=2) s += 0.55;
       // 版本 T0 优先级
       if((S.meta[c]||0)>=2) s += 1.1;
-      if(varied) s += rnd()*1.05;
+      if(varied) s += random()*1.05;
       consider(c,s,r);
     }
   }
@@ -1517,7 +1531,7 @@ function aiDraftLevelOptions(d, level){
   const eligible=all.filter(x=>x.gain>=0 && x.value>-Infinity).slice(0,rule.take);
   return {rule, all, eligible};
 }
-function aiChooseLevel(d, level='normal', rand=rnd){
+function aiChooseLevel(d, level='normal', rand=draftSimulationRandom(d)){
   if(!AI_DRAFT_LEVEL_RULES[level]) return aiChoose(d,{lookahead:true});
   const {rule, all, eligible}=aiDraftLevelOptions(d, level);
   if(!all.length) return {c:null};
@@ -1910,7 +1924,7 @@ function fmtClock(minFloat){
 // 5v5 对局模拟：见 sim.js（playGame / createGame5 / step5）
 
 // 赛后联动：选手状态 form 波动 & 英雄熟练度成长
-function applyGameImpact(g, teamA, teamB){
+function applyGameImpact(g, teamA, teamB, random=rnd){
   const impacts = [];
   g.masteryChanges=[];
   const handleSide = (side, stats) => {
@@ -1927,13 +1941,13 @@ function applyGameImpact(g, teamA, teamB){
       development.games++;
       development.performance+=perf;
       const f0 = p.form||0;
-      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn()*0.3*tr.stab);
+      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn(random)*0.3*tr.stab);
       // 小局对心态的即时影响：胜负只占一部分，个人发挥（被打爆还是carry）同样关键，并向个人性格基线回归
       const m0 = p.mental||0;
       const ind = gamePerf(row, isMvp);
       const dTeam = won ? 0.14*tr.res : -0.2/tr.res;
       const dInd = ind >= 0 ? ind*0.32*tr.res : ind*0.38/tr.res;
-      p.mental = stepTier(m0, m0 + dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn()*0.15);
+      p.mental = stepTier(m0, m0 + dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn(random)*0.15);
       // 英雄熟练度经验累积（每次出场累积熟练度数值，跨过档位线时晋升档位）
       if(row.c && CH[row.c]){
         const prev=champProfVal(p,row.c);
@@ -1965,9 +1979,15 @@ const FORM_SWING = { game:6, series:2.5 };
 const REGION_RANK_NOISE = 3;     // 非 LPL 赛区按战力 + 噪声排名
 const DEV_GROWTH_MUL = 1.5;
 function ensureSeriesForm(ctx){
-  if(ctx && !ctx.sform) ctx.sform = {A:randn()*FORM_SWING.series, B:randn()*FORM_SWING.series};
+  if(!ctx) return ctx;
+  if(ctx.simSeed==null) ctx.simSeed=rnd()*0x100000000>>>0;
+  if(!ctx.sform){
+    const random=srand(seriesSimulationSeed(ctx,-2));
+    ctx.sform={A:randn(random)*FORM_SWING.series,B:randn(random)*FORM_SWING.series};
+  }
   return ctx;
 }
+function seriesSimulationSeed(ctx,gameIndex){ return hash(ctx.simSeed+':game:'+gameIndex); }
 
 // 系列赛（AI 自动）
 function simSeries(m, keepGames){
@@ -1976,13 +1996,14 @@ function simSeries(m, keepGames){
   m.ctx = baseCtx;
   ensureSeriesForm(baseCtx);
   // 仅首局通过 1v1 决定选边权；此后 BO3/BO5 每打一把一律由上一局输方选边
-  let chooser = simSolo1v1(m.a, m.b).winner;
+  let chooser = simSolo1v1(m.a, m.b,null,null,{seed:seriesSimulationSeed(baseCtx,-1)}).winner;
   while(wa<need && wb<need){
     const other = chooser==='A'?'B':'A';
-    const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked);
+    const gameSeed=seriesSimulationSeed(baseCtx,games.length);
+    const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked,gameSeed);
     const blue = sidePick==='blue' ? chooser : other;
     const d=newDraft(m.a,m.b,blue,locked);
-    d.ctx = Object.assign({}, baseCtx, {decider: wa===need-1 && wb===need-1 && m.bo>1});
+    d.ctx = Object.assign({}, baseCtx, {decider: wa===need-1 && wb===need-1 && m.bo>1,gameSeed});
     autoDraftRest(d);
     const g=playGame(d); games.push(g);
     if(g.w==='A')wa++; else wb++;
@@ -2013,6 +2034,7 @@ function finishSeries(m, wa, wb, games, keep){
 // 系列赛结束：心态结算（连胜连败、淘汰赛与国际赛放大、夺冠/出局带动全队），幅度乘以抗压
 function settleSeriesMental(m, games){
   const ctx = m.ctx || findMatchCtx(m) || {};
+  const random=ctx.simSeed==null ? rnd : srand(seriesSimulationSeed(ctx,-3));
   const amp = 1 + (ctx.ko?0.6:0) + (ctx.intl?0.4:0);
   const isFinal = ctx.ko && /总决赛|决赛/.test(m.label||'') && !/半决赛|败者组决赛|胜者组决赛/.test(m.label||'');
   for(const [key, won] of [[m.w,true],[m.l,false]]){
@@ -2039,7 +2061,7 @@ function settleSeriesMental(m, games){
       // 越接近顶点/谷底越难再推：同队一路夺冠时，能否到「无畏」取决于个人发挥与性格
       if(dm*m0 > 0) dm *= Math.max(0.25, 1 - Math.abs(m0)/6.5);
       dm += (mentalBase(p) - m0) * 0.3 * tr.res;
-      p.mental = stepTier(m0, m0 + dm + randn()*0.25);
+      p.mental = stepTier(m0, m0 + dm + randn(random)*0.25);
     }
     // 替补：没有比赛的选手状态在基线附近漂移；实力够首发却坐板凳的人心态慢慢下滑
     for(const pid of t.roster){
@@ -2047,12 +2069,12 @@ function settleSeriesMental(m, games){
       const p = P(pid); if(!p || p.retired) continue;
       const tr = playerTraits(p);
       const f0 = p.form||0, m0 = p.mental||0;
-      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn()*0.22*tr.stab);
+      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn(random)*0.22*tr.stab);
       const cur = P(t.lineup[p.role]);
       const deserves = cur && p.rating >= cur.rating - 1;
       const mb = mentalBase(p);
       const dm = deserves && m0 > mb - 3 ? -0.28/tr.res : 0;
-      p.mental = stepTier(m0, m0 + dm + (mb - m0)*(deserves?0.03:0.1) + randn()*0.12);
+      p.mental = stepTier(m0, m0 + dm + (mb - m0)*(deserves?0.03:0.1) + randn(random)*0.12);
     }
   }
 }
@@ -2618,6 +2640,32 @@ function simUntilUser(limitAll){
     playAI(it); n++; if(n>2000) break; }
   return null;
 }
+function canSimRegularSeason(){
+  const ev=curEvent();
+  return !!ev && !ev.done && /^lpl_s[123]$/.test(ev.type) &&
+    (!ev.started || ev.stages[ev.si]?.kind==='rr');
+}
+function simRegularSeason(){
+  const result={played:0, userMatches:[]};
+  if(!canSimRegularSeason()) return result;
+  startEvent();
+  const ev=curEvent(), stage=ev.stages[ev.si];
+  while(canSimRegularSeason() && ev.stages[ev.si]===stage){
+    const it=nextReadyMatch();
+    if(!it || it.st!==stage) break;
+    playPhaseMatch(it, result);
+  }
+  return result;
+}
+function playPhaseMatch(it, result){
+  playAI(it);
+  result.played++;
+  const m=it.m;
+  if(!userInvolved(m)) return;
+  const won=m.w===S.user;
+  addNews(`${won?'胜':'负'}：${teamName(m.a)} ${m.s[0]}:${m.s[1]} ${teamName(m.b)}（${m.label}）`);
+  result.userMatches.push({a:m.a,b:m.b,s:m.s.slice(),won,label:m.label});
+}
 // 模拟当前单轮（常规赛仅推完本轮、瑞士轮仅推完本轮、淘汰赛仅推完本轮对阵），包含玩家本轮的比赛，本轮打完即止
 function simCurrentRound(){
   startEvent();
@@ -2630,8 +2678,8 @@ function simCurrentRound(){
   const targetRnd = st0.kind==='rr' ? firstPool[0].m.rnd : st0.kind==='swiss' ? st0.round : null;
   const targetCol = st0.kind==='br' ? Math.min(...firstPool.map(x => x.m.col != null ? x.m.col : 0)) : null;
 
-  let played = 0, guard = 0;
-  const userMatches = [];
+  let guard = 0;
+  const result={played:0,userMatches:[]};
   while(!ev.done && ev.si === startSi && guard++ < 200){
     const pool = stageMatches(ev).filter(({m, st}) => {
       if(st.kind==='rr') return m.rnd === targetRnd;
@@ -2640,19 +2688,9 @@ function simCurrentRound(){
       return true;
     });
     if(!pool.length) break;
-    const it = pool[0];
-    if(userInvolved(it.m)){
-      simSeries(it.m, true);
-      afterMatch(it.st, it.m);
-      const won = it.m.w === S.user;
-      addNews(`${won?'胜':'负'}：${teamName(it.m.a)} ${it.m.s[0]}:${it.m.s[1]} ${teamName(it.m.b)}（${it.m.label}）`);
-      userMatches.push({ a: it.m.a, b: it.m.b, s: it.m.s.slice(), won, label: it.m.label });
-    } else {
-      playAI(it);
-    }
-    played++;
+    playPhaseMatch(pool[0], result);
   }
-  return { played, userMatches };
+  return result;
 }
 function advanceEvent(){
   const ev=curEvent(); if(!ev.done) return;

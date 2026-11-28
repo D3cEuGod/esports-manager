@@ -327,14 +327,13 @@ section('内核边界回归');
   const r = run(`(()=>{
     newGame('TES');
     const d = newDraft('BLG', 'TES', 'A', []);
-    const oldRandom = Math.random;
     const fight = resolveFight;
     try {
       const sides = [];
       resolveFight = (G, a, b) => sides.push([a[0].side, b[0].side].join(''));
-      Math.random = () => 0.2;
       for(const losingSide of ['A', 'B']){
         const G = createGame5(d);
+        G.random = () => 0.2;
         G.t = 100;
         for(const c of G.champs){
           c.alive = c.role === 'MID';
@@ -371,22 +370,22 @@ section('内核边界回归');
       tickChamp(G, recalling);
       const recallClearsPower = recalling.recall > 0 && recalling.pw === 0;
 
-      Math.random = () => 0.05;
       const ring = createSolo('BLG', 'TES');
+      ring.random = () => 0.05;
       ring.t = 599;
       ring.F.A.hp = 0.001;
       ring.F.B.hp = 0.01;
       ring.F.A.sum2 = ring.F.B.sum2 = 'bar';
       soloStep(ring);
 
-      Math.random = () => 0.75;
       const tie = createSolo('BLG', 'TES');
+      tie.random = () => 0.75;
       tie.t = 599;
       tie.F.A.hp = tie.F.B.hp = 0.001;
       soloStep(tie);
 
-      Math.random = () => 0.999;
       const clock = createSolo('BLG', 'TES');
+      clock.random = () => 0.999;
       clock.t = 599;
       while(!clock.over && clock.t < 720) soloStep(clock);
 
@@ -400,7 +399,6 @@ section('内核边界回归');
         style: styleEdge('pick', 'poke') === 0.9 && styleEdge('poke', 'pick') === -0.9
       };
     } finally {
-      Math.random = oldRandom;
       resolveFight = fight;
     }
   })()`);
@@ -411,6 +409,95 @@ section('内核边界回归');
   ok(r.ringClock, '双方在 11:59 仍存活时直接判胜');
   ok(r.tiers, '舍入边界也最多跨一档');
   ok(r.style, '抓单克制消耗，交换阵容时克制分取反');
+}
+
+section('观战、途中快进与快模一致性');
+{
+  const r=run(`(()=>{
+    newGame('TES');
+    const d=newDraft('TES','BLG','A',[]);
+    autoDraftRest(d);
+    const snapshot=JSON.stringify(S);
+    const options={seed:91831};
+    const strip=({rec,...game})=>game;
+    const fast=playGame(d, options);
+    const fastPlayers=JSON.stringify(S.players);
+    const paths=[false,true].map(skip=>{
+      S=JSON.parse(snapshot);
+      const live=createGame5(d,{...options,record:true});
+      while(!live.over && (!skip || live.t<627)){
+        rnd(); rnd();
+        step5(live);
+      }
+      while(!live.over) step5(live);
+      const result=game5Result(live);
+      const same=JSON.stringify(strip(result))===JSON.stringify(fast) && JSON.stringify(S.players)===fastPlayers;
+      return same && game5Result(live)===result && JSON.stringify(S.players)===fastPlayers;
+    });
+    const solo=simSolo1v1('TES','BLG',null,null,{...options,record:true});
+    const liveSolo=createSolo('TES','BLG',null,null,{...options,record:true});
+    while(!liveSolo.over){ rnd(); soloStep(liveSolo); }
+    return paths.every(Boolean) && JSON.stringify(solo)===JSON.stringify(soloResult(liveSolo));
+  })()`);
+  ok(r,'同阵容和种子下，录制、外部随机调用及快进均不改变赛果与结算');
+  const series=run(`(()=>{
+    newGame('TES');
+    const start=JSON.stringify(S), fast=playGame;
+    const runSeries=(seed,record)=>{
+      S=JSON.parse(start);
+      playGame=record ? d=>{
+        const G=createGame5(d,{record:true});
+        while(!G.over){
+          if(G.t<480) rnd();
+          step5(G);
+        }
+        return game5Result(G);
+      } : fast;
+      const m={a:'TES',b:'BLG',bo:3,label:'系列赛一致性',ctx:{simSeed:seed,intl:true,ko:true}};
+      simSeries(m,true);
+      return JSON.stringify([m,S.players,S.bonds,S.log]);
+    };
+    try{
+      for(let seed=1201;seed<=1208;seed++){
+        if(runSeries(seed,false)!==runSeries(seed,true)) return false;
+      }
+      return true;
+    } finally { playGame=fast; }
+  })()`);
+  ok(series,'8 个种子的 BO3 在同档同 BP 下，直接模拟和每局带录制逐步推进结果一致');
+}
+
+section('5v5 兵线与野区补刀');
+{
+  const r=run(`(()=>{
+    newGame('TES');
+    const d=newDraft('TES','BLG','A',[]);
+    autoDraftRest(d);
+    const G=createGame5(d,{seed:1});
+    G.random=()=>0.1;
+    const mid=G.rosters.A[2], jg=G.rosters.A[1];
+    [mid.x,mid.y]=lanePt('mid',0.5);
+    for(G.t=0;G.t<=51;G.t+=3) farmWaves(G);
+    const noEarly=mid.cs===0;
+    for(;G.t<=72;G.t+=3) farmWaves(G);
+    const six=mid.cs===6 && mid.laneCs===6 && mid.xp===270;
+    mid.recall=8;
+    for(;G.t<=99;G.t+=3) farmWaves(G);
+    const noRecallCs=mid.cs===6;
+    G.t=54; farmCamp(G,jg);
+    const noTravelCs=jg.cs===0;
+    [jg.x,jg.y]=MAP5.camps.blue[4]; jg.camp=4;
+    for(G.t=57;G.t<=81;G.t+=3) farmCamp(G,jg);
+    const camp=jg.cs===4 && jg.jungleCs===4 && G.camps.A[4]>G.t;
+    const gold=G.champs.map(c=>c.tg);
+    G.bountySide='B';
+    claimObjectiveBounty(G,'A',500,'小龙');
+    claimObjectiveBounty(G,'B',500,'小龙');
+    const paid=G.champs.every((c,i)=>c.tg===gold[i]+(c.side==='B'?100:0)) &&
+      G.feed.filter(f=>f.tag==='目标赏金').length===1;
+    return noEarly && six && noRecallCs && noTravelCs && camp && paid;
+  })()`);
+  ok(r,'首波六刀上限、回城漏刀、赶路无补刀、完成清营才计分，目标赏金只给落后方');
 }
 
 section('英雄机制克制与分路联动');

@@ -85,6 +85,7 @@ async function main(){
         ACT.dbTeam({k:dataset.k});
         const visible=[...document.querySelectorAll('main [data-a="dbPlayer"]')].map(e=>e.dataset.p).sort();
         if(JSON.stringify(visible)!==JSON.stringify(T(dataset.k).roster.slice().sort())) return false;
+        if(!document.querySelector('.db-ovr')?.textContent.includes(String(Math.round(teamOvr(dataset.k))))) return false;
       }
     }
     document.querySelector('main [data-a="dbPlayer"]').click();
@@ -95,6 +96,17 @@ async function main(){
   const market=await run(()=>{
     ACT.view({v:'market'});
     const candidate=freeAgents().find(p=>p.role==='TOP' && !isForeign(p));
+    document.querySelector('[data-f="fa"]').click();
+    const cardLink=document.querySelector('[data-a="mkPlayer"][data-p="Uzi2018"]');
+    cardLink?.click();
+    const freeProfile=document.querySelector('.modal');
+    const profile=!!cardLink && freeProfile?.textContent.includes('自由球员') &&
+      freeProfile.textContent.includes('英雄池') && !!freeProfile.querySelector('[data-a="offer"]');
+    ACT.closeModal();
+    document.querySelector('[data-f="fa"]').click();
+    ACT.mkPlayer({p:'Bin'});
+    const regional=!!document.querySelector('.modal .rg-tag')?.textContent.includes('LEC');
+    ACT.closeModal();
     ACT.offer({p:candidate.pid}); ACT.doOffer({p:candidate.pid});
     const landed=P(candidate.pid).team===S.user && T(S.user).roster.includes(candidate.pid);
     ACT.view({v:'roster'}); ACT.setStarter({p:candidate.pid,r:'TOP'});
@@ -122,7 +134,7 @@ async function main(){
     const cash=document.querySelector('[data-o="cash"]'); cash.value=String(price); cash.dispatchEvent(new Event('input',{bubbles:true}));
     ACT.doOffer({p:incoming.pid});
     const exchanged=P(incoming.pid).team===S.user && P(candidate.pid).team===previousTeam;
-    return {landed,started,released,legal:!lineupProblems(S.user).length,stable,purchase,sold,exchanged};
+    return {profile,regional,landed,started,released,legal:!lineupProblems(S.user).length,stable,purchase,sold,exchanged};
   });
   checks.market=Object.values(market).every(Boolean);
   assert.ok(checks.market,JSON.stringify(market));
@@ -146,9 +158,12 @@ async function main(){
       for(let tries=0;tries<50 && !predicate();tries++) await new Promise(resolve=>setTimeout(resolve,25));
       if(!predicate()) throw Error('Expected match phase was not reached');
     };
-    ACT.startSolo(); ACT.wSkip();
+    ACT.soloChamp({c:'Yasuo'});
+    document.querySelector('[data-a="skipSolo"]').click();
+    ACT.skipSolo();
     await until(()=>!!UI.match.solo);
-    const solo=!!UI.match.solo && !!UI.match.pendingSolo;
+    const solo=UI.match.solo[UI.match.me].champ==='Yasuo' && !!UI.match.pendingSolo &&
+      UI.match.games.length===0 && !it.m.w;
     ACT.soloEnterDraft(); stopBpClock();
     const live=UI.match, d=live.draft;
     const turn=draftSide(d);
@@ -176,9 +191,15 @@ async function main(){
     const item=simUntilUser(false);
     ACT.simStage();
     const round=!!item.m.w && item.m.gm.every(g=>g.masteryChanges.length===5);
+    const ev=curEvent(), phase=ev.stages[ev.si];
+    const pending=phase.matches.filter(m=>!m.w).length;
+    document.querySelector('[data-a="simRegular"]').click();
+    const regular=pending>0 && phase.matches.every(m=>m.w) && curEvent()===ev && !ev.done &&
+      ev.stages[ev.si].kind!=='rr' && !!nextReadyMatch() && !nextReadyMatch().m.w &&
+      !document.querySelector('[data-a="simRegular"]');
     ACT.simEvent(); const complete=curEvent().done && !!curEvent().res.champ;
     ACT.nextEvent();
-    return round && complete && curEvent().type==='fst';
+    return round && regular && complete && curEvent().type==='fst';
   });
   checks.progressionViews=await run(()=>{
     const names=[['events','赛事'],['meta','版本'],['news','新闻'],['settings','账号与存档']];

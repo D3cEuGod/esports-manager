@@ -126,13 +126,14 @@ const dec1 = (s,i) => B64I[s[i]]||0;
 const dec2 = (s,i) => ((B64I[s[i]]||0)<<6) | (B64I[s[i+1]]||0);
 const hyp = (x,y) => Math.sqrt(x*x + y*y);   // 比 Math.hypot 快很多
 const fmtSec = sec => { sec = Math.max(0, Math.floor(sec)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; };
-function wpick(arr, wfn){
+function wpick(arr, wfn, random){
   let tot = 0; const w = arr.map(x=>{ const v=Math.max(0.0001, wfn(x)); tot+=v; return v; });
-  let r = rnd()*tot;
+  let r = random()*tot;
   for(let i=0;i<arr.length;i++){ r-=w[i]; if(r<=0) return arr[i]; }
   return arr[arr.length-1];
 }
-const pickOne = a => a[Math.floor(rnd()*a.length)];
+const pickOne = (a, random) => a[Math.floor(random()*a.length)];
+const matchRandom = seed => srand(seed ?? (rnd()*0x100000000 >>> 0));
 
 // =====================================================================
 //                       1v1 SOLO 中路对线状态机
@@ -143,7 +144,7 @@ const SOLO_LAST_TICK = 12*60 - 1;
 const XP_LV = [0,0,280,660,1140,1720,2400,3180,4060,5040,6120,7300,8580,9960,11440,13020,14700,16480,18360];
 const lvlOf = xp => { let l=1; while(l<18 && xp>=XP_LV[l+1]) l++; return l; };
 
-function soloFighter(side, pl, c, role){
+function soloFighter(side, pl, c, role, random){
   const ch = CH[c];
   const mr = (pl ? matchRating(pl, pl.role, {}) : 70) + champFit(pl, c, pl?pl.role:role)*0.8;
   const tags = new Set(ch.tags);
@@ -157,7 +158,7 @@ function soloFighter(side, pl, c, role){
     mental: mentalTier(pl),
     s: side==='A'?0.38:0.62, hp:1, mp:1, lvl:1, xp:0, cs:0, gold:500-ITEMS[start][1]-50*2, items:[start], pots:2, potT:0,
     flash:0, sum2: (tags.has('early')||tags.has('pick')) ? 'ig' : (ranged ? 'bar' : 'ig'), s2cd:0,
-    recall:0, away:0, trd: 4+rnd()*4, comboCd:0, invested: ITEMS[start][1], dead:false, mood:0
+    recall:0, away:0, trd: 4+random()*4, comboCd:0, invested: ITEMS[start][1], dead:false, mood:0
   };
 }
 function soloMaxHp(f){ return 560 + 92*(f.lvl-1) + (f.items.includes(1054)?110:f.items.includes(1055)?80:f.items.includes(1056)?70:0) + (f.invested>1200?150:0); }
@@ -180,9 +181,10 @@ function createSolo(teamA, teamB, pickA, pickB, opts){
   const plB = (pb.pid && P(pb.pid)) || luB[pb.role] || Object.values(luB)[0];
   const cA = pa.champ && CH[pa.champ] ? pa.champ : defaultSoloPick(teamA).champ;
   const cB = pb.champ && CH[pb.champ] ? pb.champ : defaultSoloPick(teamB).champ;
+  const random = matchRandom(opts?.seed);
   const g = {
-    kind:'solo', teamA, teamB, t:90, over:false, winner:null, winReason:'',
-    F:{A:soloFighter('A', plA, cA, pa.role), B:soloFighter('B', plB, cB, pb.role)},
+    random, kind:'solo', teamA, teamB, t:90, over:false, winner:null, winReason:'',
+    F:{A:soloFighter('A', plA, cA, pa.role, random), B:soloFighter('B', plB, cB, pb.role, random)},
     wave:0.5, waveT:0, waveN:0, tw:{A:1, B:1}, ring:0, log:[], fx:null, fxT:0,
     first:{lv2:null, lv6:null},
     rec: opts && opts.record ? [] : null
@@ -217,8 +219,8 @@ function soloStep(g){
     for(const [f,o,pres] of [[A,B,presA],[B,A,presB]]){
       if(!pres){ continue; }
       const harass = clamp((o.hp - f.hp)*0.25 + (o.ranged && !f.ranged ? 0.06 : 0), -0.05, 0.25);
-      const eff = clamp(0.74 + (f.mr-78)/70 - harass + randn()*0.04 - (f.mental<0 && g.t>400 ? 0.04 : 0), 0.45, 0.99);
-      let got = 0; for(let i=0;i<minions;i++) if(rnd()<eff) got++;
+      const eff = clamp(0.74 + (f.mr-78)/70 - harass + randn(g.random)*0.04 - (f.mental<0 && g.t>400 ? 0.04 : 0), 0.45, 0.99);
+      let got = 0; for(let i=0;i<minions;i++) if(g.random()<eff) got++;
       f.cs += got; f.gold += got*21 + 1; f.xp += 250 + (cannon?90:0);
     }
     if(!presA && presB){ g.tw.A = Math.max(0, g.tw.A - 0.2 - (B.lvl>=6?0.04:0)); g.wave = 0.12; soloLog(g, 'B', '推线磨塔', `${B.tag} 趁 ${A.tag} 不在线上把兵线推进塔下，猛点防御塔，剩余 ${Math.round(g.tw.A*100)}%。`); }
@@ -226,9 +228,9 @@ function soloStep(g){
     else if(presA && presB){
       const pushA = (A.ranged?1.15:1) * (A.tags.has('poke')?1.1:1) * Math.exp((A.mr-B.mr)/60) * (0.5+A.hp) ;
       const pushB = (B.ranged?1.15:1) * (B.tags.has('poke')?1.1:1) * (0.5+B.hp);
-      g.wave = clamp(g.wave + (pushA-pushB)*0.16 + randn()*0.07, 0.2, 0.8);
-      if(g.wave>=0.72){ g.tw.B = Math.max(0, g.tw.B - 0.055); if(g.tw.B>0 && rnd()<0.5) soloLog(g, 'A', '兵线压制', `${A.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.B*100)}%。`); }
-      if(g.wave<=0.28){ g.tw.A = Math.max(0, g.tw.A - 0.055); if(g.tw.A>0 && rnd()<0.5) soloLog(g, 'B', '兵线压制', `${B.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.A*100)}%。`); }
+      g.wave = clamp(g.wave + (pushA-pushB)*0.16 + randn(g.random)*0.07, 0.2, 0.8);
+      if(g.wave>=0.72){ g.tw.B = Math.max(0, g.tw.B - 0.055); if(g.tw.B>0 && g.random()<0.5) soloLog(g, 'A', '兵线压制', `${A.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.B*100)}%。`); }
+      if(g.wave<=0.28){ g.tw.A = Math.max(0, g.tw.A - 0.055); if(g.tw.A>0 && g.random()<0.5) soloLog(g, 'B', '兵线压制', `${B.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.A*100)}%。`); }
     }
     // 升级与抢 2 / 抢 6
     for(const f of [A,B]){
@@ -251,7 +253,7 @@ function soloStep(g){
     if(f.recall>0 || f.away>0) continue;
     const dir = f.side==='A' ? -1 : 1;
     const want = g.wave + dir*(f.ranged?0.09:0.05) + dir*(f.hp<0.4?0.06:0) - dir*(f.mood>0?0.03:0);
-    f.s += clamp(want - f.s, -0.04, 0.04) + randn()*0.006;
+    f.s += clamp(want - f.s, -0.04, 0.04) + randn(g.random)*0.006;
     f.s = clamp(f.s, SOLO_TW.A+0.02, SOLO_TW.B-0.02);
     if(f.mood>0) f.mood--;
   }
@@ -265,26 +267,26 @@ function soloStep(g){
       f.hp -= 0.004 + elapsed*0.00006;
     }
     if(A.hp<=0 || B.hp<=0 || g.t>=SOLO_LAST_TICK){
-      const w = A.hp===B.hp ? (rnd()<0.5?'A':'B') : (A.hp>B.hp?'A':'B');
+      const w = A.hp===B.hp ? (g.random()<0.5?'A':'B') : (A.hp>B.hp?'A':'B');
       g.F[w].hp = Math.max(0, g.F[w].hp);
       return soloEnd(g, w, '决死缩圈击杀', `🔥 火圈收缩终极一战！${g.F[w].tag} 顶住压力完成终结，为 ${teamName(w==='A'?g.teamA:g.teamB)} 赢下选边权！`);
     }
     // 火圈越小越容易爆发决战：10:00 刚开始缩圈时以拉扯为主，越接近 12:00 越可能强开
-    if(g.t % 5 === 0 && rnd() < 0.1 + elapsed/140){
-      if(soloAllIn(g, A.hp*rnd() > B.hp*rnd() ? 'A' : 'B', true)) return;
+    if(g.t % 5 === 0 && g.random() < 0.1 + elapsed/140){
+      if(soloAllIn(g, A.hp*g.random() > B.hp*g.random() ? 'A' : 'B', true)) return;
     }
   }
   if(presA && presB && g.ring===0){
     // 双方都在线：各自判断换血 / 抢级 All-in / 控线
-    const order = rnd()<0.5 ? [A,B] : [B,A];
+    const order = g.random()<0.5 ? [A,B] : [B,A];
     for(const f of order){
       if(g.over) break;
       const o = g.F[oppSide(f.side)];
       if(f.recall||o.recall) continue;
       // 回城判断
-      if(f.hp < 0.36 && (o.hp > f.hp + 0.2 || (f.pots===0 && f.potT===0)) && rnd() < 0.7 + f.mental*0.05){ f.recall = 8; soloLog(g, f.side, '回城补给', `${f.tag} 血量见底只能交出线权回城，${o.tag} 获得推线磨塔的机会。`); continue; }
+      if(f.hp < 0.36 && (o.hp > f.hp + 0.2 || (f.pots===0 && f.potT===0)) && g.random() < 0.7 + f.mental*0.05){ f.recall = 8; soloLog(g, f.side, '回城补给', `${f.tag} 血量见底只能交出线权回城，${o.tag} 获得推线磨塔的机会。`); continue; }
       if(f.hp < 0.55 && f.pots>0 && f.potT===0){ f.pots--; f.potT = 15; }
-      if(f.gold >= 1100 && g.wave > 0.6 === (f.side==='A') && f.hp<0.8 && rnd()<0.08){ f.recall = 8; soloLog(g, f.side, '回城出装', `${f.tag} 推完兵线果断回城，准备把 ${f.gold} 金币换成装备。`); continue; }
+      if(f.gold >= 1100 && g.wave > 0.6 === (f.side==='A') && f.hp<0.8 && g.random()<0.08){ f.recall = 8; soloLog(g, f.side, '回城出装', `${f.tag} 推完兵线果断回城，准备把 ${f.gold} 金币换成装备。`); continue; }
       // All-in 判定（击杀线）
       const killLine = soloDps(f)*3.1*(f.lvl>=6?1.35:1) + (f.sum2==='ig'&&f.s2cd===0 ? 0.14*o.maxhp : 0);
       const oHp = o.hp*o.maxhp + (o.sum2==='bar'&&o.s2cd===0 ? 140 : 0);
@@ -297,9 +299,9 @@ function soloStep(g){
       // 换血
       if(f.trd<=0 && f.mp > 0.25){
         const edge = (soloDps(f)/f.maxhp*o.maxhp)/(soloDps(o)) ;
-        const want = sigmoid((edge-1)*3 + (f.ranged&&!o.ranged?0.5:0) + (f.tags.has('poke')?0.4:0) + lvAdv*0.4 + (f.hp-o.hp)*1.5 + f.mental*0.08 + randn()*0.6);
-        if(rnd() < want*0.45){ soloTrade(g, f, o); }
-        f.trd = 6 + Math.floor(rnd()*7);
+        const want = sigmoid((edge-1)*3 + (f.ranged&&!o.ranged?0.5:0) + (f.tags.has('poke')?0.4:0) + lvAdv*0.4 + (f.hp-o.hp)*1.5 + f.mental*0.08 + randn(g.random)*0.6);
+        if(g.random() < want*0.45){ soloTrade(g, f, o); }
+        f.trd = 6 + Math.floor(g.random()*7);
       }
     }
   }
@@ -319,19 +321,19 @@ function soloBase(g, f){
 }
 function soloTrade(g, f, o){
   const dodge = clamp(0.18 + (o.mr - f.mr)/90 + (o.ranged?0.04:0), 0.05, 0.45);
-  const hit = rnd() > dodge;
+  const hit = g.random() > dodge;
   const rel = soloDps(f)/Math.max(1,soloDps(o));
-  const dmgF = hit ? 0.085*Math.pow(rel,0.8)*(0.6+rnd()*0.9) : 0.03;
-  const retF = 0.085*Math.pow(1/rel,0.8)*(o.ranged&&!f.ranged ? 0.75 : f.ranged&&!o.ranged ? 0.4 : 0.6)*(0.5+rnd()*0.9);
+  const dmgF = hit ? 0.085*Math.pow(rel,0.8)*(0.6+g.random()*0.9) : 0.03;
+  const retF = 0.085*Math.pow(1/rel,0.8)*(o.ranged&&!f.ranged ? 0.75 : f.ranged&&!o.ranged ? 0.4 : 0.6)*(0.5+g.random()*0.9);
   const dmg = dmgF*o.maxhp;
   o.hp = Math.max(0.04, o.hp - dmgF);
   f.hp = Math.max(0.04, f.hp - retF);
-  f.mp = Math.max(0, f.mp - 0.18 - rnd()*0.1); o.mp = Math.max(0, o.mp - 0.06);
+  f.mp = Math.max(0, f.mp - 0.18 - g.random()*0.1); o.mp = Math.max(0, o.mp - 0.06);
   g.wave = clamp(g.wave + (f.side==='A'?0.05:-0.05), 0.15, 0.85);
   g.fx = {k:'trade', s:(f.s+o.s)/2, side:f.side}; g.fxT = 2;
   const big = dmg/o.maxhp > 0.25;
   soloLog(g, f.side, hit?(big?'精准连招':'拉扯换血'):'技能落空',
-    hit ? `${f.tag} ${pickOne(['抓住技能空档','卡住补刀时机','绕到兵线侧面','用一套技能'])}${big?'打出完整连招':'主动换血'}，${o.tag} 血量掉到 ${Math.round(o.hp*100)}%。`
+    hit ? `${f.tag} ${pickOne(['抓住技能空档','卡住补刀时机','绕到兵线侧面','用一套技能'], g.random)}${big?'打出完整连招':'主动换血'}，${o.tag} 血量掉到 ${Math.round(o.hp*100)}%。`
         : `${f.tag} 的关键技能被 ${o.tag} 侧身躲开，反手被 ${o.tag} 消耗了一口。`);
 }
 // 全力 All-in：比较双方击杀所需时间，闪现 / 点燃 / 屏障 / 防御塔都会改变结局
@@ -347,20 +349,20 @@ function soloAllIn(g, side, forced){
   const nearTower = side==='A' ? f.s > 0.8 : f.s < 0.2;
   if(nearTower) fHp -= 180 + 20*f.lvl;
   const skill = (f.mr - o.mr)/14 + (f.mental - o.mental)*0.12*(0.5+pressureOf(null));
-  const tf = oHp/Math.max(1,fDps) * Math.exp(-(randn()*0.32 + skill*0.12));
-  const to = fHp/Math.max(1,oDps) * Math.exp(randn()*0.32);
+  const tf = oHp/Math.max(1,fDps) * Math.exp(-(randn(g.random)*0.32 + skill*0.12));
+  const to = fHp/Math.max(1,oDps) * Math.exp(randn(g.random)*0.32);
   f.comboCd = 22; f.mp = Math.max(0, f.mp-0.4);
   g.fx = {k:'allin', s:(f.s+o.s)/2, side}; g.fxT = 3;
   // 势均力敌：双方交完技能各自后撤
   const ratio = to/Math.max(0.01, tf);
-  if(!forced && ratio > 0.7 && ratio < 1.45 && rnd() < 0.5){
-    f.hp = Math.max(0.06, f.hp - 0.18 - rnd()*0.12); o.hp = Math.max(0.06, o.hp - 0.18 - rnd()*0.12);
+  if(!forced && ratio > 0.7 && ratio < 1.45 && g.random() < 0.5){
+    f.hp = Math.max(0.06, f.hp - 0.18 - g.random()*0.12); o.hp = Math.max(0.06, o.hp - 0.18 - g.random()*0.12);
     soloLog(g, side, '激烈对拼', `${f.tag} 与 ${o.tag} 打出一波激烈对拼，双方都只剩 ${Math.round(Math.min(f.hp,o.hp)*100)}% 左右血量，各自后撤！`, true);
     return false;
   }
   if(tf < to){
     // 守方闪现逃生的机会
-    if(o.flash===0 && !forced && tf > to*0.55 && rnd()<0.7){
+    if(o.flash===0 && !forced && tf > to*0.55 && g.random()<0.7){
       o.flash = 300; o.hp = Math.max(0.05, (o.hp*o.maxhp*0.25)/o.maxhp); f.hp = Math.max(0.08, f.hp - (oDps*tf*0.6)/f.maxhp);
       soloLog(g, side, '闪现逃生', `${f.tag} ${notes.length?notes.join('、')+'，':''}强开 All-in，${o.tag} 残血交闪现极限逃生！`, true);
       return false;
@@ -371,7 +373,7 @@ function soloAllIn(g, side, forced){
     return true;
   } else {
     // 反杀
-    if(f.flash===0 && to > tf*0.72 && rnd()<0.6 && !forced){
+    if(f.flash===0 && to > tf*0.72 && g.random()<0.6 && !forced){
       f.flash = 300; f.hp = Math.max(0.05, f.hp*0.3); o.hp = Math.max(0.08, o.hp - (fDps*to*0.5)/o.maxhp);
       soloLog(g, side, '闪现撤退', `${f.tag} 主动开团却没打出伤害，及时交闪现撤离，血量只剩 ${Math.round(f.hp*100)}%。`, true);
       return false;
@@ -449,9 +451,15 @@ function lanePt(lane, s){
 }
 const LANE_OF = {TOP:'top', JUG:null, MID:'mid', ADC:'bot', SUP:'bot'};
 const LANES3 = ['top','mid','bot'];
+// 2026 召唤师峡谷兵线。刷新时间和到达交战位置的时间分开记。
+const MINION = {melee:[21,60], caster:[14,30], cannon:[60,93], super:[45,95]};
+const CAMP_START = [55,67,55,55,55,67];
+const CAMP_RESPAWN = [300,135,135,135,300,135];
+const CAMP_GOLD = [100,82,85,85,100,105];
+const CAMP_XP = [205,170,175,180,205,190];
 const DRAKES = [['infernal','炼狱亚龙'],['ocean','海洋亚龙'],['mountain','山脉亚龙'],['cloud','云端亚龙'],['hextech','海克斯科技亚龙'],['chemtech','化学科技亚龙']];
 const BRW = [10,10,12,12,14,16,20,25,28,32.5,35,37.5,40,42.5,45,47.5,50,52.5];
-const SIM5 = { TD:0.0075, FN:0.5, SK:90, IT:9000, LV:0.07, SPD:27, ENC:80, DT:3 };   // 战斗强度刻度（校准用）
+const SIM5 = { TD:0.0075, FN:0.5, SK:74, IT:9000, LV:0.07, SPD:27, ENC:80, DT:3 };   // 战斗强度刻度（校准用）
 const dist = (a,b) => hyp(a.x-b.x, a.y-b.y);
 
 function buildTowers(){
@@ -476,11 +484,13 @@ function createGame5(d, opts){
   opts = opts || {};
   const ev = evalDraft(d);
   const G = {
-    kind:'g5', d, ev, t:0, over:false, winner:null, rec: !!opts.record,
+    kind:'g5', random:matchRandom(opts.seed ?? d.ctx?.gameSeed), d, ev, t:0, over:false, winner:null, rec: !!opts.record,
     champs:[], towers: buildTowers(), front:{top:0.5, mid:0.5, bot:0.5},
     obj:{ drag:{next:300, up:false, prog:0, by:null, type:null, mapType:null, n:0}, grubs:{next:360, up:false, wave:0, prog:0},
           herald:{next:900, up:false, prog:0, until:1185}, baron:{next:1200, up:false, prog:0}, elder:{next:null, up:false, prog:0} },
     team:{}, feed:[], key:[], evs:[], frames:[], stats:[], gs:[], fx:[],
+    nextWave:30, waveNumber:0, laneWaves:{top:[],mid:[],bot:[]},
+    camps:{A:CAMP_START.slice(),B:CAMP_START.slice()}, engagements:[], bountySide:null,
     firstBlood:null, firstTower:null, lastKill:{}, laneT:{top:20, mid:18, bot:22}, planT:0,
     stance:{A:opts.stanceA||'auto', B:opts.stanceB||'auto'}   // 预留：全队倾向（战术指令接口）
   };
@@ -488,11 +498,12 @@ function createGame5(d, opts){
     const blue = d.blue===side;
     const lu = lineupMap(d[side]);
     const dp = side==='A' ? ev.a : ev.b;
+    const threats=draftThreats(d.picks[side==='A'?'B':'A']);
     G.team[side] = { side, blue, color: blue?'blue':'red', key:d[side], name:teamName(d[side]), dp,
-      drakes:[], soul:null, baronT:0, elderT:0, heraldT:0, grubs:0, kills:0, towers:0, barons:0, gankT: 150 + rnd()*40, roamT: 300 + rnd()*120,
+      drakes:[], soul:null, baronT:0, elderT:0, heraldT:0, grubs:0, kills:0, towers:0, barons:0, gankT: 150 + G.random()*40, roamT: 300 + G.random()*120,
       split: null, focus:null, comp: dp.comp, tags: dp.comp.tags, calmT:0,
       // 临场发挥：本局浮动 + 系列赛共享浮动（见 engine.js FORM_SWING），叠加在全队阶段强度上
-      dayForm: randn()*FORM_SWING.game + ((d.ctx && d.ctx.sform && d.ctx.sform[side]) || 0) };
+      dayForm: randn(G.random)*FORM_SWING.game + ((d.ctx && d.ctx.sform && d.ctx.sform[side]) || 0) };
     ROLES.forEach(r=>{
       const p = lu[r], c = d.picks[side][r];
       const sk = draftPlayerRating(p,r,d.ctx) + (c ? champFit(p,c,r)*DRAFT_FIT_WEIGHT : 0);
@@ -504,9 +515,11 @@ function createGame5(d, opts){
       const cm = {
         i: G.champs.length, side, blue, role:r, p, pid:p?p.pid:null, tag:playerTag(p), c, cn: ch?ch.cn:r,
         sk, mental: mentalTier(p), arche, build:b, tags: new Set(ch?ch.tags:[]), ranged: c?isRanged(c):false, combat:draftCombatProfile(c),
+        counter:DRAFT_COUNTERS[c] ? counterStrength(DRAFT_COUNTERS[c],threats) : 0,
         x:fx, y:fy, px:fx, py:fy, hp:1, alive:true, rt:0, lvl:1, xp:0, gold:500, tg:500, cs:0, k:0, d:0, a:0,
         items:[], invest:0, coreIdx:0, bootsDone:false, supDone:false, streak:0,
-        task:TK({k: r==='JUG'?'jungle':'lane', lane:LANE_OF[r]}), recall:0, lastBack:0, fightCd:0, camp:0, campT:0, pw:0, partial:0,
+        task:TK({k: r==='JUG'?'jungle':'lane', lane:LANE_OF[r]}), recall:0, lastBack:0, fightCd:0, camp:4, campT:0, campPlanT:0, pw:0, partial:0,
+        laneCs:0, jungleCs:0, supportExecute:65,
         powerLevel:0, powerInvest:0, powerBase:0
       };
       for(const id of start){ cm.gold -= ITEMS[id][1]; cm.invest += ITEMS[id][1]; cm.items.push(id); }
@@ -541,7 +554,7 @@ function champPow(G, c, pressure){
   if(c.powerLevel!==c.lvl || c.powerInvest!==c.invest){
     c.powerLevel=c.lvl;
     c.powerInvest=c.invest;
-    c.powerBase=Math.exp((c.sk-80)/SIM5.SK + SIM5.LV*c.lvl + c.invest/SIM5.IT);
+    c.powerBase=Math.exp((c.sk-80)/SIM5.SK + SIM5.LV*c.lvl + Math.log1p(c.invest/SIM5.IT)*1.18);
   }
   const phase=G.phasePower ? G.phasePower[c.side] : Math.exp(phaseAdj(G,c.side,G.t)/SIM5.SK);
   let p = c.powerBase * phase * (0.3 + 0.7*c.hp);
@@ -564,25 +577,36 @@ function step5(G){
   G.t += DT;
   const t = G.t;
   objTimers(G);
-  // 每秒缓存：战斗强度、各路线上人数
+  // 每个时间步缓存阵容阶段战力。
   const adj = G.adj || (G.adj = {A:0, B:0});
   adj.A = phaseAdj(G,'A',t); adj.B = phaseAdj(G,'B',t);
   const power=G.phasePower||(G.phasePower={A:1,B:1});
   power.A=Math.exp(adj.A/SIM5.SK); power.B=Math.exp(adj.B/SIM5.SK);
-  const crowd = G.crowd || (G.crowd = {A:{top:0,mid:0,bot:0}, B:{top:0,mid:0,bot:0}});
-  crowd.A.top = crowd.A.mid = crowd.A.bot = crowd.B.top = crowd.B.mid = crowd.B.bot = 0;
   for(const c of G.champs){
     c.pw = c.alive && c.recall===0 ? champPow(G, c, 0) : 0;
-    const k = c.task.k;
-    if(c.alive && c.role!=='SUP' && c.task.lane && (k==='lane'||k==='push'||k==='split')) crowd[c.side][c.task.lane]++;
   }
-  if(t >= G.planT){ G.planT = t + 4; plan5(G, 'A'); plan5(G, 'B'); }
-  for(const c of G.champs) tickChamp(G, c);
+  const aFirst=(t/DT&1)===0;
+  if(t >= G.planT){
+    G.planT = t + 9;
+    plan5(G,aFirst?'A':'B'); plan5(G,aFirst?'B':'A');
+  }
+  for(const c of G.rosters[aFirst?'A':'B']) tickChamp(G,c);
+  for(const c of G.rosters[aFirst?'B':'A']) tickChamp(G,c);
+  farmWaves(G);
   laneTrades(G);
   encounters(G);
   objectives(G);
   lanesAndTowers(G);
-  if(t%21===0){ const gA = G.champs.filter(c=>c.side==='A').reduce((s,c)=>s+c.tg,0), gB = G.champs.filter(c=>c.side==='B').reduce((s,c)=>s+c.tg,0); G.gs.push([t, Math.round(gA-gB)]); }
+  if(t%21===0){
+    let goldA=0, goldB=0, levelEdge=0;
+    for(const c of G.rosters.A){ goldA+=c.tg; levelEdge+=c.lvl; }
+    for(const c of G.rosters.B){ goldB+=c.tg; levelEdge-=c.lvl; }
+    G.gs.push([t,Math.round(goldA-goldB)]);
+    const a=G.team.A,b=G.team.B;
+    const edge=goldA-goldB+levelEdge*90+(a.towers-b.towers)*120+(a.drakes.length-b.drakes.length)*180;
+    const threshold=Math.max(3000,0.055*(goldA+goldB));
+    if(t>=840) G.bountySide=edge>threshold?'B':edge< -threshold?'A':null;
+  }
   if(G.fx.length && G.fx[0].t < t-4) G.fx = G.fx.filter(f=>f.t>=t-4);
   if(t >= 3600 && !G.over){ // 安全阀：极端拉锯时由经济领先方终结
     const gA = G.champs.filter(c=>c.side==='A').reduce((s,c)=>s+c.tg,0), gB = G.champs.filter(c=>c.side==='B').reduce((s,c)=>s+c.tg,0);
@@ -603,8 +627,8 @@ function objTimers(G){
       const cands = DRAKES.filter(x=>!used.has(x[0]));
       const nTaken = G.team.A.drakes.length + G.team.B.drakes.length;
       if(nTaken >= 2 && o.drag.mapType) o.drag.type = o.drag.mapType;
-      else o.drag.type = pickOne(cands.length?cands:DRAKES)[0];
-      if(nTaken === 1 && !o.drag.mapType){ o.drag.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.drag.type && !used.has(x[0])))[0]; }
+      else o.drag.type = pickOne(cands.length?cands:DRAKES, G.random)[0];
+      if(nTaken === 1 && !o.drag.mapType){ o.drag.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.drag.type && !used.has(x[0])), G.random)[0]; }
     }
   }
   if(!o.grubs.up && o.grubs.next!=null && t >= o.grubs.next && t < 840){ o.grubs.up = true; o.grubs.prog = 0; }
@@ -617,7 +641,81 @@ function objTimers(G){
   for(const tw of G.towers) if(!tw.alive && tw.tier===4 && tw.resp && t >= tw.resp){ tw.alive = true; tw.hp = 1; tw.resp = 0; G.towerDirty = true; if(G.rec) G.evs.push([t,'R',tw.id]); }
 }
 
-function campPos(G, c){ const camps = MAP5.camps[c.blue?'blue':'red']; return camps[c.camp % camps.length]; }
+function farmCamp(G,c){
+  const points=MAP5.camps[c.blue?'blue':'red'], ready=G.camps[c.side], t=G.t;
+  let i=c.camp;
+  if(ready[i]>t+SIM5.DT && t>=c.campPlanT){
+    c.campPlanT=t+12;
+    let best=Infinity;
+    for(let j=0;j<points.length;j++){
+      const [x,y]=points[j];
+      const score=Math.max(0,ready[j]-t)*13+Math.abs(c.x-x)+Math.abs(c.y-y);
+      if(score<best){ best=score; i=j; }
+    }
+    if(c.camp!==i){ c.camp=i; c.campT=0; }
+  }
+  const pt=points[i];
+  if(t>=ready[i] && Math.abs(c.x-pt[0])+Math.abs(c.y-pt[1])<35){
+    c.campT+=SIM5.DT;
+    const clear=(t<180?18:12)-clamp((c.sk-80)*0.20+c.invest/1800,-3,6);
+    if(c.campT>=clear){
+      ready[i]=t+CAMP_RESPAWN[i]; c.campT=0; c.campPlanT=0;
+      c.cs+=4; c.jungleCs+=4; c.gold+=CAMP_GOLD[i]; c.tg+=CAMP_GOLD[i]; c.xp+=CAMP_XP[i];
+    }
+  } else c.campT=0;
+  return pt;
+}
+
+function spawnWaves(G){
+  const sec=G.nextWave, n=++G.waveNumber;
+  G.nextWave+=sec<840?30:sec<1800?25:20;
+  const cannon=sec>=1500 || n%(sec<840?3:2)===0;
+  for(const lane of LANES3){
+    const melee=cannon&&sec>=840?2:3, caster=sec>=1800?2:3;
+    if(G.towerDirty || !G.first) refreshTowers(G);
+    const superA=!!G.supLane[G.team.B.color][lane], superB=!!G.supLane[G.team.A.color][lane];
+    G.laneWaves[lane].push({due:sec+(lane==='mid'?22:28), minion:0, melee,caster,cannon, superA,superB});
+  }
+}
+function farmWaves(G){
+  if(G.t>=G.nextWave) spawnWaves(G);
+  for(const lane of LANES3){
+    const q=G.laneWaves[lane];
+    const wave=q[0]; if(!wave || wave.due>G.t) continue;
+    const idx=wave.minion++, base=wave.melee+wave.caster;
+    const [x,y]=lanePt(lane,G.front[lane]);
+    const regular=idx<wave.melee?MINION.melee:idx<base?MINION.caster:wave.cannon&&idx===base?MINION.cannon:null;
+    const t=G.t;
+    const superIndex=base+Number(wave.cannon);
+    if(regular || (wave.superB && idx===superIndex)) contestLastHit(G,'A',lane,x,y,regular||MINION.super);
+    if(regular || (wave.superA && idx===superIndex)) contestLastHit(G,'B',lane,x,y,regular||MINION.super);
+    if(wave.minion>=superIndex+Number(wave.superA||wave.superB)) q.shift();
+    else wave.due=t+SIM5.DT;
+  }
+}
+function contestLastHit(G,side,lane,x,y,minion){
+  let count=0, present=0, farmer=null, support=null, farmScore=-Infinity;
+  const roster=G.rosters[side];
+  for(const c of roster){
+    if(!c.alive || c.recall>0 || Math.abs(c.x-x)+Math.abs(c.y-y)>145) continue;
+    count++; present |= 1<<c.i;
+    const k=c.task.k;
+    if(c.task.lane!==lane || (k!=='lane'&&k!=='push'&&k!=='split'&&k!=='defend')) continue;
+    if(c.role==='SUP'){ support=c; continue; }
+    const score=c.sk + (LANE_OF[c.role]===lane?7:0) + (c.role==='ADC'&&G.t>=840?8:0) + c.hp*7;
+    if(score>farmScore){ farmer=c; farmScore=score; }
+  }
+  if(!count) return;
+  const xp=minion[1]*(count===1?1:1.24/count);
+  for(const c of roster) if(present & (1<<c.i)) c.xp+=xp;
+  const execute=support && farmer && G.t>=support.supportExecute && !support.supDone;
+  if(execute){ support.supportExecute=G.t+40; support.gold+=15; support.tg+=15; }
+  if(!farmer && support && G.random()<0.28) farmer=support;
+  const push=G.front[lane]-0.5;
+  const underPressure=G.team[side].blue?Math.min(0,push):Math.min(0,-push);
+  if(!farmer || (!execute && G.random()>=clamp(0.89+(farmer.sk-80)*0.004+(farmer.hp-0.7)*0.16+underPressure*0.24,0.52,0.98))) return;
+  farmer.cs++; farmer.laneCs++; farmer.gold+=minion[0]; farmer.tg+=minion[0];
+}
 function lanePos(G, c, lane, off){
   const dir = c.blue ? 1 : -1;
   const s = clamp(G.front[lane] - dir*(off==null?0.03:off), 0.05, 0.95);
@@ -648,11 +746,11 @@ function tickChamp(G, c){
   else c.hp = Math.min(1, c.hp + 0.0025*DT);
   // 目标点
   const tk = c.task;
+  if(tk.k!=='jungle') c.campT=0;
   let tx = c.x, ty = c.y;
   if(tk.k==='lane' || tk.k==='split'){ [tx,ty] = lanePos(G, c, tk.lane, tk.k==='split' ? -0.01 : (c.role==='SUP'?0.045:c.ranged?0.04:0.025)); }
   else if(tk.k==='jungle'){
-    const [cx,cy] = campPos(G, c); tx=cx; ty=cy;
-    if(Math.abs(c.x-cx) + Math.abs(c.y-cy) < 35){ c.campT += DT; if(c.campT >= 9){ c.campT=0; c.camp = (c.camp+1+(rnd()<0.3?1:0)) % 6; } }
+    [tx,ty] = farmCamp(G,c);
   }
   else if(tk.k==='go' || tk.k==='obj' || tk.k==='gank' || tk.k==='push' || tk.k==='defend'){
     if(tk.lane && (tk.k==='push'||tk.k==='defend')) [tx,ty] = lanePos(G, c, tk.lane, tk.k==='push' ? 0.0 : 0.05);
@@ -677,33 +775,13 @@ function tickChamp(G, c){
   }
   const dx = tx-c.x, dy = ty-c.y, dd = hyp(dx,dy);
   const spd = SIM5.SPD * (c.bootsDone?1.12:1) * (G.team[c.side].baronT>t?1.1:1);
-  if(dd > 1){ const m = Math.min(dd, spd*DT); c.x += dx/dd*m + (rnd()-0.5)*3; c.y += dy/dd*m + (rnd()-0.5)*3; }
-  // 发育
-  const inLane = (tk.k==='lane'||tk.k==='split'||tk.k==='push') && tk.lane && dd < 110;
-  const m = t/60;
-  if(inLane && t>90){
-    const solo = c.role!=='ADC' && c.role!=='SUP';
-    const share = c.role==='SUP' ? 0.04 : 1;
-    const crowd = Math.max(0, G.crowd[c.side][tk.lane] - (c.role==='SUP'?0:1));
-    const farm = clamp(0.8 + (c.sk-78)/60 + (c.hp-0.6)*0.15, 0.5, 1.15) * share / (1 + crowd*0.6);
-    const csr = (0.132 + Math.min(0.03, m*0.0012)) * farm;
-    c.cs += csr*DT; const gg = csr*DT*(20 + Math.min(14, m*0.45)); c.gold += gg; c.tg += gg;
-    c.xp += (solo ? 7.4 : 5.0) * (1 + m*0.025) / (1 + crowd*0.4) * DT;
-    if(c.role==='SUP'){ c.gold += 0.25*DT; c.tg += 0.25*DT; }
-  } else if(tk.k==='jungle' && t>85){
-    const csr = 0.085 * clamp(0.85 + (c.sk-78)/60, 0.6, 1.1);
-    c.cs += csr*DT; const gg = csr*DT*(32 + Math.min(12, m*0.4)); c.gold += gg; c.tg += gg;
-    c.xp += 6.6 * (1 + m*0.02) * DT;
-  } else if(t > 90){
-    // 抱团/转线途中也会顺手清兵、刷野
-    c.xp += 4.2 * (1 + m*0.03) * DT;
-    const gg = (c.role==='SUP' ? 1.0 : 2.0) * Math.min(1, m/14) * DT; c.gold += gg; c.tg += gg; c.cs += (c.role==='SUP'?0:0.06*Math.min(1,m/14))*DT;
-  }
+  if(dd > 1){ const m = Math.min(dd, spd*DT); c.x += dx/dd*m + (G.random()-0.5)*3; c.y += dy/dd*m + (G.random()-0.5)*3; }
+  if(t>65 && c.role==='SUP'){ c.gold+=0.55*DT; c.tg+=0.55*DT; }
   while(c.lvl < 18 && c.xp >= XP_LV[c.lvl+1]) c.lvl++;
   // 回城：残血或者钱够了
   const lowHp = c.hp < (t<840 && c.task.k==='lane' ? 0.36 : 0.3);
   const rich = t-c.lastBack>140 && (tk.k==='lane'||tk.k==='jungle'||tk.k==='split') && G.front[tk.lane||'mid']!==undefined && c.gold>=nextItemCost(c);
-  if((lowHp || (rich && rnd()<0.06*DT)) && tk.k!=='obj' && tk.k!=='defend' && !nearEnemy(G, c, 160)){
+  if((lowHp || (rich && G.random()<0.06*DT)) && tk.k!=='obj' && tk.k!=='defend' && !nearEnemy(G, c, 160)){
     startRecall5(c);
   }
 }
@@ -792,7 +870,7 @@ function plan5(G, side){
     }
     return count;
   };
-  const goObj = (list, pt, kind) => list.forEach(c=>{ if(c.alive) setTask(c, {k:'obj', x:pt[0]+(rnd()-0.5)*30, y:pt[1]+(rnd()-0.5)*30, o:kind}); });
+  const goObj = (list, pt, kind) => list.forEach(c=>{ if(c.alive) setTask(c, {k:'obj', x:pt[0]+(G.random()-0.5)*30, y:pt[1]+(G.random()-0.5)*30, o:kind}); });
 
   if(t < 840){
     // ===== 对线期 =====
@@ -813,13 +891,13 @@ function plan5(G, side){
         const over = blue ? (0.5 - G.front[lane]) : (G.front[lane]-0.5); // 敌方压线越深越好抓
         const setup=allies.reduce((s,a)=>s+a.combat.control*a.hp,0);
         const escape=foes.reduce((s,f)=>s+f.combat.escape,0);
-        const sc = foes.reduce((s,f)=>s+(1-f.hp),0)*1.4 + over*3 + allies.reduce((s,a)=>s+a.hp,0)*0.4 + setup*0.35 - escape*0.22 + (lane==='bot'&&t>300?0.3:0) + rnd()*0.9;
+        const sc = foes.reduce((s,f)=>s+(1-f.hp),0)*1.4 + over*3 + allies.reduce((s,a)=>s+a.hp,0)*0.4 + setup*0.35 - escape*0.22 + (lane==='bot'&&t>300?0.3:0) + G.random()*0.9;
         if(sc > bs){ bs = sc; best = lane; }
       }
       if(best){
         const [gx,gy] = lanePt(best, clamp(G.front[best] + (blue?0.02:-0.02), 0.08, 0.92));
         setTask(jg, {k:'gank', lane:best, x:gx, y:gy, until: t+38});
-        tm.gankT = t + 150 + rnd()*80 - early*14;
+        tm.gankT = t + 150 + G.random()*80 - early*14;
       } else tm.gankT = t + 30;
     }
     // 辅助游走
@@ -827,7 +905,7 @@ function plan5(G, side){
     if(sup && sup.alive && t >= tm.roamT && sup.task.k==='lane' && lanePriority(G,side,'bot')>-0.15 && (sup.tags.has('engage')||sup.tags.has('pick'))){
       const [gx,gy] = lanePt('mid', clamp(G.front.mid + (blue?0.03:-0.03), 0.1, 0.9));
       setTask(sup, {k:'gank', lane:'mid', x:gx, y:gy, until:t+30});
-      tm.roamT = t + 200 + rnd()*120;
+      tm.roamT = t + 200 + G.random()*120;
     }
     // 小龙
     if(o.drag.up || (o.drag.next!=null && o.drag.next - t < 25 && o.drag.next - t > 0)){
@@ -836,7 +914,7 @@ function plan5(G, side){
       const enAtPit = enemyAt(MAP5.dragon, 220);
       const ourAtPit = mine.filter(c=>c.task.k==='obj' && c.task.o==='drag').length;
       const want = grp.some(c=>c.role==='JUG') && grp.length>=2 && grp.every(c=>c.hp>0.45) && (prioBot>0.05 || enAtPit>0 || R>1.15) && (enAtPit===0 || R + prioBot*0.10 > 0.8);
-      if(want || ourAtPit){ goObj(grp, MAP5.dragon, 'drag'); const md = mine.find(c=>c.role==='MID'); if(md && md.alive && md.recall===0 && md.hp>0.5 && (enAtPit>=2 || (lanePriority(G,side,'mid')>-0.1 && rnd()<0.4))) goObj([md], MAP5.dragon, 'drag'); }
+      if(want || ourAtPit){ goObj(grp, MAP5.dragon, 'drag'); const md = mine.find(c=>c.role==='MID'); if(md && md.alive && md.recall===0 && md.hp>0.5 && (enAtPit>=2 || (lanePriority(G,side,'mid')>-0.1 && G.random()<0.4))) goObj([md], MAP5.dragon, 'drag'); }
     }
     // 巢虫
     if(o.grubs.up){
@@ -866,7 +944,16 @@ function plan5(G, side){
     const soon = ob.up || (ob.next!=null && ob.next - t < 30 && ob.next - t > 0);
     if(!soon) return false;
     const enAtPit = enemyAt(pt, 260);
-    return R >= need || enAlive <= myAlive-2 || (enAtPit>0 && R>=need*0.85);
+    if(R >= need || enAlive <= myAlive-2 || (enAtPit>0 && R>=need*0.85)) return true;
+    // 落后方可以靠近资源的一侧先到，等满血队友集结后争夺。
+    if(G.bountySide!==side || myAlive<4 || enAtPit>=4 || R<0.72) return false;
+    let ready=0, jungleReady=false;
+    for(const c of mine){
+      if(!c.alive || c.recall || c.hp<0.64 || Math.abs(c.x-pt[0])+Math.abs(c.y-pt[1])>365) continue;
+      ready++;
+      if(c.role==='JUG') jungleReady=true;
+    }
+    return ready>=3 && jungleReady && ready>enAtPit;
   };
   if(o.elder.up && objOK('elder', MAP5.dragon, 0.85)) focus = {k:'obj', o:'elder', pt:MAP5.dragon};
   else if(o.baron.up && objOK('baron', MAP5.baron, late?1.05:1.2)) focus = {k:'obj', o:'baron', pt:MAP5.baron};
@@ -883,14 +970,14 @@ function plan5(G, side){
   }
   const aggro = stance==='push' ? 0.85 : stance==='safe' ? 1.25 : 1;
   if(!focus){
-    if(R >= 1.06*aggro || enAlive <= myAlive-1 || (late && R>=0.94*aggro && rnd()<0.6)){
+    if(R >= 1.06*aggro || enAlive <= myAlive-1 || (late && R>=0.94*aggro && G.random()<0.6)){
       // 选最容易推的路：敌方该路第一座存活建筑层级越低越好、兵线越深越好
       let best=null, bs=-1e9;
       for(const lane of LANES3){
         const tw = firstAlive(G, G.team[en].color, lane) || null;
         const tier = tw ? tw.tier : 7;
         const depth = blue ? G.front[lane] : 1-G.front[lane];
-        const sc = depth*2 - (tier>=5?0:tier*0.3) + (lane==='mid'?0.4:0) + rnd()*0.5 + (tw&&tw.tier===4?0.8:0);
+        const sc = depth*2 - (tier>=5?0:tier*0.3) + (lane==='mid'?0.4:0) + G.random()*0.5 + (tw&&tw.tier===4?0.8:0);
         if(sc>bs){ bs=sc; best=lane; }
       }
       siege = best;
@@ -900,7 +987,14 @@ function plan5(G, side){
       if(inhibDown && (enAlive <= 2 || R > 1.6)) { focus = {k:'go', pt: nexT ? [nexT.x,nexT.y] : MAP5.nexus[G.team[en].color], o:'nexus'}; }
     }
   }
-  if(defend && !focus && R >= 0.85) focus = {k:'defend', lane:defend.lane};
+  if(defend && !focus && (R >= 0.85 || defend.tw.tier>=3)) focus = {k:'defend', lane:defend.lane};
+  // 对手已在一侧集结，而本方没有争夺窗口时，用另一侧兵线换取空间。
+  if(!focus && !siege && t < 2100){
+    const opposite=enemyAt(MAP5.dragon,205)>=3 && o.drag.up ? 'top' :
+      enemyAt(MAP5.baron,205)>=3 && (o.baron.up||o.herald.up) ? 'bot' : null;
+    const front=opposite && (blue?G.front[opposite]:1-G.front[opposite]);
+    if(front>0.44 && myAlive>=3 && R>0.72) siege=opposite;
+  }
   const grouped = [];
   for(const c of mine){
     if(c.task.k==='gank' && t <= c.task.until) continue;
@@ -912,7 +1006,7 @@ function plan5(G, side){
     grouped.push(c);
   }
   if(focus && focus.k==='obj') goObj(grouped, focus.pt, focus.o);
-  else if(focus && focus.k==='go') grouped.forEach(c=>setTask(c, {k:'go', x:focus.pt[0]+(rnd()-0.5)*40, y:focus.pt[1]+(rnd()-0.5)*40}));
+  else if(focus && focus.k==='go') grouped.forEach(c=>setTask(c, {k:'go', x:focus.pt[0]+(G.random()-0.5)*40, y:focus.pt[1]+(G.random()-0.5)*40}));
   else if(focus && focus.k==='defend') grouped.forEach(c=>setTask(c, {k:'defend', lane:focus.lane}));
   else if(siege) grouped.forEach(c=>setTask(c, {k:'push', lane:siege}));
   else {
@@ -926,7 +1020,7 @@ function plan5(G, side){
     }
     // 中期抓单：有抓单英雄且敌方分推手孤立时，派人包夹
     const enSplit = G.team[en].split>=0 ? G.champs[G.team[en].split] : null;
-    if(enSplit && enSplit.alive && enSplit.task.k==='split' && (tm.tags.pick||0) + (tm.tags.engage||0) >= 2 && rnd()<0.35){
+    if(enSplit && enSplit.alive && enSplit.task.k==='split' && (tm.tags.pick||0) + (tm.tags.engage||0) >= 2 && G.random()<0.35){
       const lonely = !G.champs.some(x=>x.side===en && x!==enSplit && x.alive && hyp(x.x-enSplit.x,x.y-enSplit.y)<300);
       if(lonely){
         const hunters = mine.filter(c=>c.alive && c!==splitter && (c.role==='JUG' || c.tags.has('pick') || c.tags.has('engage'))).slice(0,3);
@@ -948,37 +1042,78 @@ function laneTrades(G){
   const t = G.t;
   for(const lane of LANES3){
     if(t < G.laneT[lane]) continue;
-    G.laneT[lane] = t + (t<840 ? 22 + rnd()*16 : 30 + rnd()*20);
+    G.laneT[lane] = t + (t<840 ? 22 + G.random()*16 : 30 + G.random()*20);
     const [x,y]=lanePt(lane,G.front[lane]);
     const near = (c) => c.alive && c.recall===0 && c.task.lane===lane && (c.task.k==='lane'||c.task.k==='split') && hyp(c.x-x,c.y-y) < 120;
     const a = G.champs.filter(c=>c.side==='A' && near(c)), b = G.champs.filter(c=>c.side==='B' && near(c));
     if(!a.length || !b.length) continue;
-    const pa = a.reduce((s,c)=>s+champPow(G,c,0)*(1+(c.tags.has('early')?0.12:0)+(c.tags.has('poke')?0.08:0)),0);
-    const pb = b.reduce((s,c)=>s+champPow(G,c,0)*(1+(c.tags.has('early')?0.12:0)+(c.tags.has('poke')?0.08:0)),0);
+    const tradePower=(own,enemy)=>{
+      const theirLevel=Math.max(...enemy.map(c=>c.lvl));
+      const theirRange=enemy.some(c=>c.ranged);
+      return own.reduce((sum,c)=>{
+        const spike=t<840 && ((c.lvl>=2 && theirLevel<2)||(c.lvl>=6 && theirLevel<6)) ? 0.14 : 0;
+        const reach=c.ranged && !theirRange ? 0.08 : 0;
+        return sum+champPow(G,c,0)*(1+spike+reach+(c.tags.has('early')?0.12:0)+(c.tags.has('poke')?0.08:0));
+      },0);
+    };
+    const pa=tradePower(a,b), pb=tradePower(b,a);
     const pA = pa*pa/(pa*pa+pb*pb);
-    const aWin = rnd() < pA;
+    const aWin = G.random() < pA;
     const [W,L] = aWin ? [a,b] : [b,a];
     const marg = Math.abs(pA-0.5)*2;
-    L.forEach(c=>c.hp = Math.max(0.05, c.hp - (0.07 + rnd()*0.12 + marg*0.08)));
-    W.forEach(c=>c.hp = Math.max(0.08, c.hp - (0.02 + rnd()*0.08)));
+    const depth=W[0].blue?G.front[lane]:1-G.front[lane];
+    L.forEach(c=>c.hp = Math.max(0.05, c.hp - (0.07 + G.random()*0.12 + marg*0.08)*(depth>0.61?0.72:1)));
+    W.forEach(c=>c.hp = Math.max(0.08, c.hp - (0.02 + G.random()*0.08)));
     G.front[lane] = clamp(G.front[lane] + ((W[0].blue)?1:-1)*0.035, 0.12, 0.88);
     // 残血被击杀：单杀 / 二打二
     const dying = L.filter(c=>c.hp < 0.2);
-    if(dying.length && rnd() < 0.2 + marg*0.25){
+    if(dying.length && G.random() < 0.2 + marg*0.25){
       resolveFight(G, a, b, 'lane', true);
     }
   }
 }
 
 // ---------------- 遭遇检测 → 团战 / 抓人 ----------------
+function fightObjective(G, x, y){
+  const atDragon=Math.abs(x-MAP5.dragon[0])+Math.abs(y-MAP5.dragon[1])<190;
+  if(atDragon && (G.obj.elder.up || G.obj.drag.up)) return G.obj.elder.up?'elder':'drag';
+  const atBaron=Math.abs(x-MAP5.baron[0])+Math.abs(y-MAP5.baron[1])<190;
+  if(atBaron){
+    if(G.obj.baron.up) return 'baron';
+    if(G.obj.herald.up) return 'herald';
+    if(G.obj.grubs.up) return 'grubs';
+  }
+  return null;
+}
+function advanceEngagements(G,used){
+  for(let i=G.engagements.length-1;i>=0;i--){
+    const battle=G.engagements[i], A=[], B=[];
+    const entry=battle.resource?142:122;
+    for(const c of G.champs){
+      if(!c.alive || c.recall>0 || c.fightCd>0 || used[c.i]) continue;
+      if(Math.abs(c.x-battle.x)+Math.abs(c.y-battle.y)>entry) continue;
+      used[c.i]=true;
+      if(!battle.arrival[c.i]) battle.arrival[c.i]=G.t;
+      (c.side==='A'?A:B).push(c);
+    }
+    if(G.t<battle.end) continue;
+    G.engagements.splice(i,1);
+    if(!A.length || !B.length) continue;
+    const n=A.length+B.length;
+    const kind=A.length>=2&&B.length>=2&&n>=6?'team':Math.min(A.length,B.length)===1&&n>=3?'gank':'skirm';
+    resolveFight(G,A,B,kind,false,battle);
+  }
+}
 function encounters(G){
   const cs = G.champs, R = SIM5.ENC, early = G.t < 840;
+  const offset=(G.t/SIM5.DT&1)*5;
   const used = G._used || (G._used = new Array(10));
   for(let i=0;i<10;i++) used[i] = false;
+  if(G.engagements.length) advanceEngagements(G,used);
   for(let i=0;i<10;i++){
-    const c = cs[i]; if(!c.alive || c.recall>0 || c.fightCd>0 || used[i]) continue;
+    const c = cs[(i+offset)%10]; if(!c.alive || c.recall>0 || c.fightCd>0 || used[c.i]) continue;
     for(let j=i+1;j<10;j++){
-      const o = cs[j]; if(o.side===c.side || !o.alive || o.recall>0 || o.fightCd>0 || used[j]) continue;
+      const o = cs[(j+offset)%10]; if(o.side===c.side || !o.alive || o.recall>0 || o.fightCd>0 || used[o.i]) continue;
       const dx = o.x-c.x, dy = o.y-c.y;
       if(dx > R || dx < -R || dy > R || dy < -R || dx*dx+dy*dy > R*R) continue;
       // 对线期：线上对峙由 laneTrades 处理，只有 Gank / 资源争夺 / 入侵才会爆发遭遇战
@@ -986,11 +1121,11 @@ function encounters(G){
         const ck = c.task.k, ok = o.task.k;
         const act = ck==='gank'||ck==='obj'||ok==='gank'||ok==='obj'||ck==='push'||ok==='push'||ck==='defend'||ok==='defend'||ck==='go'||ok==='go';
         const calm = G.team.A.calmT > G.t && G.team.B.calmT > G.t;
-        if(calm){ const hot = ck==='obj'||ok==='obj'; if(rnd() < (hot ? 0.75 : 0.9)) continue; }
+        if(calm){ const hot = ck==='obj'||ok==='obj'; if(G.random() < (hot ? 0.75 : 0.9)) continue; }
         if(!act){
-          if(early){ if(!(ck==='jungle' && ok==='jungle' && rnd() < 0.04)) continue; }
+          if(early){ if(!(ck==='jungle' && ok==='jungle' && G.random() < 0.04)) continue; }
           else if((ck==='lane'||ck==='split') && (ok==='lane'||ok==='split') && c.task.lane===o.task.lane) continue;
-          else if(rnd() > 0.35) continue;
+          else if(G.random() > 0.35) continue;
         }
       }
       const cx = (c.x+o.x)/2, cy = (c.y+o.y)/2;
@@ -1009,12 +1144,19 @@ function encounters(G){
       const defending = weak.some(x=>x.task.k==='defend');
       const n = A.length + B.length;
       const escape = ratio < 0.7 ? (defending ? (ratio < 0.55 ? 0.55 : 0) : 0.7 + (weak.some(x=>x.tags.has('protect'))?0.08:0) - (n>=7?0.15:0)) : 0;
-      if(rnd() < escape){
+      if(G.random() < escape){
         for(const x of weak){ x.fightCd = 8; x.hp = Math.max(0.1, x.hp-0.1); if(x.hp<0.45) startRecall5(x); else setTask(x, {k:'base'}); }
         break;
       }
-      const kind = n >= 6 ? 'team' : (A.length===1||B.length===1) && n>=3 ? 'gank' : 'skirm';
-      resolveFight(G, A, B, kind, false);
+      const resource=fightObjective(G,cx,cy);
+      const arrival=[];
+      for(const x of A) arrival[x.i]=G.t;
+      for(const x of B) arrival[x.i]=G.t;
+      G.engagements.push({x:cx,y:cy,resource,arrival,end:G.t+(resource?9:6)});
+      if(G.rec){
+        G.fx.push({t:G.t,x:cx,y:cy,n:0});
+        G.evs.push([G.t,'F',Math.round(cx),Math.round(cy),0]);
+      }
       break;
     }
   }
@@ -1025,6 +1167,14 @@ function fightProfile(group){
   for(const c of group){
     const k=c.combat, ready=0.45+0.55*c.hp;
     for(const key in k) sum[key]+=k[key]*ready;
+    // 只有反制英雄实际进场时才会加强这一手。对手没有对应机制时不产生收益。
+    if(c.counter){
+      const prepared=c.counter*ready*0.85;
+      sum.antiDash+=k.antiDash*prepared;
+      sum.antiMagic+=k.antiMagic*prepared;
+      sum.antiAuto+=k.antiAuto*prepared;
+      sum.guardProjectile+=k.guardProjectile*prepared;
+    }
     if(c.tags.has('poke')) sum.poke+=ready;
   }
   return sum;
@@ -1040,9 +1190,10 @@ function localFightBonus(own, enemy, kind, river){
   return clamp(chain + opening*0.019 + zoning + defense + screen + peel + own.poke*(river?0.014:0.008),0,0.19);
 }
 // 团战/抓人结算：集火、击杀、助攻（严格对账），存活者状态
-function resolveFight(G, A, B, kind, laneFight){
+function resolveFight(G, A, B, kind, laneFight, battle){
   const t = G.t;
-  const near = (pt, r) => hyp(A[0].x-pt[0], A[0].y-pt[1]) < r;
+  const fx=battle?.x ?? (A[0].x+B[0].x)/2, fy=battle?.y ?? (A[0].y+B[0].y)/2;
+  const near = (pt, r) => hyp(fx-pt[0], fy-pt[1]) < r;
   const atBaron = near(MAP5.baron, 200), atDragon = near(MAP5.dragon, 200);
   const big = (atBaron && (G.obj.baron.up)) || (atDragon && (G.obj.elder.up || (G.team.A.drakes.length>=3||G.team.B.drakes.length>=3)));
   let goldA=0,goldB=0;
@@ -1057,60 +1208,66 @@ function resolveFight(G, A, B, kind, laneFight){
   const sidePow = (L, s, own, enemy) => {
     let p = 0;
     const pressure=pressSide(s);
-    for(const c of L) p += champPow(G, c, pressure);
+    for(const c of L){
+      const late=battle ? Math.min(2,(t-battle.arrival[c.i])/SIM5.DT) : 2;
+      p += champPow(G, c, pressure)*(0.90+late*0.05);
+    }
     // 塔下防守优势
     const myColor = G.team[s].color;
     for(const tw of G.towers){ if(tw.side===myColor && tw.alive && Math.abs(tw.x-L[0].x)+Math.abs(tw.y-L[0].y) < 170){ p *= tw.tier===1 ? 1.1 : 1.18; break; } }
     return p * (1+localFightBonus(own,enemy,kind,atBaron||atDragon));
   };
-  const pa = sidePow(A,'A',profileA,profileB)*Math.exp(randn()*SIM5.FN), pb = sidePow(B,'B',profileB,profileA)*Math.exp(randn()*SIM5.FN);
+  const pa = sidePow(A,'A',profileA,profileB)*Math.exp(randn(G.random)*SIM5.FN), pb = sidePow(B,'B',profileB,profileA)*Math.exp(randn(G.random)*SIM5.FN);
   const pAwin = pa*pa/(pa*pa+pb*pb);
-  const aWin = rnd() < pAwin;
+  const aWin = G.random() < pAwin;
   const W = aWin ? A : B, L = aWin ? B : A;
   const margin = Math.abs(pa*pa-pb*pb)/(pa*pa+pb*pb);
   const plBase = laneFight ? 0.2 : kind==='gank' ? 0.12 : kind==='team' ? 0.11 : 0.13;
   const deathsL = [], deathsW = [];
   const lossProfile=aWin?profileB:profileA, winProfile=aWin?profileA:profileB;
+  const stoppedDive=laneFight?0:Math.min(0.23,lossProfile.antiDash*winProfile.dash*0.075);
   for(const c of L){
     let pl = plBase + margin*0.5 + (1-c.hp)*0.2 - (c.tags.has('protect')?0.04:0) + (c.mental<=-2?0.06:0);
-    if(!laneFight) pl += Math.min(2,winProfile.control)*0.017 - c.combat.frontline*0.034 - c.combat.escape*0.026 - Math.min(2,lossProfile.protect)*0.013;
+    if(!laneFight) pl += Math.min(2,winProfile.control)*0.017 - c.combat.frontline*0.034 - c.combat.escape*0.026 - Math.min(2,lossProfile.protect)*0.013 - stoppedDive;
     if(laneFight && c.hp < 0.2) pl += 0.5;
-    if(rnd() < clamp(pl, 0.05, 0.95)) deathsL.push(c);
+    if(G.random() < clamp(pl, 0.05, 0.95)) deathsL.push(c);
   }
   for(const c of W){
     const pw = laneFight ? 0.02 : 0.03 + 0.22*(1-margin)*(kind==='team'?1:0.5) + (1-c.hp)*0.08;
-    if(rnd() < clamp(pw, 0.01, 0.4)) deathsW.push(c);
+    if(G.random() < clamp(pw, 0.01, 0.4)) deathsW.push(c);
   }
-  if(!deathsL.length && !laneFight && kind!=='skirm' && rnd() < 0.55){ deathsL.push(wpick(L, c=>1.5-c.hp)); }
+  if(!deathsL.length && !laneFight && kind!=='skirm' && G.random() < 0.55-stoppedDive){ deathsL.push(wpick(L, c=>1.5-c.hp, G.random)); }
   if(laneFight && !deathsL.length){ const lo = L.slice().sort((x,y)=>x.hp-y.hp)[0]; if(lo.hp<0.2) deathsL.push(lo); }
-  const fx = (A[0].x+B[0].x)/2, fy = (A[0].y+B[0].y)/2;
   G.fx.push({t, x:fx, y:fy, n: deathsL.length+deathsW.length});
   if(G.rec) G.evs.push([t,'F',Math.round(fx),Math.round(fy),deathsL.length+deathsW.length]);
   const killW = {TOP:1, JUG:1.1, MID:1.35, ADC:1.6, SUP:0.3};
   const doKill = (victim, killers, allies) => {
     const alive = killers.filter(c=>c.alive);
     const pool = alive.length ? alive : killers;
-    const killer = wpick(pool, c=>killW[c.role]*champPow(G,c,0)*(c.tags.has('pick')?1.15:1)+0.01);
-    const assists = allies.filter(c=>c!==killer && rnd() < (kind==='team'?0.82:0.7));
+    const killer = wpick(pool, c=>killW[c.role]*champPow(G,c,0)*(c.tags.has('pick')?1.15:1)+0.01, G.random);
+    const assists = allies.filter(c=>c!==killer && G.random() < (kind==='team'?0.82:0.7));
     applyKill(G, killer, victim, assists);
   };
   // 交错结算：败方阵亡与胜方阵亡按顺序穿插
   const order = [];
   deathsL.forEach(v=>order.push([v, W]));
-  deathsW.forEach(v=>order.splice(Math.floor(rnd()*(order.length+1)), 0, [v, L]));
+  deathsW.forEach(v=>order.splice(Math.floor(G.random()*(order.length+1)), 0, [v, L]));
   let killsBy = {A:0, B:0};
   for(const [v, ks] of order){ if(!v.alive) continue; const kset = ks; doKill(v, kset, kset); killsBy[v.side==='A'?'B':'A']++; }
   // 存活者状态
-  for(const c of L) if(c.alive){ c.hp = Math.max(0.06, c.hp*(0.35+rnd()*0.3)); c.fightCd = 15; if(c.hp < 0.45){ setTask(c, {k:'base'}); startRecall5(c); } }
-  for(const c of W) if(c.alive){ c.hp = Math.max(0.1, c.hp*(0.55+rnd()*0.35)); c.fightCd = 9; }
+  for(const c of L) if(c.alive){ c.hp = Math.max(0.06, c.hp*(0.35+G.random()*0.3)); c.fightCd = 15; if(c.hp < 0.45){ setTask(c, {k:'base'}); startRecall5(c); } }
+  for(const c of W) if(c.alive){ c.hp = Math.max(0.1, c.hp*(0.55+G.random()*0.35)); c.fightCd = 9; }
   if(!laneFight){ G.planT = t; if(kind!=='gank'){ G.team.A.calmT = t + 75; G.team.B.calmT = t + 75; } }
   // 团灭 / 团战播报
   const lSide = L[0].side;
-  if(kind==='team' && deathsL.length>=3){
+  if(battle?.resource && (deathsL.length||deathsW.length)){
+    const target={drag:'小龙',elder:'远古龙',baron:'男爵',herald:'先锋',grubs:'虚空巢虫'}[battle.resource];
+    feed(G,W[0].side,'资源争夺',`${target}河道 ${A.length} 对 ${B.length}，${G.team[W[0].side].name} 打出 ${killsBy[W[0].side]} 换 ${killsBy[lSide]}。`,true);
+  } else if(kind==='team' && deathsL.length>=3){
     const aced = aliveN(G, lSide)===0;
     feed(G, W[0].side, aced?'团灭':'团战胜利', aced ? `☠️ ${G.team[W[0].side].name} 打出一波团灭！${G.team[lSide].name} 全员阵亡！` : `⚔️ ${G.team[W[0].side].name} 团战 ${killsBy[W[0].side]} 换 ${killsBy[lSide]} 大获全胜！`, true);
-  } else if(kind==='team' && (deathsL.length||deathsW.length)){
-    feed(G, W[0].side, '团战', `${G.team[W[0].side].name} 在${atBaron?'大龙坑':atDragon?'小龙坑':'野区'}附近打出 ${killsBy[W[0].side]} 换 ${killsBy[lSide]} 的交换。`);
+  } else if((kind==='team'||kind==='skirm') && (deathsL.length||deathsW.length)){
+    feed(G, W[0].side, kind==='team'?'团战':'小规模交战', `${G.team[W[0].side].name} 在${atBaron?'大龙坑':atDragon?'小龙坑':'野区'}附近打出 ${killsBy[W[0].side]} 换 ${killsBy[lSide]} 的交换。`);
   }
   // 抢龙：团战败方的打野在资源快被拿下时惩戒抢走
   for(const key of ['baron','drag','elder']){
@@ -1120,7 +1277,7 @@ function resolveFight(G, A, B, kind, laneFight){
     if(hyp(fx-pit[0], fy-pit[1]) > 220) continue;
     const jg = G.champs.find(c=>c.side===lSide && c.role==='JUG' && c.alive && c.recall===0 && hyp(c.x-pit[0],c.y-pit[1])<200);
     const defendingJg=W.some(c=>c.role==='JUG' && c.alive && c.recall===0);
-    if(jg && ob.by===W[0].side && rnd() < (defendingJg?0.14:0.28)){ takeObj(G, key, lSide, true); }
+    if(jg && ob.by===W[0].side && G.random() < (defendingJg?0.14:0.28)){ takeObj(G, key, lSide, true); }
   }
 }
 
@@ -1133,10 +1290,10 @@ function applyKill(G, killer, victim, assists){
   victim.task = TK({k: victim.role==='JUG'?'jungle':'lane', lane: LANE_OF[victim.role]});
   killer.k++; killer.streak++;
   assists.forEach(a=>a.a++);
-  const shut = victim.streak >= 3 ? Math.min(700, 150*(victim.streak-2)) : 0;
+  const shut = victim.streak >= 3 && G.bountySide!==victim.side ? Math.min(700, 200*(victim.streak-2)) : 0;
   victim.streak = 0;
-  let gold = 300 + shut + (G.firstBlood ? 0 : 100);
-  killer.gold += gold; killer.tg += gold;
+  const gold = 300 + (G.firstBlood ? 0 : 100);
+  killer.gold += gold+shut; killer.tg += gold+shut;
   if(assists.length){ const share = gold*0.5/assists.length; assists.forEach(a=>{ a.gold += share; a.tg += share; }); }
   const xp = 140 + victim.lvl*28; killer.xp += xp*0.6; assists.forEach(a=>a.xp += xp*0.4/assists.length);
   G.team[killer.side].kills++;
@@ -1162,6 +1319,12 @@ function applyKill(G, killer, victim, assists){
 }
 
 // ---------------- 资源争夺 ----------------
+function claimObjectiveBounty(G, side, amount, target){
+  if(G.bountySide!==side) return;
+  const share=amount/5;
+  for(const c of G.rosters[side]){ c.gold+=share; c.tg+=share; }
+  feed(G,side,'目标赏金',`${G.team[side].name} 拿下${target}，全队获得额外 ${amount} 金币。`,true);
+}
 function objectives(G){
   const t = G.t, o = G.obj;
   const check = (key, pt, need) => {
@@ -1199,7 +1362,7 @@ function takeObj(G, key, side, steal){
     tm.drakes.push(o.type);
     G.drakeSeen = (G.drakeSeen||[]).concat(o.type);
     const total = G.team.A.drakes.length + G.team.B.drakes.length;
-    if(total===1 && !o.mapType) o.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.type))[0];
+    if(total===1 && !o.mapType) o.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.type), G.random)[0];
     if(total>=2) o.type = o.mapType; else o.type = null;
     if(tm.drakes.length >= 4){
       tm.soul = o.mapType || dk[0];
@@ -1225,6 +1388,7 @@ function takeObj(G, key, side, steal){
     tm.heraldT = t + 240; o.next = null;
     feed(G, side, '峡谷先锋', `${nm} 拿下峡谷先锋，准备撞塔。`);
   }
+  if(key!=='grubs') claimObjectiveBounty(G,side,500,{drag:'小龙',elder:'远古龙',baron:'男爵',herald:'峡谷先锋'}[key]);
   if(G.rec) G.evs.push([t,'O',key,side,key==='drag'?(tm.drakes[tm.drakes.length-1]||''):'', steal?1:0]);
   // 资源到手后回到常规决策
   G.champs.filter(c=>c.side===side && c.task.k==='obj' && c.task.o===key).forEach(c=>{ c.task = TK({k: c.role==='JUG'?'jungle':'lane', lane: LANE_OF[c.role]}); });
@@ -1260,7 +1424,7 @@ function towerDamageable(G, tw){ if(G.towerDirty || !G.first) refreshTowers(G); 
 function lanesAndTowers(G){
   const t = G.t, DT = SIM5.DT;
   if(G.towerDirty || !G.first) refreshTowers(G);
-  const norm = Math.exp(SIM5.LV*Math.max(1, Math.min(18, 1+t/110)) + Math.min(18000, t*8)/SIM5.IT);
+  const norm = Math.exp(SIM5.LV*Math.min(18,1+t/110) + Math.log1p(Math.min(16000,t*6.8)/SIM5.IT)*1.18);
   const champs = G.champs;
   const alive=G.aliveN||(G.aliveN={blue:0,red:0});
   alive.blue=alive.red=0;
@@ -1279,7 +1443,7 @@ function lanesAndTowers(G){
     const supB = G.supLane.red[lane] ? 1.6 : 0, supR = G.supLane.blue[lane] ? 1.6 : 0;
     const fb = pB/norm + 0.6 + supB, fr = pR/norm + 0.6 + supR;
     let v = 0.008 * DT * (fb - fr) / (fb + fr);
-    if(pB===0 && pR===0 && !supB && !supR) v += (0.0012*(G.aliveN.blue - G.aliveN.red)/5 + (0.5 - G.front[lane]) * 0.0004 + randn()*0.002) * DT;
+    if(pB===0 && pR===0 && !supB && !supR) v += (0.0012*(G.aliveN.blue - G.aliveN.red)/5 + (0.5 - G.front[lane]) * 0.0004 + randn(G.random)*0.002) * DT;
     const rT = G.first.red[lane], bT = G.first.blue[lane];
     const maxS = rT ? rT.s - 0.012 : 0.93, minS = bT ? bT.s + 0.012 : 0.07;
     let nf = G.front[lane] + v;
@@ -1293,7 +1457,7 @@ function lanesAndTowers(G){
       const tm = G.team[atkSide];
       let dmg = (0.0006 + Math.min(1, t/1800)*0.0022 + (pw/norm) * SIM5.TD * (1 + tm.grubs*0.04)) * DT;
       if(tm.baronT > t) dmg *= 2.2;
-      if(tm.heraldT > t && tw.tier<=2 && pw>0 && rnd()<0.05*DT){ dmg += 0.3; tm.heraldT = 0; feed(G, atkSide, '先锋撞塔', `${tm.name} 放出峡谷先锋撞向${laneCN(lane)}防御塔！`); }
+      if(tm.heraldT > t && tw.tier<=2 && pw>0 && G.random()<0.05*DT){ dmg += 0.3; tm.heraldT = 0; feed(G, atkSide, '先锋撞塔', `${tm.name} 放出峡谷先锋撞向${laneCN(lane)}防御塔！`); }
       if(tw.tier===1 && t < 300) dmg *= 0.3;
       if(t > 3000) dmg *= 2.5;
       tw.hp -= dmg;
@@ -1329,6 +1493,7 @@ function destroyTower(G, tw, side){
   if(G.rec) G.evs.push([t,'T',tw.id,side]);
   if(tw.tier===6){ endGame5(G, side); return; }
   if(tw.tier===4){ tw.resp = t + 300; feed(G, side, '破水晶', `💎 ${tm.name} 攻破${laneCN(tw.lane)}召唤水晶，超级兵即将出动！`, true); return; }
+  if(tw.tier<=3) claimObjectiveBounty(G,side,tw.tier===1?250:400,TIER_CN[tw.tier]);
   tm.towers++;
   const near = G.champs.filter(c=>c.side===side && c.alive && hyp(c.x-tw.x,c.y-tw.y)<220);
   G.champs.filter(c=>c.side===side).forEach(c=>{ const g = 50 + (near.includes(c) ? 200/Math.max(1,near.length) : 0); c.gold += g; c.tg += g; });
@@ -1368,8 +1533,8 @@ function game5Result(G){
   const winStats = winA ? sa : sb;
   const winTotalK = Math.max(1, winA ? kA : kB);
   const mvpRow = winStats.slice().sort((x,y)=>{
-    const sx = x.k*2.4 + x.a*1.2 - x.d*1.6 + ((x.k+x.a)/winTotalK)*4 + x.gold/4000 + rnd()*0.5;
-    const sy = y.k*2.4 + y.a*1.2 - y.d*1.6 + ((y.k+y.a)/winTotalK)*4 + y.gold/4000 + rnd()*0.5;
+    const sx = x.k*2.4 + x.a*1.2 - x.d*1.6 + ((x.k+x.a)/winTotalK)*4 + x.gold/4000 + G.random()*0.5;
+    const sy = y.k*2.4 + y.a*1.2 - y.d*1.6 + ((y.k+y.a)/winTotalK)*4 + y.gold/4000 + G.random()*0.5;
     return sy - sx;
   })[0];
   const game = {
@@ -1383,7 +1548,7 @@ function game5Result(G){
     blue: d.blue, first: d.first, styleA: ev.a.comp.style, styleB: ev.b.comp.style
   };
   if(G.rec) game.rec = recordOf(G);
-  game.impacts = G.over ? applyGameImpact(game, d.A, d.B) : [];
+  game.impacts = G.over ? applyGameImpact(game, d.A, d.B, G.random) : [];
   if(G.over) G.result=game;
   return game;
 }
@@ -1403,10 +1568,14 @@ function playGame(d, opts){
 
 // ================= 回放存档：最多 200 条，最近 10 局 + 最多 10 局永久收藏 =================
 const REPLAY_MAX_RECENT = 10, REPLAY_MAX_KEPT = 10, REPLAY_MAX_ENTRIES = 200;
+let replaySequence = 0;
 function replayStore(){ if(!S.replays) S.replays = []; return S.replays; }
 function pushReplay(entry){
   const list = replayStore();
-  entry.id = entry.id || ('r' + Date.now().toString(36) + Math.floor(rnd()*1e4).toString(36));
+  if(!entry.id){
+    const prefix='r'+Date.now().toString(36)+'-';
+    do{ entry.id=prefix+(++replaySequence).toString(36); }while(list.some(r=>r.id===entry.id));
+  }
   list.unshift(entry);
   pushReplayTrim();
   return entry.id;

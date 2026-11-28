@@ -19,3 +19,10 @@
 python data/traits/build_pro_profiles.py path/to/2025.csv path/to/2026.csv
 python build_web.py
 ```
+
+## 赛区对抗标签
+
+用同一批 CSV 运行 `python data/traits/build_region_edges.py path/to/2025.csv path/to/2026.csv`。
+按同年一级联赛的队伍 ID 识别双方赛区，只统计不同赛区的正式国际赛对局。2025 年 LTA 北区计入 LCS，南区计入 CBLOL。同赛区预选、队伍赛区无法确认的记录排除。
+
+标签按选手对目标赛区生成。每组至少 10 局、2 支对手和 2 届赛事；用赛前本地联赛 Elo 和已发生的跨赛区结果估计队伍胜率，对超出预期的部分加 12 局先验收缩。超额至少 5 个百分点，并且同位置 KDA 相对对手的差值在扣除胜负方均值后达到平均，才显示标签。生成结果只写回 `regionEdge`，不计入引擎战力或阵容评分。238 局样本中，11 名游戏名单内的选手满足条件。

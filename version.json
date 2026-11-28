@@ -1,7 +1,7 @@
 {
-  "version": "2.1.10",
+  "version": "2.1.11",
   "date": "2026-11-28",
-  "notes": "强队不再年年包揽冠军：BLG/GEN/T1 主力能力微调（ON 上调），比赛加入临场发挥浮动，弱队更常爆冷；选手每年成长更多",
+  "notes": "逐波补刀与野怪清营、资源交战和快模一致性、跳过范围修复、转会资料卡与赛区对抗标签",
   "url": "https://github.com/D3cEuGod/esports-manager/releases",
   "webUrl": "https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/dist/index.html"
 }

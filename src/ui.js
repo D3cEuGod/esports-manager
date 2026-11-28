@@ -575,7 +575,7 @@ VIEWS.home = () => {
   let stageCard = '';
   if(!ev.started){
     topBody = `<p class="muted">${ev.type==='lpl_s1'&&transferWindowOpen()?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
-      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
+      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button>${simRegularBtn()}<button class="btn ghost" data-a="simEvent" title="一直模拟到本项赛事全部结束（含季后赛）">快速模拟整项赛事（含季后赛）</button></div>`;
   } else if(ev.done){
     topBody = `<div class="done">${ico('check','g')} ${esc(info.name)}已结束 ${ev.res.champ?`· ${ico('trophy','gold')} 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
       <div class="btns"><button class="btn big" data-a="nextEvent">进入下一阶段 ${ico('play')}</button></div>`;
@@ -593,8 +593,9 @@ VIEWS.home = () => {
         `<p class="muted">${inEvent?'等待本轮其他比赛结果…':'本队未参加此项赛事（或已止步），可模拟观看赛果。'}</p>`}
       <div class="btns">
         ${myNext?`<button class="btn big" data-a="toMyMatch">${ico('play')} ${nxt&&userInvolved(nxt.m)?'进入比赛':'模拟至我的比赛'}</button>`:''}
-        <button class="btn" data-a="simStage">${ico('skip')} 模拟本轮</button>
-        <button class="btn ghost" data-a="simEvent">模拟整项赛事</button>
+        <button class="btn" data-a="simStage" title="只模拟当前这一轮的比赛">${ico('skip')} 模拟本轮</button>
+        ${simRegularBtn()}
+        <button class="btn ghost" data-a="simEvent" title="一直模拟到本项赛事全部结束（含季后赛）">模拟整项赛事（含季后赛）</button>
       </div>
       ${probs()}`;
     // 直接把当前赛事正在打的小组赛/瑞士轮/淘汰赛对阵放到主页下方
@@ -611,6 +612,12 @@ VIEWS.home = () => {
     ${stageCard}
     ${S.news.length?`<section class="card compact-news"><h4>${ico('news')} 最新赛场动态</h4><ul class="news">${S.news.slice(0,5).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`:''}`;
 };
+// 模拟常规赛：引擎 canSimRegularSeason() 为真时显示，截止到季后赛开始前
+function simRegularBtn(){
+  let ok=false;
+  try{ ok = typeof canSimRegularSeason==='function' && typeof simRegularSeason==='function' && !!canSimRegularSeason(); }catch(e){ ok=false; }
+  return ok ? `<button class="btn" data-a="simRegular" title="模拟到常规赛全部结束，季后赛开始前停下">${ico('skip')} 模拟常规赛（到季后赛前）</button>` : '';
+}
 function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">${ico('warn')} ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
 function findMyNext(){ const ev=curEvent(); if(!ev.started||ev.done) return null; for(const st of ev.stages){ if(st.kind==='br') resolveBR(st); const m=st.matches.find(m=>!m.w&&userInvolved(m)&&m.a&&m.b); if(m) return {m,st}; } return null; }
@@ -690,7 +697,7 @@ function legendStripHtml(){
   const ls=Object.values(S.players).filter(p=>p.legend && !p.team && !p.retired);
   if(!ls.length) return '';
   return `<div class="legend-strip"><b>传奇自由选手</b><span class="muted">无需转会费，只付年薪；AI 球队不会签约</span>
-    ${ls.map(p=>`<span class="legend-card"><b>${esc(playerTag(p))}</b> <small>${ROLE_CN[p.role]} · ${p.age}岁</small> ${ovrBadge(p.rating)} <small class="muted">${p.champs.slice(0,3).map(x=>CH[x.c]?.cn||x.c).join('、')}</small> <small>年薪 ${fmtMoney(Math.round(p.salary*1.1))}</small>${transferWindowOpen()?` <button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">签约</button>`:''}</span>`).join('')}
+    ${ls.map(p=>`<span class="legend-card"><button type="button" class="pl-link" data-a="mkPlayer" data-p="${esc(p.pid)}" title="查看选手资料"><b>${esc(playerTag(p))}</b></button> <small>${ROLE_CN[p.role]} · ${p.age}岁</small> ${ovrBadge(p.rating)} <small class="muted">${p.champs.slice(0,3).map(x=>CH[x.c]?.cn||x.c).join('、')}</small> <small>年薪 ${fmtMoney(Math.round(p.salary*1.1))}</small>${transferWindowOpen()?` <button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">签约</button>`:''}</span>`).join('')}
   </div>`;
 }
 // ---------- 转会市场（含季中建队非卖品过滤） ----------
@@ -722,7 +729,7 @@ function marketEmbedHtml(limit){
   ${ps.slice(0,maxShow).map(p=>{
     const locked = isUntouchable(p);
     const crossMid = midWin && isCrossRegionFor(p, S.user);
-    return `<tr><td><b>${esc(playerTag(p))}</b>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
+    return `<tr><td><button type="button" class="pl-link" data-a="mkPlayer" data-p="${esc(p.pid)}" title="查看选手资料"><b>${esc(playerTag(p))}</b></button>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
     <td>${!open?'':locked?`<span class="nft-tag">${ico('lock')} 季中非卖</span>`:`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
   }).join('')}</table>
   ${ps.length>maxShow?`<p class="muted">共 ${ps.length} 人，当前显示前 ${maxShow} 人，请使用上方筛选缩小范围。</p>`:''}
@@ -872,7 +879,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.5')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.11')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -1056,7 +1063,7 @@ VIEWS.db = () => {
   if(team){
     const { slots, subs } = dbSquad(team);
     const head = '<tr><th>位置</th><th>选手</th><th>能力</th><th>状态/心态</th><th></th></tr>';
-    body = `<h3>${esc(team.name||team.short||team.key)} ${team.cn?`<small>${esc(team.cn)}</small>`:''}</h3>
+    body = `<h3>${esc(team.name||team.short||team.key)} ${team.cn?`<small>${esc(team.cn)}</small>`:''} <span class="db-ovr">战力 ${ovrBadge(teamOvr(team.key))}</span></h3>
       <h4>首发</h4>
       <table class="tbl db-tbl">${head}${slots.map(({r,p})=>p
         ? dbRow(p, `<span class="tagon">首发·${ROLE_CN[r]}</span>`, p.role!==r)
@@ -1070,15 +1077,18 @@ function dbPlayerModal(pid, opts={}){
   return () => {
     const p = P(pid);
     const t = p && p.team ? T(p.team) : null;
-    if(!p || !t || !(t.roster||[]).includes(pid)) return `<h3>资料库</h3><p class="muted">该选手已不在此战队名单中。</p><div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
-    const slot = ROLES.find(r=>(t.lineup||{})[r]===pid);
-    const bd = playerTeamBond(p);
+    // 自由球员（无战队）也可查看；有战队时须仍在该队名单中
+    if(!p || p.retired || (p.team && (!t || !(t.roster||[]).includes(pid)))) return `<h3>资料库</h3><p class="muted">该选手已不在此战队名单中。</p><div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+    const slot = t ? ROLES.find(r=>(t.lineup||{})[r]===pid) : null;
+    const bd = t ? playerTeamBond(p) : null;
+    const regional = regionalTagsHtml(p);
     const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
     const pool = poolChipsHtml(p, {val:true});
     const dl = ratingDeltaHtml(p);
-    const manage = opts.manage && t.key===S.user;
-    return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small></h3>
-      <p>${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}${slot&&p.role!==slot?' <em class="muted">非本位</em>':''}</p>
+    const manage = opts.manage && t && t.key===S.user;
+    const market = opts.market && p.team!==S.user ? marketActHtml(p) : '';
+    return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}</h3>
+      <p>${t ? `${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}${slot&&p.role!==slot?' <em class="muted">非本位</em>':''}` : '<span class="tagoff">自由球员</span>'}</p>
       <table class="tbl db-kv">
         ${kv('位置', ROLE_CN[p.role]||esc(p.role||''))}
         ${kv('国籍', esc(p.nat||'—')+(isForeign(p)?'<small class="fx">外援</small>':''))}
@@ -1088,14 +1098,35 @@ function dbPlayerModal(pid, opts={}){
         ${kv('状态', formChip(p,true))}
         ${kv('心态', mentalChip(p,true))}
         ${kv('特质', traitChips(p)||'<small class="muted">—</small>')}
-        ${kv('默契', `<span class="bd-val ${bondCls(bd)}">${bd}</span> <small class="muted">与其余首发队友的平均羁绊</small>`)}
+        ${regional?kv('赛区表现', regional):''}
+        ${t?kv('默契', `<span class="bd-val ${bondCls(bd)}">${bd}</span> <small class="muted">与其余首发队友的平均羁绊</small>`):''}
         ${kv('身价', fmtMoney(playerValue(p)))}
         ${kv('年薪', fmtMoney(p.salary||0))}
         ${kv('合同至', p.contract!=null?p.contract:'—')}
         ${kv('英雄池', pool?`<span class="pool">${pool}</span>`:'<small class="muted">—</small>')}
       </table>
-      <div class="btns">${manage?rosterActsHtml(p, slot, transferWindowOpen()):''}<button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+      <div class="btns">${manage?rosterActsHtml(p, slot, transferWindowOpen()):''}${market}<button class="btn ghost" data-a="closeModal">关闭</button></div>`;
   };
+}
+// 资料卡上的报价/签约按钮：与转会表同一套条件（窗口开放、非季中非卖）
+function marketActHtml(p){
+  if(!transferWindowOpen()) return '<span class="muted">转会窗口关闭，仅可浏览</span>';
+  if(p.team && isUntouchable(p)) return `<span class="nft-tag">${ico('lock')} 季中非卖</span>`;
+  return `<button class="btn" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`;
+}
+// 赛区表现（引擎接口 playerRegionalTags，edge 为百分点）：没有数据时不显示
+function regionalTagsHtml(p){
+  if(typeof playerRegionalTags!=='function') return '';
+  let tags;
+  try{ tags = playerRegionalTags(p); }catch(e){ return ''; }
+  if(!Array.isArray(tags) || !tags.length) return '';
+  return tags.map(t=>{
+    const edge = Number(t && t.edge) || 0;
+    const games = Number(t && t.games) || 0;
+    const cls = edge>0 ? 'up' : edge<0 ? 'dn' : '';
+    const pts = `${edge>0?'+':''}${Math.round(edge*10)/10}`;
+    return `<span class="rg-tag ${cls}" title="对阵 ${esc(t.region||'')} 赛区：${edge<0?'低于':'高于'}赛前预期 ${Math.abs(Math.round(edge*10)/10)} 个百分点，样本 ${games} 局">${esc(t.label||t.region||'')} <b>${pts}%</b> <small>${games} 局</small></span>`;
+  }).join(' ');
 }
 
 // ================= 比赛（1v1 选边赛 + LoL 海克斯风格 BP）界面 =================
@@ -1120,7 +1151,7 @@ function enterNextGamePhase(M){
   if(M.chooser === me){
     M.phase = 'choose';
   } else {
-    const opSide = aiChooseSide(m[op==='A'?'a':'b'], m[me==='A'?'a':'b'], M.locked);
+    const opSide = aiChooseSide(m[op==='A'?'a':'b'], m[me==='A'?'a':'b'], M.locked, matchCtx(M).gameSeed);
     const blue = opSide === 'blue' ? op : me;
     setupDraft(blue);
     toast(`对手拥有选边权，选择了${opSide==='blue'?'蓝色方（BP先手）':'红色方（BP后手）'}，本局你位于${blue===me?'蓝色方（BP先手）':'红色方（BP后手）'}`);
@@ -1136,6 +1167,7 @@ function beginUserMatch(item){
     sel:null, roleSel:null, swapFrom:null,
     filter:'ALL', q:'', onlyAvail:false, showLocked:false, clock:30
   };
+  matchCtx(UI.match);   // 开赛即初始化系列赛种子与系列赛状态，手玩与快进共用同一随机流
   enterNextGamePhase(UI.match);
   render();
 }
@@ -1145,7 +1177,13 @@ function matchCtx(M){
   if(!m.ctx) m.ctx = findMatchCtx(m) || {intl:false, ko:false};
   ensureSeriesForm(m.ctx);
   const need = Math.ceil(m.bo/2);
-  return Object.assign({}, m.ctx, {decider: m.bo>1 && M.wa===need-1 && M.wb===need-1});
+  const gameSeed = typeof seriesSimulationSeed==='function' ? seriesSimulationSeed(m.ctx, M.games.length) : undefined;
+  return Object.assign({}, m.ctx, {decider: m.bo>1 && M.wa===need-1 && M.wb===need-1, gameSeed});
+}
+// 系列赛首局 1v1 的种子（与后端 simSeries 一致，gameIndex = -1）
+function soloSimOpts(M){
+  const ctx = matchCtx(M);
+  return typeof seriesSimulationSeed==='function' ? {record:true, seed:seriesSimulationSeed(ctx,-1)} : {record:true};
 }
 function setDraftCtx(M, d){ d.ctx = matchCtx(M); return d; }
 // 回放：1v1 录像在下一局 5v5 时一起存
@@ -1573,7 +1611,7 @@ function matchScreen(){
         </div>
         <div class="solo-go-row">
           <button class="lock-btn is-pick big-go" data-a="startSolo">⚔ 开始峡谷 1v1 选边赛</button>
-          <button class="hex-btn ghost" data-a="autoSeries">跳过，自动模拟剩余系列赛</button>
+          <button class="hex-btn ghost" data-a="skipSolo" title="用上面选定的选手和英雄直接得出 1v1 结果，之后照常选边和 BP">跳过 1v1，直接看结果</button>
         </div>
         ${intelPanel(M)}
       </div>
@@ -1639,9 +1677,6 @@ function matchScreen(){
         <div class="choose-cards single">
           <button class="hex-choice blue" data-a="chooseSideOnly" data-c="blue"><b>选择 蓝色方</b><small>BP 先手 · 一楼先抢核心英雄</small></button>
           <button class="hex-choice red" data-a="chooseSideOnly" data-c="red"><b>选择 红色方</b><small>BP 后手 · 握有五楼康特位</small></button>
-        </div>
-        <div class="choose-foot">
-          <button class="hex-btn ghost" data-a="autoSeries">跳过，自动模拟剩余系列赛</button>
         </div>
         ${intelPanel(M)}
       </div>
@@ -1976,6 +2011,7 @@ const ACT = {
   dbRegion:d=>{ UI.db={region:d.r, team:null}; render(); },
   dbTeam:d=>{ const t=T(d.k); UI.db={region:t?t.region:(UI.db||{}).region, team:d.k}; render(); },
   dbPlayer:d=>{ UI.modal=dbPlayerModal(d.p); render(); },
+  mkPlayer:d=>{ clearTimeout(UI._t); UI.modal=dbPlayerModal(d.p,{market:true}); render(); },
   rsPlayer:d=>{ UI.modal=dbPlayerModal(d.p,{manage:true}); render(); },
   authTab:d=>{ UI.authTab=d.t; UI.verifyEmail=null; render(); },
   cancelOtp:()=>{ UI.verifyEmail=null; render(); },
@@ -2116,6 +2152,15 @@ const ACT = {
       toast(`本轮 ${res.played} 场比赛模拟完毕`);
     }
   },
+  simRegular:()=>{
+    if(typeof canSimRegularSeason!=='function' || typeof simRegularSeason!=='function' || !canSimRegularSeason()) return;
+    const ps = lineupProblems(S.user);
+    if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
+    const res = simRegularSeason();
+    save(); render();
+    const n = res && Number.isFinite(res.played) ? res.played : null;
+    toast(n!=null ? `常规赛模拟完毕（共 ${n} 场），季后赛即将开始` : '常规赛模拟完毕，季后赛即将开始');
+  },
   simEvent:()=>{
     const ps = lineupProblems(S.user);
     if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
@@ -2149,28 +2194,38 @@ const ACT = {
   },
   soloChamp:d=>{ if(UI.match){ UI.match.soloMyChamp = d.c; render(); } },
   startSolo:()=>{
-    const M=UI.match, m=M.item.m, me=M.me, op=me==='A'?'B':'A';
+    const M=UI.match;
+    if(!M || M.phase!=='solo_pick') return;   // 防止重复开赛/重复结算
+    const m=M.item.m, me=M.me, op=me==='A'?'B':'A';
     const myTeamKey = m[me==='A'?'a':'b'], oppTeamKey = m[op==='A'?'a':'b'];
     const myLu = lineupMap(myTeamKey);
     const myPl = myLu[M.soloMyRole];
     const myPick = { role: M.soloMyRole, pid: myPl?myPl.pid:null, champ: M.soloMyChamp };
     const oppPick = defaultSoloPick(oppTeamKey);
-    const g = me==='A' ? createSolo(m.a, m.b, myPick, oppPick, {record:true}) : createSolo(m.a, m.b, oppPick, myPick, {record:true});
+    const soloOpts = soloSimOpts(M);
+    const g = me==='A' ? createSolo(m.a, m.b, myPick, oppPick, soloOpts) : createSolo(m.a, m.b, oppPick, myPick, soloOpts);
     M.solo = null;
     M.phase = 'solo_watch';
     Watch.start({ kind:'solo', g, teamA:m.a, teamB:m.b, me, onEnd: w=>{
-      if(UI.match!==M) return;
+      if(UI.match!==M || M.solo || M.phase!=='solo_watch') return;
       const res = soloResult(w.g);
       M.solo = res;
       M.chooser = res.winner;
       M.pendingSolo = soloReplayData(res);
       if(M.chooser !== me){
-        const opSide = aiChooseSide(oppTeamKey, myTeamKey, M.locked);
+        const opSide = aiChooseSide(oppTeamKey, myTeamKey, M.locked, matchCtx(M).gameSeed);
         M.soloAiBlue = opSide === 'blue' ? op : me;
       }
       render();
     }});
     render();
+  },
+  // 跳过 1v1：只用玩家选定的选手和英雄，复用 startSolo 后立即跑完结算
+  skipSolo:()=>{
+    const M=UI.match;
+    if(!M || M.phase!=='solo_pick') return;
+    ACT.startSolo();
+    if(UI.match===M && M.phase==='solo_watch' && !M.solo) Watch.control('skip');
   },
   wSpeed:d=>{ Watch.control('speed', d.v); render(); },
   wPause:()=>{ Watch.control('pause'); render(); },
@@ -2248,14 +2303,17 @@ const ACT = {
   },
   nextGame:()=>{ const M=UI.match; enterNextGamePhase(M); render(); },
   autoSeries:()=>{
-    const M=UI.match; const m=M.item.m; const need=Math.ceil(m.bo/2);
+    const M=UI.match;
+    if(!M || M._autoSettling) return;   // 防止连点重复结算
+    M._autoSettling = true;
+    const m=M.item.m; const need=Math.ceil(m.bo/2);
     stopBpClock(); Watch.stop();
     const play = d => { const g = playGame(d, {record:true}); storeUserReplay(M, g); endUserGame(g); };
     if(M.phase==='draft'||M.phase==='ready'){ autoDraftRest(M.draft); play(M.draft); }
     while(M.wa<need&&M.wb<need){
-      if(!M.chooser){ const r = simSolo1v1(m.a, m.b, null, null, {record:true}); M.chooser = r.winner; M.pendingSolo = soloReplayData(r); }
+      if(!M.chooser){ const r = simSolo1v1(m.a, m.b, null, null, soloSimOpts(M)); M.chooser = r.winner; M.pendingSolo = soloReplayData(r); }
       const other = M.chooser==='A'?'B':'A';
-      const sidePick = aiChooseSide(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked);
+      const sidePick = aiChooseSide(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked, matchCtx(M).gameSeed);
       const blue = sidePick==='blue' ? M.chooser : other;
       const d=newDraft(m.a,m.b,blue,M.locked); setDraftCtx(M, d); autoDraftRest(d); play(d);
     }

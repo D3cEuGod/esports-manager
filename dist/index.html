@@ -1341,13 +1341,21 @@ body.cb-lock{overflow:hidden}
 .seg-field+.seg-field{margin-top:30px}
 @media(max-width:600px){.seg{width:100%}.seg-opt span{min-width:0;padding:6px 8px}}
 .legend-tag{margin-left:4px;padding:0 4px;border-radius:3px;font-size:11px;font-weight:700;color:#1a1204;background:linear-gradient(90deg,#f0c75e,#c89b3c)}
+/* 转会表/传奇条：点选手名查看资料卡 */
+.pl-link{appearance:none;background:none;border:0;padding:0;margin:0;font:inherit;line-height:inherit;cursor:pointer;color:inherit;text-align:inherit;text-decoration:underline dotted rgba(200,155,60,.7);text-underline-offset:3px}
+.pl-link:focus-visible{outline:2px solid var(--hex-gold-l,#f0e6d2);outline-offset:2px;border-radius:2px}
+.pl-link:hover{color:var(--hex-gold-l,#f0e6d2);text-decoration-style:solid}
+.db-ovr{font-size:13px;font-weight:400;margin-left:8px;white-space:nowrap}
+.rg-tag{display:inline-flex;align-items:baseline;gap:4px;margin:0 6px 4px 0;padding:1px 7px;border:1px solid var(--ln,#33496a);border-radius:4px;font-size:12px}
+.rg-tag b{font-family:var(--num)}.rg-tag small{opacity:.7}
+.rg-tag.up b{color:#0ac8b9}.rg-tag.dn b{color:#e84057}
 .legend-strip{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0;padding:10px 12px;border:1px solid #c89b3c;border-radius:6px;background:rgba(200,155,60,.08)}.legend-card{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 </style></head>
 <body><div id="app"></div>
 <script>window.ROSTER={"CBLOL": {"teams": [{"name": "FURIA", "short": "FUR", "cn": "FUR", "tier": 2, "players": [{"id": "guigo", "name": "Guilherme Ruiz", "role": "TOP", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Tatu", "name": "Tatu", "role": "JUG", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Tutsz", "name": "Tutsz", "role": "MID", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Ayu", "name": "Ayu", "role": "ADC", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Jojo", "name": "Jojo", "role": "SUP", "nat": "BR", "age": null, "rating": 64, "sub": false}]}, {"name": "Los Grandes", "short": "LOS", "cn": "LOS", "tier": 1, "players": [{"id": "Zest", "name": "Zest", "role": "TOP", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Curse", "name": "Curse", "role": "JUG", "nat": "BR", "age": null, "rating": 69, "sub": false}, {"id": "Feisty", "name": "Feisty", "role": "MID", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Duduhh", "name": "Duduhh", "role": "ADC", "nat": "BR", "age": null, "rating": 68, "sub": false}, {"id": "Ackerman", "name": "Ackerman", "role": "SUP", "nat": "BR", "age": null, "rating": 66, "sub": false}]}, {"name": "LOUD", "short": "LLL", "cn": "LOUD", "tier": 3, "players": [{"id": "xyno", "name": "xyno", "role": "TOP", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "uZent", "name": "uZent", "role": "JUG", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "Envy", "name": "Envy", "role": "MID", "nat": "BR", "age": null, "rating": 66, "sub": false}, {"id": "Bull", "name": "Bull", "role": "ADC", "nat": "BR", "age": null, "rating": 66, "sub": false}, {"id": "YoungJae", "name": "YoungJae", "role": "SUP", "nat": "KR", "age": null, "rating": 66, "sub": false}]}, {"name": "paiN Gaming", "short": "PNG", "cn": "PNG", "tier": 5, "players": [{"id": "Robo", "name": "Robo", "role": "TOP", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "Cariok", "name": "Cariok", "role": "JUG", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "keine", "name": "keine", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Trigger", "name": "Trigger", "role": "ADC", "nat": "BR", "age": null, "rating": 63, "sub": false}, {"id": "Kuri", "name": "Kuri", "role": "SUP", "nat": "BR", "age": null, "rating": 62, "sub": false}]}, {"name": "Fluxo W7M", "short": "FX", "cn": "FLX", "tier": 6, "players": [{"id": "curty", "name": "curty", "role": "TOP", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Peach", "name": "Peach", "role": "JUG", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Momochi", "name": "Momochi", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "BAO", "name": "BAO", "role": "ADC", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "cody", "name": "cody", "role": "SUP", "nat": "BR", "age": null, "rating": 58, "sub": false}]}, {"name": "Leviatan", "short": "LEV", "cn": "LEV", "tier": 7, "players": [{"id": "Devost", "name": "Devost", "role": "TOP", "nat": "CL", "age": null, "rating": 60, "sub": false}, {"id": "Booki", "name": "Booki", "role": "JUG", "nat": "AR", "age": null, "rating": 60, "sub": false}, {"id": "Enga", "name": "Enga", "role": "MID", "nat": "CL", "age": null, "rating": 62, "sub": false}, {"id": "Snaker", "name": "Snaker", "role": "ADC", "nat": "CL", "age": null, "rating": 60, "sub": false}, {"id": "TopLop", "name": "TopLop", "role": "SUP", "nat": "CL", "age": null, "rating": 58, "sub": false}]}, {"name": "RED Canids Kalunga", "short": "RED", "cn": "RED", "tier": 4, "players": [{"id": "STEPZ", "name": "STEPZ", "role": "TOP", "nat": "BR", "age": null, "rating": 63, "sub": false}, {"id": "zvnts", "name": "zvnts", "role": "JUG", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Kaze", "name": "Kaze", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Morttheus", "name": "Morttheus", "role": "ADC", "nat": "BR", "age": null, "rating": 64, "sub": false}, {"id": "frostyy", "name": "frostyy", "role": "SUP", "nat": "BR", "age": null, "rating": 60, "sub": false}]}, {"name": "Vivo Keyd Stars", "short": "VKS", "cn": "VKS", "tier": 8, "players": [{"id": "ZekaS", "name": "ZekaS", "role": "TOP", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Disamis", "name": "Disamis", "role": "JUG", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Mireu", "name": "Mireu", "role": "MID", "nat": "BR", "age": null, "rating": 62, "sub": false}, {"id": "Ceo", "name": "Ceo", "role": "ADC", "nat": "BR", "age": null, "rating": 60, "sub": false}, {"id": "Scamber", "name": "Scamber", "role": "SUP", "nat": "BR", "age": null, "rating": 58, "sub": false}]}]}, "LCK": {"teams": [{"name": "Gen.G Esports", "short": "GEN", "cn": "Gen.G", "tier": 1, "players": [{"id": "Kiin", "name": "Kim Gi-in", "role": "TOP", "nat": "KR", "age": 27, "rating": 88, "sub": false}, {"id": "Canyon", "name": "Kim Geon-bu", "role": "JUG", "nat": "KR", "age": 25, "rating": 90, "sub": false}, {"id": "Chovy", "name": "Jeong Ji-hoon", "role": "MID", "nat": "KR", "age": 25, "rating": 91, "sub": false}, {"id": "Ruler", "name": "Park Jae-hyuk", "role": "ADC", "nat": "KR", "age": 28, "rating": 89, "sub": false}, {"id": "Duro", "name": "Joo Min-kyu", "role": "SUP", "nat": "KR", "age": 24, "rating": 84, "sub": false}]}, {"name": "T1", "short": "T1", "cn": "T1", "tier": 1, "players": [{"id": "Doran", "name": "Choi Hyeon-joon", "role": "TOP", "nat": "KR", "age": 25, "rating": 85, "sub": false}, {"id": "Oner", "name": "Mun Hyeon-jun", "role": "JUG", "nat": "KR", "age": 24, "rating": 89, "sub": false}, {"id": "Faker", "name": "Lee Sang-hyeok", "role": "MID", "nat": "KR", "age": 30, "rating": 91, "sub": false}, {"id": "Peyz", "name": "Kim Su-hwan", "role": "ADC", "nat": "KR", "age": 20, "rating": 88, "sub": false}, {"id": "Keria", "name": "Ryu Min-seok", "role": "SUP", "nat": "KR", "age": 24, "rating": 91, "sub": false}]}, {"name": "Hanwha Life Esports", "short": "HLE", "cn": "韩华", "tier": 1, "players": [{"id": "Zeus", "name": "Choi Woo-je", "role": "TOP", "nat": "KR", "age": 22, "rating": 90, "sub": false}, {"id": "Kanavi", "name": "Seo Jin-hyeok", "role": "JUG", "nat": "KR", "age": 26, "rating": 87, "sub": false}, {"id": "Zeka", "name": "Kim Geon-woo", "role": "MID", "nat": "KR", "age": 23, "rating": 88, "sub": false}, {"id": "Gumayusi", "name": "Lee Min-hyeong", "role": "ADC", "nat": "KR", "age": 24, "rating": 89, "sub": false}, {"id": "Delight", "name": "Yoo Hwan-joong", "role": "SUP", "nat": "KR", "age": 23, "rating": 87, "sub": false}]}, {"name": "Dplus KIA", "short": "DK", "cn": "DK", "tier": 2, "players": [{"id": "Siwoo", "name": "Jeon Si-woo", "role": "TOP", "nat": "KR", "age": 21, "rating": 81, "sub": false}, {"id": "Lucid", "name": "Choi Yong-hyeok", "role": "JUG", "nat": "KR", "age": 22, "rating": 84, "sub": false}, {"id": "ShowMaker", "name": "Heo Su", "role": "MID", "nat": "KR", "age": 26, "rating": 88, "sub": false}, {"id": "Smash", "name": "Shin Geum-jae", "role": "ADC", "nat": "KR", "age": 21, "rating": 81, "sub": false}, {"id": "Career", "name": "Oh Hyeong-seok", "role": "SUP", "nat": "KR", "age": 22, "rating": 77, "sub": false}]}, {"name": "KT Rolster", "short": "KT", "cn": "KT", "tier": 3, "players": [{"id": "PerfecT", "name": "Lee Seung-min", "role": "TOP", "nat": "KR", "age": 21, "rating": 79, "sub": false}, {"id": "Cuzz", "name": "Mun U-chan", "role": "JUG", "nat": "KR", "age": 26, "rating": 84, "sub": false}, {"id": "Bdd", "name": "Gwak Bo-sung", "role": "MID", "nat": "KR", "age": 29, "rating": 89, "sub": false}, {"id": "Aiming", "name": "Kim Ha-ram", "role": "ADC", "nat": "KR", "age": 27, "rating": 85, "sub": false}, {"id": "Pollu", "name": "Oh Dong-gyu", "role": "SUP", "nat": "KR", "age": 21, "rating": 76, "sub": false}, {"id": "Ghost", "name": "Jang Yong-jun", "role": "SUP", "nat": "KR", "age": 26, "rating": 76, "sub": true}]}, {"name": "BNK FEARX", "short": "BFX", "cn": "FearX", "tier": 3, "players": [{"id": "Clear", "name": "Song Hyeon-min", "role": "TOP", "nat": "KR", "age": 21, "rating": 76, "sub": false}, {"id": "Raptor", "name": "Jeon Eo-jin", "role": "JUG", "nat": "KR", "age": 22, "rating": 79, "sub": false}, {"id": "VicLa", "name": "Lee Dae-kwang", "role": "MID", "nat": "KR", "age": 25, "rating": 79, "sub": false}, {"id": "Diable", "name": "Nam Dae-geun", "role": "ADC", "nat": "KR", "age": 21, "rating": 80, "sub": false}, {"id": "Kellin", "name": "Kim Hyeong-gyu", "role": "SUP", "nat": "KR", "age": 26, "rating": 79, "sub": false}, {"id": "Daystar", "name": "Yoo Ji-myeong", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "Nongshim RedForce", "short": "NS", "cn": "农心", "tier": 3, "players": [{"id": "Kingen", "name": "Hwang Seong-hoon", "role": "TOP", "nat": "KR", "age": 26, "rating": 80, "sub": false}, {"id": "Sponge", "name": "Bae Young-jun", "role": "JUG", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Scout", "name": "Lee Ye-chan", "role": "MID", "nat": "KR", "age": 28, "rating": 83, "sub": false}, {"id": "Taeyoon", "name": "Kim Tae-yoon", "role": "ADC", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Lehends", "name": "Son Si-woo", "role": "SUP", "nat": "KR", "age": 27, "rating": 83, "sub": false}, {"id": "Calix", "name": "Seon Hyeon-bin", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "DN SOOPers", "short": "DNS", "cn": "DN SOOPers", "tier": 4, "players": [{"id": "DuDu", "name": "Lee Dong-ju", "role": "TOP", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "Pyosik", "name": "Hong Chang-hyeon", "role": "JUG", "nat": "KR", "age": 25, "rating": 80, "sub": false}, {"id": "Clozer", "name": "Lee Ju-hyun", "role": "MID", "nat": "KR", "age": 21, "rating": 82, "sub": false}, {"id": "deokdam", "name": "Seo Dae-gil", "role": "ADC", "nat": "KR", "age": 25, "rating": 80, "sub": false}, {"id": "Peter", "name": "Jeong Yoon-su", "role": "SUP", "nat": "KR", "age": 25, "rating": 76, "sub": false}, {"id": "Life", "name": "Kim Jeong-min", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": true}]}, {"name": "HANJIN BRION", "short": "BRO", "cn": "BRO", "tier": 4, "players": [{"id": "Casting", "name": "Shin Min-jae", "role": "TOP", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "GIDEON", "name": "Kim Min-seong", "role": "JUG", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Fisher", "name": "Lee Jeong-tae", "role": "MID", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "Teddy", "name": "Park Jin-seong", "role": "ADC", "nat": "KR", "age": 27, "rating": 81, "sub": false}, {"id": "Namgung", "name": "Namgung Seong-hoon", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": false}, {"id": "Roamer", "name": "Cho Woo-jin", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "DRX", "short": "DRX", "cn": "DRX", "tier": 5, "players": [{"id": "Rich", "name": "Lee Jae-won", "role": "TOP", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Vincenzo", "name": "Ha Seung-min", "role": "JUG", "nat": "KR", "age": null, "rating": 73, "sub": false}, {"id": "ucal", "name": "Son Woo-hyeon", "role": "MID", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Jiwoo", "name": "Jung Ji-woo", "role": "ADC", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Andil", "name": "Mun Gwan-bin", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": false}]}]}, "LCP": {"teams": [{"name": "CTBC Flying Oyster", "short": "CFO", "cn": "CFO", "tier": 1, "players": [{"id": "Rest", "name": "Rest", "role": "TOP", "nat": "TW", "age": null, "rating": 76, "sub": false}, {"id": "Shad0w", "name": "Shad0w", "role": "JUG", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "Pout", "name": "Pout", "role": "MID", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Doggo", "name": "Doggo", "role": "ADC", "nat": "TW", "age": null, "rating": 79, "sub": false}, {"id": "Kino", "name": "Kino", "role": "SUP", "nat": "TW", "age": null, "rating": 73, "sub": false}, {"id": "Pungyeon", "name": "Pungyeon", "role": "MID", "nat": "KR", "age": null, "rating": 66, "sub": true}, {"id": "Orca", "name": "Orca", "role": "SUP", "nat": "TW", "age": null, "rating": 64, "sub": true}]}, {"name": "Secret Whales", "short": "SW", "cn": "SW", "tier": 2, "players": [{"id": "Pun", "name": "Pun", "role": "TOP", "nat": "VN", "age": null, "rating": 66, "sub": false}, {"id": "Hizto", "name": "Hizto", "role": "JUG", "nat": "VN", "age": null, "rating": 67, "sub": false}, {"id": "Dire", "name": "Dire", "role": "MID", "nat": "VN", "age": null, "rating": 68, "sub": false}, {"id": "Eddie", "name": "Eddie", "role": "ADC", "nat": "VN", "age": null, "rating": 66, "sub": false}, {"id": "Bie", "name": "Bie", "role": "SUP", "nat": "VN", "age": null, "rating": 65, "sub": false}, {"id": "Hiro02", "name": "Hiro02", "role": "TOP", "nat": "VN", "age": null, "rating": 62, "sub": true}]}, {"name": "GAM Esports", "short": "GAM", "cn": "GAM", "tier": 3, "players": [{"id": "Kiaya", "name": "Kiaya", "role": "TOP", "nat": "VN", "age": null, "rating": 67, "sub": false}, {"id": "Draktharr", "name": "Draktharr", "role": "JUG", "nat": "VN", "age": null, "rating": 66, "sub": false}, {"id": "Aress", "name": "Aress", "role": "MID", "nat": "VN", "age": null, "rating": 65, "sub": false}, {"id": "Artemis", "name": "Artemis", "role": "ADC", "nat": "VN", "age": null, "rating": 67, "sub": false}, {"id": "Taki", "name": "Taki", "role": "SUP", "nat": "VN", "age": null, "rating": 65, "sub": false}]}, {"name": "Fukuoka SoftBank HAWKS", "short": "SHG", "cn": "HAWKS", "tier": 4, "players": [{"id": "Evi", "name": "Shunsuke Murase", "role": "TOP", "nat": "JP", "age": null, "rating": 68, "sub": false}, {"id": "Van", "name": "Van", "role": "JUG", "nat": "JP", "age": null, "rating": 64, "sub": false}, {"id": "Aria", "name": "Aria", "role": "MID", "nat": "JP", "age": null, "rating": 64, "sub": false}, {"id": "Marble", "name": "Marble", "role": "ADC", "nat": "JP", "age": null, "rating": 64, "sub": false}, {"id": "Vsta", "name": "Vsta", "role": "SUP", "nat": "JP", "age": null, "rating": 62, "sub": false}]}, {"name": "MVK Esports", "short": "MVK", "cn": "MVK", "tier": 5, "players": [{"id": "Kratos", "name": "Kratos", "role": "TOP", "nat": "VN", "age": null, "rating": 64, "sub": false}, {"id": "Gury", "name": "Gury", "role": "JUG", "nat": "VN", "age": null, "rating": 65, "sub": false}, {"id": "Chika", "name": "Chika", "role": "MID", "nat": "VN", "age": null, "rating": 64, "sub": false}, {"id": "Harky", "name": "Harky", "role": "ADC", "nat": "VN", "age": null, "rating": 64, "sub": false}, {"id": "SiuLoong", "name": "SiuLoong", "role": "SUP", "nat": "VN", "age": null, "rating": 63, "sub": false}, {"id": "Kati", "name": "Kati", "role": "MID", "nat": "VN", "age": null, "rating": 62, "sub": true}, {"id": "Puddin", "name": "Puddin", "role": "ADC", "nat": "VN", "age": null, "rating": 62, "sub": true}, {"id": "Seany", "name": "Seany", "role": "MID", "nat": "VN", "age": null, "rating": 60, "sub": true}]}, {"name": "Relove Deep Cross Gaming", "short": "DCG", "cn": "DCG", "tier": 6, "players": [{"id": "Flauren", "name": "Flauren", "role": "TOP", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "665", "name": "665", "role": "JUG", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "HongSuo", "name": "HongSuo", "role": "MID", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "Feng", "name": "Feng", "role": "ADC", "nat": "TW", "age": null, "rating": 62, "sub": false}, {"id": "ShiauC", "name": "ShiauC", "role": "SUP", "nat": "TW", "age": null, "rating": 60, "sub": false}]}, {"name": "Ground Zero Gaming", "short": "GZG", "cn": "GZG", "tier": 7, "players": [{"id": "1Jiang", "name": "1Jiang", "role": "TOP", "nat": "TW", "age": null, "rating": 60, "sub": false}, {"id": "Karsa", "name": "Hsiao Ming-Hsin", "role": "JUG", "nat": "TW", "age": null, "rating": 64, "sub": false}, {"id": "Maple", "name": "Maple", "role": "MID", "nat": "TW", "age": null, "rating": 60, "sub": false}, {"id": "Betty", "name": "Betty", "role": "ADC", "nat": "TW", "age": null, "rating": 60, "sub": false}, {"id": "Woody", "name": "Woody", "role": "SUP", "nat": "TW", "age": null, "rating": 58, "sub": false}, {"id": "Azhi", "name": "Azhi", "role": "TOP", "nat": "TW", "age": null, "rating": 56, "sub": true}]}, {"name": "DetonatioN FocusMe", "short": "DFM", "cn": "DFM", "tier": 8, "players": [{"id": "RayFarky", "name": "RayFarky", "role": "TOP", "nat": "JP", "age": null, "rating": 60, "sub": false}, {"id": "Citrus", "name": "Citrus", "role": "JUG", "nat": "JP", "age": null, "rating": 60, "sub": false}, {"id": "DFM Mid (unverified)", "name": "Unknown", "role": "MID", "nat": "JP", "age": null, "rating": 58, "sub": false}, {"id": "Kakkun", "name": "Kakkun", "role": "ADC", "nat": "JP", "age": null, "rating": 60, "sub": false}, {"id": "Harp", "name": "Harp", "role": "SUP", "nat": "JP", "age": null, "rating": 58, "sub": false}]}]}, "LCS": {"teams": [{"name": "LYON", "short": "LYON", "cn": "LYON", "tier": 1, "players": [{"id": "Zamudo", "name": "Zamudo", "role": "TOP", "nat": "US", "age": null, "rating": 74, "sub": false}, {"id": "Inspired", "name": "Kacper Sl:oma", "role": "JUG", "nat": "PL", "age": 25, "rating": 83, "sub": false}, {"id": "Saint", "name": "Saint", "role": "MID", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "Berserker", "name": "Kim Min-cheol", "role": "ADC", "nat": "KR", "age": 24, "rating": 82, "sub": false}, {"id": "Isles", "name": "Isles", "role": "SUP", "nat": "US", "age": null, "rating": 74, "sub": false}]}, {"name": "Team Liquid", "short": "TL", "cn": "TL", "tier": 2, "players": [{"id": "Morgan", "name": "Morgan", "role": "TOP", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "Josedeodo", "name": "Brandon Joel Villegas", "role": "JUG", "nat": "US", "age": null, "rating": 76, "sub": false}, {"id": "Quid", "name": "Quid", "role": "MID", "nat": "KR", "age": null, "rating": 80, "sub": false}, {"id": "Yeon", "name": "Yeon", "role": "ADC", "nat": "US", "age": null, "rating": 81, "sub": false}, {"id": "CoreJJ", "name": "Jo Yong-in", "role": "SUP", "nat": "KR", "age": 29, "rating": 78, "sub": false}]}, {"name": "Cloud9", "short": "C9", "cn": "C9", "tier": 3, "players": [{"id": "Thanatos", "name": "Thanatos", "role": "TOP", "nat": "KR", "age": null, "rating": 76, "sub": false}, {"id": "Blaber", "name": "Robert Huang", "role": "JUG", "nat": "US", "age": 27, "rating": 78, "sub": false}, {"id": "APA", "name": "Eain Stearns", "role": "MID", "nat": "US", "age": null, "rating": 75, "sub": false}, {"id": "Zven", "name": "Jesper Svenningsen", "role": "ADC", "nat": "DK", "age": 29, "rating": 75, "sub": false}, {"id": "Vulcan", "name": "Philippe Laflamme", "role": "SUP", "nat": "CA", "age": null, "rating": 75, "sub": false}, {"id": "Tactical", "name": "Edward Ra", "role": "ADC", "nat": "US", "age": null, "rating": 64, "sub": true}]}, {"name": "FlyQuest", "short": "FLY", "cn": "FLY", "tier": 4, "players": [{"id": "Gakgos", "name": "Ibrahim Samet Bulut", "role": "TOP", "nat": "TR", "age": null, "rating": 74, "sub": false}, {"id": "Gryffinn", "name": "Johnson Le", "role": "JUG", "nat": "US", "age": null, "rating": 75, "sub": false}, {"id": "Quad", "name": "Song Su-hyeong", "role": "MID", "nat": "KR", "age": null, "rating": 78, "sub": false}, {"id": "Massu", "name": "Fahad Abdulmalek", "role": "ADC", "nat": "US", "age": null, "rating": 80, "sub": false}, {"id": "Cryogen", "name": "Cryogen", "role": "SUP", "nat": "US", "age": null, "rating": 73, "sub": false}]}, {"name": "Sentinels", "short": "SEN", "cn": "SEN", "tier": 5, "players": [{"id": "Impact", "name": "Jeong Eon-young", "role": "TOP", "nat": "US", "age": 28, "rating": 76, "sub": false}, {"id": "HamBak", "name": "HamBak", "role": "JUG", "nat": "KR", "age": null, "rating": 66, "sub": false}, {"id": "DARKWINGS", "name": "DARKWINGS", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Rahel", "name": "Rahel", "role": "ADC", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Huhi", "name": "Huhi", "role": "SUP", "nat": "US", "age": null, "rating": 74, "sub": false}]}, {"name": "Shopify Rebellion", "short": "SR", "cn": "SR", "tier": 6, "players": [{"id": "Fudge", "name": "Ibrahim Allami", "role": "TOP", "nat": "AU", "age": null, "rating": 74, "sub": false}, {"id": "Contractz", "name": "Juan Garcia", "role": "JUG", "nat": "US", "age": null, "rating": 74, "sub": false}, {"id": "Zinie", "name": "Yoo Baek-jin", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Bvoy", "name": "Bvoy", "role": "ADC", "nat": "KR", "age": null, "rating": 74, "sub": false}, {"id": "Zeyzal", "name": "Tristan Stidam", "role": "SUP", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Ceos", "name": "Denilson Oliveira Goncalves", "role": "SUP", "nat": "BR", "age": null, "rating": 64, "sub": true}]}, {"name": "Disguised", "short": "DSG", "cn": "DSG", "tier": 7, "players": [{"id": "Srtty", "name": "Srtty", "role": "TOP", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "KryRa", "name": "KryRa", "role": "JUG", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Calime", "name": "Calime", "role": "MID", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Sajed", "name": "Sajed", "role": "ADC", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Lyonz", "name": "Lyonz", "role": "SUP", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Castle", "name": "Castle", "role": "TOP", "nat": "US", "age": null, "rating": 60, "sub": true}]}, {"name": "Dignitas", "short": "DIG", "cn": "DIG", "tier": 8, "players": [{"id": "Denathor", "name": "Noah Erikson", "role": "TOP", "nat": "US", "age": null, "rating": 60, "sub": false}, {"id": "eXyu", "name": "eXyu", "role": "JUG", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "Palafox", "name": "Palafox", "role": "MID", "nat": "US", "age": null, "rating": 62, "sub": false}, {"id": "FBI", "name": "Victor Huang", "role": "ADC", "nat": "US", "age": null, "rating": 64, "sub": false}, {"id": "IgNar", "name": "IgNar", "role": "SUP", "nat": "KR", "age": null, "rating": 60, "sub": false}, {"id": "Photon", "name": "Photon", "role": "TOP", "nat": "KR", "age": null, "rating": 62, "sub": true}]}]}, "LEC": {"teams": [{"name": "G2 Esports", "short": "G2", "cn": "G2", "tier": 1, "players": [{"id": "BrokenBlade", "name": "Sergen Celik", "role": "TOP", "nat": "TR", "age": 25, "rating": 83, "sub": false}, {"id": "SkewMond", "name": "Kim Dong-hyeon", "role": "JUG", "nat": "KR", "age": null, "rating": 80, "sub": false}, {"id": "Caps", "name": "Rasmus Winther", "role": "MID", "nat": "DK", "age": 27, "rating": 87, "sub": false}, {"id": "Hans Sama", "name": "Steven Liv", "role": "ADC", "nat": "FR", "age": 26, "rating": 84, "sub": false}, {"id": "Labrov", "name": "Labros Papoutsakis", "role": "SUP", "nat": "GR", "age": null, "rating": 80, "sub": false}]}, {"name": "Karmine Corp", "short": "KC", "cn": "KC", "tier": 2, "players": [{"id": "Canna", "name": "Kim Chang-dong", "role": "TOP", "nat": "KR", "age": 25, "rating": 82, "sub": false}, {"id": "Yike", "name": "Martin Sundelin", "role": "JUG", "nat": "SE", "age": null, "rating": 81, "sub": false}, {"id": "Kyeahoo", "name": "Kyeahoo", "role": "MID", "nat": "KR", "age": null, "rating": 79, "sub": false}, {"id": "Caliste", "name": "Caliste Henry-Hennebert", "role": "ADC", "nat": "FR", "age": null, "rating": 81, "sub": false}, {"id": "Busio", "name": "Alan Cwalina", "role": "SUP", "nat": "US", "age": null, "rating": 78, "sub": false}]}, {"name": "Movistar KOI", "short": "MKOI", "cn": "KOI", "tier": 3, "players": [{"id": "Myrwn", "name": "Alex Pastor", "role": "TOP", "nat": "ES", "age": null, "rating": 76, "sub": false}, {"id": "Elyoya", "name": "Javier Prades", "role": "JUG", "nat": "ES", "age": 27, "rating": 82, "sub": false}, {"id": "Jojopyun", "name": "Joseph Joon Pyun", "role": "MID", "nat": "CA", "age": 21, "rating": 79, "sub": false}, {"id": "Supa", "name": "Supa", "role": "ADC", "nat": "ES", "age": null, "rating": 77, "sub": false}, {"id": "Alvaro", "name": "Alvaro Fernandez", "role": "SUP", "nat": "ES", "age": null, "rating": 77, "sub": false}]}, {"name": "GIANTX", "short": "GX", "cn": "GX", "tier": 6, "players": [{"id": "Oscarinin", "name": "Oscar Munoz", "role": "TOP", "nat": "ES", "age": null, "rating": 68, "sub": false}, {"id": "ISMA", "name": "Ismael Fernandez", "role": "JUG", "nat": "ES", "age": null, "rating": 71, "sub": false}, {"id": "Jackies", "name": "Jakub Binek", "role": "MID", "nat": "CZ", "age": null, "rating": 72, "sub": false}, {"id": "Flakked", "name": "Victor Lirola", "role": "ADC", "nat": "ES", "age": null, "rating": 71, "sub": false}, {"id": "Jun", "name": "Jun", "role": "SUP", "nat": "KR", "age": null, "rating": 72, "sub": false}, {"id": "Lot", "name": "Lot", "role": "TOP", "nat": "ES", "age": null, "rating": 66, "sub": true}, {"id": "Noah", "name": "Noah Kim", "role": "ADC", "nat": "KR", "age": null, "rating": 69, "sub": true}]}, {"name": "Team Vitality", "short": "VIT", "cn": "VIT", "tier": 4, "players": [{"id": "Naak Nako", "name": "Naak Nako", "role": "TOP", "nat": "FR", "age": null, "rating": 73, "sub": false}, {"id": "Lyncas", "name": "Lyncas", "role": "JUG", "nat": "LT", "age": null, "rating": 72, "sub": false}, {"id": "FIESTA", "name": "FIESTA", "role": "MID", "nat": "KR", "age": null, "rating": 75, "sub": false}, {"id": "Carzzy", "name": "Matyas Orsag", "role": "ADC", "nat": "CZ", "age": null, "rating": 79, "sub": false}, {"id": "Fleshy", "name": "Fleshy", "role": "SUP", "nat": "NL", "age": null, "rating": 73, "sub": false}, {"id": "Humanoid", "name": "Marek Brazda", "role": "MID", "nat": "CZ", "age": null, "rating": 78, "sub": true}]}, {"name": "Natus Vincere", "short": "NAVI", "cn": "NAVI", "tier": 8, "players": [{"id": "Maynter", "name": "Maynter", "role": "TOP", "nat": "FR", "age": null, "rating": 68, "sub": false}, {"id": "Rhilech", "name": "Rhilech", "role": "JUG", "nat": "ES", "age": null, "rating": 68, "sub": false}, {"id": "Poby", "name": "Poby", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Hans SamD", "name": "Hans SamD", "role": "ADC", "nat": "FR", "age": null, "rating": 68, "sub": false}, {"id": "Parus", "name": "Parus", "role": "SUP", "nat": "KR", "age": null, "rating": 68, "sub": false}]}, {"name": "Fnatic", "short": "FNC", "cn": "FNC", "tier": 5, "players": [{"id": "Soboro", "name": "Soboro", "role": "TOP", "nat": "KR", "age": null, "rating": 72, "sub": false}, {"id": "Razork", "name": "Iván Martín Díaz", "role": "JUG", "nat": "ES", "age": null, "rating": 80, "sub": false}, {"id": "Vladi", "name": "Vladimiros Kourtidis", "role": "MID", "nat": "GR", "age": null, "rating": 78, "sub": false}, {"id": "Upset", "name": "Elias Lipp", "role": "ADC", "nat": "DE", "age": 26, "rating": 80, "sub": false}, {"id": "Lospa", "name": "Lospa", "role": "SUP", "nat": "DE", "age": null, "rating": 70, "sub": false}, {"id": "Empyros", "name": "Empyros", "role": "TOP", "nat": "NL", "age": null, "rating": 68, "sub": true}]}, {"name": "SK Gaming", "short": "SK", "cn": "SK", "tier": 7, "players": [{"id": "Wunder", "name": "Martin Hansen", "role": "TOP", "nat": "DK", "age": 27, "rating": 74, "sub": false}, {"id": "Skeanz", "name": "Skeanz", "role": "JUG", "nat": "FR", "age": null, "rating": 73, "sub": false}, {"id": "SlowQ", "name": "SlowQ", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": false}, {"id": "Jopa", "name": "Jopa", "role": "ADC", "nat": "SE", "age": null, "rating": 70, "sub": false}, {"id": "Mikyx", "name": "Mihael Mehle", "role": "SUP", "nat": "SI", "age": null, "rating": 80, "sub": false}, {"id": "LIDER", "name": "LIDER", "role": "MID", "nat": "KR", "age": null, "rating": 70, "sub": true}]}, {"name": "Shifters", "short": "SHFT", "cn": "SHF", "tier": 9, "players": [{"id": "Rooster", "name": "Rooster", "role": "TOP", "nat": "FR", "age": null, "rating": 68, "sub": false}, {"id": "Sheo", "name": "Sheo", "role": "JUG", "nat": "FR", "age": null, "rating": 70, "sub": false}, {"id": "nuc", "name": "nuc", "role": "MID", "nat": "ES", "age": null, "rating": 68, "sub": false}, {"id": "Paduck", "name": "Paduck", "role": "ADC", "nat": "FR", "age": null, "rating": 67, "sub": false}, {"id": "Stend", "name": "Stend", "role": "SUP", "nat": "ES", "age": null, "rating": 66, "sub": false}, {"id": "Boukada", "name": "Boukada", "role": "JUG", "nat": "FR", "age": null, "rating": 66, "sub": true}, {"id": "Trymbi", "name": "Adam Trymbi", "role": "SUP", "nat": "PL", "age": null, "rating": 66, "sub": true}]}, {"name": "Team Heretics", "short": "TH", "cn": "TH", "tier": 10, "players": [{"id": "Tracyn", "name": "Tracyn", "role": "TOP", "nat": "EE", "age": null, "rating": 66, "sub": false}, {"id": "Daglas", "name": "Daglas", "role": "JUG", "nat": "ES", "age": null, "rating": 64, "sub": false}, {"id": "Serin", "name": "Serin", "role": "MID", "nat": "KR", "age": null, "rating": 68, "sub": false}, {"id": "Hype", "name": "Hype", "role": "ADC", "nat": "ES", "age": null, "rating": 64, "sub": false}, {"id": "Way", "name": "Way", "role": "SUP", "nat": "ES", "age": null, "rating": 66, "sub": false}, {"id": "Ice", "name": "Ice", "role": "ADC", "nat": "ES", "age": null, "rating": 64, "sub": true}]}]}, "LPL": {"teams": [{"name": "Bilibili Gaming", "short": "BLG", "cn": "哔哩哔哩电竞", "tier": 1, "players": [{"id": "Bin", "name": "Chen Zebin", "role": "TOP", "nat": "CN", "age": null, "rating": 90, "sub": false}, {"id": "XUN", "name": "Peng Lixun", "role": "JUG", "nat": "CN", "age": null, "rating": 85, "sub": false}, {"id": "knight", "name": "Zhuo Ding", "role": "MID", "nat": "CN", "age": null, "rating": 89, "sub": false}, {"id": "Viper", "name": "Park Do-hyeon", "role": "ADC", "nat": "KR", "age": null, "rating": 89, "sub": false}, {"id": "ON", "name": "Luo Wenjun", "role": "SUP", "nat": "CN", "age": null, "rating": 90, "sub": false}]}, {"name": "Anyone's Legend", "short": "AL", "cn": "AL电子竞技俱乐部", "tier": 1, "players": [{"id": "Flandre", "name": "Li Xuanjun", "role": "TOP", "nat": "CN", "age": null, "rating": 85, "sub": false}, {"id": "Tarzan", "name": "Lee Seung-yong", "role": "JUG", "nat": "KR", "age": null, "rating": 88, "sub": false}, {"id": "Shanks", "name": "Cui Xiaojun", "role": "MID", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "Hope", "name": "Wang Jie", "role": "ADC", "nat": "CN", "age": null, "rating": 81, "sub": false}, {"id": "Kael", "name": "Kim Jin-hong", "role": "SUP", "nat": "KR", "age": null, "rating": 87, "sub": false}, {"id": "Breathe", "name": "Chen Chen", "role": "TOP", "nat": "CN", "age": null, "rating": 81, "sub": true}]}, {"name": "Top Esports", "short": "TES", "cn": "TOP电竞", "tier": 2, "players": [{"id": "369", "name": "Bai Jiahao", "role": "TOP", "nat": "CN", "age": null, "rating": 88, "sub": false}, {"id": "Tian", "name": "Gao Tianliang", "role": "JUG", "nat": "CN", "age": null, "rating": 86, "sub": false}, {"id": "Creme", "name": "Lin Jian", "role": "MID", "nat": "CN", "age": null, "rating": 85, "sub": false}, {"id": "JackeyLove", "name": "Yu Wenbo", "role": "ADC", "nat": "CN", "age": null, "rating": 88, "sub": false}, {"id": "fengyue", "name": "Wang Runlai", "role": "SUP", "nat": "CN", "age": null, "rating": 79, "sub": false}, {"id": "ZUIAN", "name": "Cheng Zihao", "role": "TOP", "nat": "CN", "age": null, "rating": 77, "sub": true}]}, {"name": "Invictus Gaming", "short": "IG", "cn": "Invictus Gaming", "tier": 2, "players": [{"id": "TheShy", "name": "Kang Seung-lok", "role": "TOP", "nat": "KR", "age": null, "rating": 85, "sub": false}, {"id": "Wei", "name": "Yan Yangwei", "role": "JUG", "nat": "CN", "age": null, "rating": 85, "sub": false}, {"id": "Rookie", "name": "Song Eui-jin", "role": "MID", "nat": "KR", "age": null, "rating": 85, "sub": false}, {"id": "JiaQi", "name": "Zi Jiaqi", "role": "ADC", "nat": "CN", "age": null, "rating": 80, "sub": false}, {"id": "Meiko", "name": "Tian Ye", "role": "SUP", "nat": "CN", "age": null, "rating": 84, "sub": false}, {"id": "Soboro", "name": "Soboro", "role": "TOP", "nat": "KR", "age": null, "rating": 78, "sub": true}]}, {"name": "JD Gaming", "short": "JDG", "cn": "京东电竞", "tier": 2, "players": [{"id": "Xiaoxu", "name": "Xu Xingzu", "role": "TOP", "nat": "CN", "age": null, "rating": 80, "sub": false}, {"id": "JunJia", "name": "Yu Chun-chia", "role": "JUG", "nat": "TW", "age": null, "rating": 83, "sub": false}, {"id": "HongQ", "name": "Tsai Ming-hong", "role": "MID", "nat": "TW", "age": null, "rating": 81, "sub": false}, {"id": "GALA", "name": "Chen Wei", "role": "ADC", "nat": "CN", "age": null, "rating": 88, "sub": false}, {"id": "Vampire", "name": "Zhao Zhecan", "role": "SUP", "nat": "CN", "age": null, "rating": 80, "sub": false}]}, {"name": "Weibo Gaming", "short": "WBG", "cn": "微博电竞", "tier": 3, "players": [{"id": "Zika", "name": "Chen Chen", "role": "TOP", "nat": "CN", "age": null, "rating": 81, "sub": false}, {"id": "Jiejie", "name": "Zhao Lijie", "role": "JUG", "nat": "CN", "age": null, "rating": 83, "sub": false}, {"id": "Xiaohu", "name": "Li Yuanhao", "role": "MID", "nat": "CN", "age": null, "rating": 85, "sub": false}, {"id": "Elk", "name": "Zhao Jiahao", "role": "ADC", "nat": "CN", "age": null, "rating": 89, "sub": false}, {"id": "Erha", "name": "Liu Qingsong", "role": "SUP", "nat": "CN", "age": null, "rating": 76, "sub": false}]}, {"name": "LNG Esports", "short": "LNG", "cn": "LNG电子竞技俱乐部", "tier": 3, "players": [{"id": "sheer", "name": "Xu Wenjie", "role": "TOP", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Croco", "name": "Kim Dong-beom", "role": "JUG", "nat": "KR", "age": null, "rating": 80, "sub": false}, {"id": "BuLLDoG", "name": "Lee Tae-young", "role": "MID", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "1xn", "name": "Li Sau Nam", "role": "ADC", "nat": "HK", "age": null, "rating": 79, "sub": false}, {"id": "Missing", "name": "Lou Yunfeng", "role": "SUP", "nat": "CN", "age": null, "rating": 79, "sub": false}, {"id": "5t5", "name": "Zeng Jun", "role": "JUG", "nat": "CN", "age": null, "rating": 74, "sub": true}, {"id": "fishone", "name": "Yu Yi", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": true}, {"id": "OvO", "name": "Zhang Jiahao", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": true}]}, {"name": "EDward Gaming", "short": "EDG", "cn": "EDward Gaming", "tier": 3, "players": [{"id": "Zdz", "name": "Zdz", "role": "TOP", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Xiaohao", "name": "Xiaohao", "role": "JUG", "nat": "CN", "age": null, "rating": 80, "sub": false}, {"id": "Angel", "name": "Angel", "role": "MID", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Leave", "name": "Leave", "role": "ADC", "nat": "CN", "age": null, "rating": 78, "sub": false}, {"id": "Parukia", "name": "Parukia", "role": "SUP", "nat": "CN", "age": null, "rating": 74, "sub": false}]}, {"name": "Ninjas in Pyjamas", "short": "NIP", "cn": "Ninjas in Pyjamas", "tier": 3, "players": [{"id": "HOYA", "name": "HOYA", "role": "TOP", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Guwon", "name": "Guwon", "role": "JUG", "nat": "KR", "age": null, "rating": 78, "sub": false}, {"id": "Care", "name": "Care", "role": "MID", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Assum", "name": "Assum", "role": "ADC", "nat": "CN", "age": null, "rating": 77, "sub": false}, {"id": "Zhuo", "name": "Zhuo", "role": "SUP", "nat": "CN", "age": null, "rating": 75, "sub": false}]}, {"name": "Team WE", "short": "WE", "cn": "Team WE", "tier": 4, "players": [{"id": "Cube", "name": "Cube", "role": "TOP", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Monki", "name": "Monki", "role": "JUG", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Karis", "name": "Karis", "role": "MID", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "About", "name": "About", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "yaoyao", "name": "yaoyao", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": false}]}, {"name": "Ultra Prime", "short": "UP", "cn": "Ultra Prime", "tier": 4, "players": [{"id": "Liangchen", "name": "Liangchen", "role": "TOP", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "Grizzly", "name": "Grizzly", "role": "JUG", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Saber", "name": "Saber", "role": "MID", "nat": "CN", "age": null, "rating": 75, "sub": false}, {"id": "Hena", "name": "Hena", "role": "ADC", "nat": "KR", "age": null, "rating": 77, "sub": false}, {"id": "Xiaoxia", "name": "Xiaoxia", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": false}]}, {"name": "ThunderTalk Gaming", "short": "TT", "cn": "ThunderTalk Gaming", "tier": 4, "players": [{"id": "Keshi", "name": "Keshi", "role": "TOP", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Junhao", "name": "Junhao", "role": "JUG", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Heru", "name": "Heru", "role": "MID", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Ryan3", "name": "Ryan3", "role": "ADC", "nat": "CN", "age": null, "rating": 74, "sub": false}, {"id": "Feather", "name": "Feather", "role": "SUP", "nat": "CN", "age": null, "rating": 72, "sub": false}]}, {"name": "Oh My God", "short": "OMG", "cn": "OMG电子竞技俱乐部", "tier": 4, "players": [{"id": "Hery", "name": "Hery", "role": "TOP", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Juhan", "name": "Juhan", "role": "JUG", "nat": "CN", "age": null, "rating": 72, "sub": false}, {"id": "haichao", "name": "haichao", "role": "MID", "nat": "CN", "age": null, "rating": 76, "sub": false}, {"id": "Starry", "name": "Starry", "role": "ADC", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Moham", "name": "Moham", "role": "SUP", "nat": "CN", "age": null, "rating": 71, "sub": false}]}, {"name": "LGD Gaming", "short": "LGD", "cn": "LGD大鹅", "tier": 5, "players": [{"id": "sasi", "name": "sasi", "role": "TOP", "nat": "CN", "age": null, "rating": 70, "sub": false}, {"id": "Heng", "name": "Heng", "role": "JUG", "nat": "CN", "age": null, "rating": 73, "sub": false}, {"id": "Tangyuan", "name": "Tangyuan", "role": "MID", "nat": "CN", "age": null, "rating": 72, "sub": false}, {"id": "Shaoye", "name": "Shaoye", "role": "ADC", "nat": "CN", "age": null, "rating": 71, "sub": false}, {"id": "ycx", "name": "ycx", "role": "SUP", "nat": "CN", "age": null, "rating": 68, "sub": false}]}]}};
 window.LEGENDS={"legends": [{"pid": "Uzi2018", "id": "Uzi (2018)", "name": "Jian Zi-Hao（简自豪）", "role": "ADC", "nat": "CN", "age": 21, "rating": 94, "traits": {"big": 1.4, "ko": 0.8, "stab": 0.95, "res": 1.0}, "picks": {"Kai'Sa": 21, "Varus": 16, "Ezreal": 15, "Xayah": 14, "Kog'Maw": 13, "Ashe": 7, "Lucian": 7, "Caitlyn": 6, "Vayne": 5, "Tristana": 4, "Kalista": 3, "Sivir": 2}, "champs": {"Kai'Sa": 95, "Varus": 93, "Ezreal": 92, "Xayah": 91, "Kog'Maw": 88, "Vayne": 86, "Ashe": 80, "Lucian": 78, "Caitlyn": 76, "Tristana": 72, "Sivir": 72}}, {"pid": "Clearlove2017", "id": "Clearlove7 (2017)", "name": "Ming Kai（明凯）", "role": "JUG", "nat": "CN", "age": 24, "rating": 92, "traits": {"big": 0.3, "ko": 0.6, "stab": 0.76, "res": 1.28}, "picks": {"Rek'Sai": 14, "Kha'Zix": 10, "Sejuani": 8, "Jarvan IV": 8, "Elise": 6, "Gragas": 3, "Maokai": 3, "Nidalee": 2, "Lee Sin": 1}, "champs": {"Rek'Sai": 94, "Kha'Zix": 91, "Sejuani": 88, "Jarvan IV": 85, "Elise": 84, "Gragas": 82, "Maokai": 76, "Nidalee": 74, "Lee Sin": 72}}], "champOverrides": {"Canyon": {"picks": {"Lee Sin": 118, "Xin Zhao": 64, "Sejuani": 61, "Nidalee": 60, "Vi": 52, "Wukong": 51, "Jarvan IV": 51, "Skarner": 43, "Trundle": 39, "Maokai": 37, "Pantheon": 36, "Graves": 36, "Viego": 31, "Nocturne": 30, "Karthus": 17, "Taliyah": 16, "Lillia": 15}, "champs": {"Lee Sin": 95, "Nidalee": 94, "Xin Zhao": 90, "Graves": 86, "Skarner": 85, "Vi": 84, "Wukong": 82, "Pantheon": 80, "Jarvan IV": 78, "Karthus": 72, "Taliyah": 68}}}};
 </script>
-<script>window.TRAITS={"1Jiang":{"big":0.0,"ko":0.84,"stab":0.91,"res":1.12,"base":0.22,"n":240},"1xn":{"big":0.0,"ko":-0.07,"stab":1.23,"res":0.87,"base":-0.9,"n":260},"369":{"big":-1.41,"ko":0.51,"stab":1.03,"res":1,"base":-0.41,"n":492},"665":{"big":0.0,"ko":-0.4,"stab":1.05,"res":0.89,"base":0.66,"n":105},"APA":{"big":0.09,"ko":-0.11,"stab":1.23,"res":1.19,"base":-0.44,"n":241},"About":{"big":0.0,"ko":0.21,"stab":1.01,"res":0.84,"base":0.07,"n":133},"Ackerman":{"big":0.15,"ko":1.24,"stab":1.14,"res":1.15,"base":-0.08,"n":289},"Aiming":{"big":-1.03,"ko":-0.17,"stab":0.96,"res":0.96,"base":-1.03,"n":469},"Alvaro":{"big":0.67,"ko":-0.19,"stab":0.87,"res":1.19,"base":0.2,"n":313},"Andil":{"big":0.0,"ko":0.0,"stab":0.89,"res":1.22,"base":0.1,"n":281},"Angel":{"big":0.0,"ko":-1.03,"stab":1.12,"res":0.76,"base":0.16,"n":248},"Aress":{"big":0.16,"ko":-1.49,"stab":0.95,"res":0.87,"base":0.0,"n":185},"Aria":{"big":-0.3,"ko":0.11,"stab":1.35,"res":0.69,"base":-1.5,"n":277},"Artemis":{"big":0.71,"ko":-0.59,"stab":0.88,"res":1.14,"base":-0.1,"n":367},"Assum":{"big":0.0,"ko":-0.32,"stab":1.01,"res":0.98,"base":0.62,"n":303},"Ayu":{"big":-0.32,"ko":1.35,"stab":1.01,"res":1.04,"base":-0.19,"n":264},"Azhi":{"big":-1.36,"ko":-0.15,"stab":1.18,"res":0.99,"base":-0.62,"n":271},"BAO":{"big":0.0,"ko":0.07,"stab":1,"res":1.05,"base":-0.85,"n":53},"Bdd":{"big":0.7,"ko":0.46,"stab":0.99,"res":0.88,"base":-0.4,"n":470},"Berserker":{"big":0.57,"ko":0.75,"stab":1.31,"res":0.91,"base":-0.63,"n":346},"Betty":{"big":-0.16,"ko":0.84,"stab":1.2,"res":0.89,"base":-0.11,"n":286},"Bie":{"big":-0.68,"ko":-0.24,"stab":1.15,"res":0.98,"base":-0.07,"n":296},"Bin":{"big":1.16,"ko":1.25,"stab":0.76,"res":1.29,"base":0.1,"n":645},"Blaber":{"big":-0.84,"ko":-1.2,"stab":1.11,"res":0.88,"base":-0.77,"n":281},"Booki":{"big":0.0,"ko":0.0,"stab":0.99,"res":0.73,"base":-0.69,"n":55},"Boukada":{"big":0.0,"ko":0.0,"stab":0.8,"res":0.7,"base":0.01,"n":59},"Breathe":{"big":0.28,"ko":-0.32,"stab":0.87,"res":0.92,"base":-0.23,"n":439},"BrokenBlade":{"big":-0.61,"ko":2.42,"stab":1.04,"res":0.99,"base":-0.46,"n":459},"BuLLDoG":{"big":0.0,"ko":-0.26,"stab":1.13,"res":0.92,"base":-0.35,"n":320},"Bull":{"big":-0.07,"ko":-0.49,"stab":0.92,"res":1.02,"base":-0.09,"n":117},"Busio":{"big":-0.16,"ko":0.29,"stab":1.1,"res":1.05,"base":0.37,"n":390},"Bvoy":{"big":0.0,"ko":-1.01,"stab":1.08,"res":0.9,"base":-0.69,"n":220},"Caliste":{"big":-0.19,"ko":-0.1,"stab":0.93,"res":0.99,"base":0.28,"n":268},"Calix":{"big":0.0,"ko":-0.27,"stab":1.09,"res":1.11,"base":-0.13,"n":85},"Canna":{"big":0.07,"ko":0.03,"stab":0.85,"res":0.91,"base":0.22,"n":392},"Canyon":{"big":-0.98,"ko":0.41,"stab":0.9,"res":0.9,"base":0.21,"n":535},"Caps":{"big":-0.87,"ko":2.21,"stab":1.06,"res":1.01,"base":-0.44,"n":464},"Care":{"big":0.0,"ko":0.24,"stab":1.09,"res":1.12,"base":1.22,"n":370},"Career":{"big":0.68,"ko":0.26,"stab":0.74,"res":0.84,"base":-0.01,"n":153},"Cariok":{"big":0.33,"ko":-0.18,"stab":1.06,"res":0.96,"base":-0.38,"n":270},"Carzzy":{"big":-0.36,"ko":-0.7,"stab":1.06,"res":0.91,"base":0.44,"n":279},"Casting":{"big":0.0,"ko":-0.03,"stab":0.71,"res":0.98,"base":0.3,"n":121},"Castle":{"big":0.0,"ko":0.0,"stab":1.24,"res":0.96,"base":-0.47,"n":114},"Ceo":{"big":0.0,"ko":-0.55,"stab":1,"res":1.23,"base":-0.69,"n":96},"Ceos":{"big":-0.1,"ko":0.2,"stab":1.2,"res":0.71,"base":-0.02,"n":226},"Chika":{"big":0.33,"ko":0.0,"stab":0.81,"res":0.96,"base":-0.37,"n":61},"Chovy":{"big":-1.44,"ko":0.64,"stab":0.86,"res":1.01,"base":-0.07,"n":565},"Citrus":{"big":0.0,"ko":0.68,"stab":1.08,"res":1.24,"base":-0.18,"n":75},"Clear":{"big":-0.11,"ko":0.23,"stab":0.9,"res":0.88,"base":0.27,"n":332},"Clozer":{"big":0.0,"ko":-0.6,"stab":0.94,"res":1.02,"base":0.46,"n":378},"Contractz":{"big":0.1,"ko":-0.12,"stab":0.93,"res":0.97,"base":-0.4,"n":242},"CoreJJ":{"big":0.06,"ko":0.88,"stab":1.09,"res":1.28,"base":0.67,"n":325},"Creme":{"big":-1.67,"ko":0.23,"stab":0.99,"res":0.96,"base":-0.24,"n":566},"Croco":{"big":0.0,"ko":-0.64,"stab":1.16,"res":1.09,"base":0.61,"n":249},"Cryogen":{"big":0.0,"ko":-0.01,"stab":0.71,"res":1.13,"base":-0.25,"n":85},"Cube":{"big":0.0,"ko":0.1,"stab":0.91,"res":1.03,"base":-0.14,"n":387},"Curse":{"big":0.29,"ko":-0.29,"stab":0.93,"res":1.19,"base":-0.35,"n":116},"Cuzz":{"big":1.03,"ko":0.18,"stab":1.06,"res":0.81,"base":-0.34,"n":455},"DARKWINGS":{"big":0.0,"ko":-0.55,"stab":0.96,"res":1.07,"base":-0.24,"n":109},"Daglas":{"big":0.0,"ko":0.52,"stab":1.13,"res":0.66,"base":-0.7,"n":68},"Daystar":{"big":0.0,"ko":0.0,"stab":1.11,"res":1,"base":0.53,"n":30},"Delight":{"big":-2.22,"ko":0.31,"stab":0.94,"res":0.91,"base":-0.98,"n":545},"Devost":{"big":0.0,"ko":0.0,"stab":0.99,"res":0.76,"base":-0.66,"n":55},"Diable":{"big":-0.16,"ko":0.43,"stab":1.06,"res":1.08,"base":0.36,"n":220},"Dire":{"big":-1.11,"ko":-0.27,"stab":1.24,"res":0.83,"base":-0.11,"n":192},"Disamis":{"big":0.03,"ko":-2.02,"stab":1.14,"res":1.16,"base":-0.41,"n":247},"Doggo":{"big":2.26,"ko":2.37,"stab":1.26,"res":0.99,"base":-0.28,"n":361},"Doran":{"big":-0.91,"ko":0.18,"stab":0.83,"res":0.98,"base":-0.29,"n":589},"Draktharr":{"big":0.13,"ko":-0.64,"stab":0.84,"res":1.17,"base":0.13,"n":204},"DuDu":{"big":0.0,"ko":0.0,"stab":1.01,"res":1.04,"base":0.47,"n":356},"Duduhh":{"big":0.33,"ko":0.14,"stab":0.88,"res":1.11,"base":-0.32,"n":125},"Duro":{"big":-0.38,"ko":-0.19,"stab":0.99,"res":1.01,"base":0.37,"n":334},"Eddie":{"big":-0.34,"ko":0.72,"stab":1.19,"res":0.82,"base":-0.11,"n":296},"Elk":{"big":0.72,"ko":0.88,"stab":0.96,"res":1.22,"base":-0.92,"n":577},"Elyoya":{"big":0.09,"ko":0.31,"stab":0.94,"res":1.17,"base":-0.02,"n":408},"Empyros":{"big":0.0,"ko":0.0,"stab":0.79,"res":0.96,"base":0.38,"n":45},"Enga":{"big":0.0,"ko":0.0,"stab":0.98,"res":0.81,"base":-0.74,"n":64},"Envy":{"big":0.03,"ko":-0.09,"stab":0.95,"res":0.88,"base":-0.26,"n":185},"Erha":{"big":0.0,"ko":1.15,"stab":0.92,"res":1.05,"base":-0.04,"n":194},"Evi":{"big":0.0,"ko":0.04,"stab":1.3,"res":0.84,"base":-1.5,"n":261},"FBI":{"big":-0.22,"ko":0.43,"stab":1.13,"res":0.88,"base":-1.44,"n":232},"FIESTA":{"big":0.0,"ko":-0.09,"stab":1.02,"res":1.06,"base":0.85,"n":106},"Faker":{"big":1.64,"ko":-0.98,"stab":0.92,"res":1.19,"base":-0.14,"n":642},"Feather":{"big":0.0,"ko":-0.12,"stab":1.11,"res":0.82,"base":-0.66,"n":239},"Feisty":{"big":0.26,"ko":0.26,"stab":0.94,"res":1.15,"base":-0.27,"n":126},"Feng":{"big":-0.15,"ko":-0.37,"stab":0.94,"res":1.15,"base":-0.77,"n":218},"Fisher":{"big":0.0,"ko":0.0,"stab":0.99,"res":0.86,"base":-0.6,"n":147},"Flakked":{"big":0.0,"ko":-1.64,"stab":0.92,"res":1.2,"base":0.21,"n":152},"Flandre":{"big":0.42,"ko":-0.07,"stab":0.83,"res":1.12,"base":-0.04,"n":342},"Flauren":{"big":-0.21,"ko":0.28,"stab":1.22,"res":1.07,"base":-1.0,"n":117},"Fleshy":{"big":0.0,"ko":-0.83,"stab":1.16,"res":0.92,"base":0.44,"n":121},"Fudge":{"big":-0.16,"ko":-0.06,"stab":1.16,"res":0.83,"base":-0.67,"n":224},"GALA":{"big":-1.67,"ko":-0.68,"stab":0.89,"res":1.08,"base":-0.33,"n":531},"GIDEON":{"big":0.0,"ko":-0.66,"stab":1.07,"res":1,"base":0.32,"n":255},"Gakgos":{"big":0.0,"ko":0.23,"stab":0.82,"res":1.06,"base":-0.34,"n":90},"Grizzly":{"big":0.0,"ko":-0.88,"stab":1.14,"res":0.65,"base":-0.78,"n":56},"Gryffinn":{"big":0.0,"ko":-0.22,"stab":0.86,"res":1.12,"base":-0.22,"n":104},"Gumayusi":{"big":1.62,"ko":-0.48,"stab":0.93,"res":1.09,"base":-0.71,"n":615},"Gury":{"big":0.3,"ko":-0.38,"stab":0.96,"res":1.29,"base":-0.49,"n":315},"Guwon":{"big":0.0,"ko":0.26,"stab":1.21,"res":0.98,"base":1.04,"n":127},"HOYA":{"big":0.0,"ko":-0.22,"stab":1.09,"res":0.84,"base":1.08,"n":344},"HamBak":{"big":0.0,"ko":-0.51,"stab":1,"res":0.97,"base":0.05,"n":114},"Hans SamD":{"big":0.0,"ko":-1.05,"stab":1.4,"res":0.76,"base":-1.5,"n":66},"Hans Sama":{"big":-1.83,"ko":2.36,"stab":1.1,"res":0.92,"base":-0.59,"n":450},"Harky":{"big":0.53,"ko":-0.29,"stab":0.82,"res":0.97,"base":-0.15,"n":77},"Harp":{"big":-0.34,"ko":-0.38,"stab":1.38,"res":0.69,"base":-0.76,"n":205},"Hena":{"big":0.0,"ko":-0.12,"stab":0.76,"res":0.85,"base":0.28,"n":266},"Heng":{"big":0.0,"ko":-0.52,"stab":0.74,"res":0.97,"base":0.2,"n":269},"Heru":{"big":0.0,"ko":-0.09,"stab":1.03,"res":1,"base":-0.47,"n":81},"Hery":{"big":0.0,"ko":-0.23,"stab":1.03,"res":0.85,"base":-0.48,"n":211},"Hiro02":{"big":0.0,"ko":-0.24,"stab":1.11,"res":0.65,"base":0.62,"n":160},"Hizto":{"big":-0.59,"ko":-0.43,"stab":1.17,"res":0.83,"base":-0.08,"n":192},"HongQ":{"big":-0.87,"ko":0.01,"stab":0.97,"res":1.14,"base":-0.57,"n":288},"HongSuo":{"big":-0.22,"ko":-0.28,"stab":1.12,"res":1.07,"base":-0.82,"n":115},"Hope":{"big":0.07,"ko":0.82,"stab":0.9,"res":1,"base":-0.53,"n":500},"Huhi":{"big":0.12,"ko":-0.82,"stab":1.13,"res":0.93,"base":0.2,"n":259},"Humanoid":{"big":-0.14,"ko":-0.41,"stab":1,"res":1.05,"base":-0.74,"n":295},"Hype":{"big":0.0,"ko":-0.02,"stab":0.89,"res":1.09,"base":-0.87,"n":110},"ISMA":{"big":0.0,"ko":-0.86,"stab":0.85,"res":1.07,"base":-0.05,"n":193},"Ice":{"big":0.0,"ko":0.44,"stab":1.19,"res":0.77,"base":-1.5,"n":171},"IgNar":{"big":0.08,"ko":0.41,"stab":1,"res":1.24,"base":-0.77,"n":144},"Impact":{"big":0.26,"ko":0.11,"stab":1.08,"res":1.14,"base":-0.3,"n":283},"Inspired":{"big":-1.35,"ko":0.36,"stab":1.07,"res":1.15,"base":-0.86,"n":331},"Isles":{"big":1.31,"ko":-0.51,"stab":1.19,"res":1.05,"base":-0.29,"n":223},"JackeyLove":{"big":-1.92,"ko":-0.36,"stab":1.03,"res":0.89,"base":-0.46,"n":524},"Jackies":{"big":0.0,"ko":-1.3,"stab":0.7,"res":1.22,"base":0.23,"n":196},"JiaQi":{"big":0.75,"ko":1.22,"stab":0.92,"res":1.15,"base":0.44,"n":195},"Jiejie":{"big":0.0,"ko":0.12,"stab":1.01,"res":0.86,"base":-0.98,"n":233},"Jiwoo":{"big":0.0,"ko":-0.24,"stab":1.01,"res":0.97,"base":0.4,"n":293},"Jojo":{"big":-0.43,"ko":0.76,"stab":0.99,"res":1.05,"base":-0.04,"n":280},"Jojopyun":{"big":0.32,"ko":-0.72,"stab":0.89,"res":1.13,"base":0.01,"n":275},"Jopa":{"big":0.0,"ko":0.0,"stab":0.76,"res":1.07,"base":0.23,"n":58},"Josedeodo":{"big":-0.2,"ko":-0.5,"stab":1.13,"res":0.98,"base":0.34,"n":302},"Juhan":{"big":0.0,"ko":0.0,"stab":0.88,"res":1.23,"base":-0.44,"n":67},"Jun":{"big":0.52,"ko":0.25,"stab":0.7,"res":1.05,"base":-0.01,"n":297},"JunJia":{"big":-1.97,"ko":0.49,"stab":1.12,"res":1.02,"base":-0.7,"n":452},"Junhao":{"big":0.0,"ko":-0.31,"stab":0.95,"res":1.16,"base":-0.72,"n":151},"Kael":{"big":0.47,"ko":0.89,"stab":0.89,"res":0.99,"base":-0.31,"n":506},"Kakkun":{"big":0.0,"ko":0.68,"stab":1.01,"res":1.13,"base":-0.14,"n":131},"Kanavi":{"big":-2.14,"ko":0.03,"stab":1.07,"res":1.06,"base":-1.03,"n":550},"Karis":{"big":0.0,"ko":0.83,"stab":1,"res":1.08,"base":0.27,"n":396},"Karsa":{"big":0.0,"ko":-1.11,"stab":0.95,"res":0.96,"base":-0.23,"n":205},"Kati":{"big":-0.11,"ko":-0.03,"stab":1.02,"res":1.23,"base":-0.33,"n":286},"Kaze":{"big":0.0,"ko":-1.53,"stab":0.97,"res":0.78,"base":0.32,"n":243},"Kellin":{"big":-0.22,"ko":0.84,"stab":0.98,"res":0.82,"base":0.14,"n":414},"Keria":{"big":1.56,"ko":-0.56,"stab":0.92,"res":1.15,"base":-0.02,"n":660},"Keshi":{"big":0.0,"ko":-0.05,"stab":1.04,"res":1,"base":-0.55,"n":81},"Kiaya":{"big":0.56,"ko":0.66,"stab":1.05,"res":1.22,"base":-0.45,"n":400},"Kiin":{"big":-1.66,"ko":0.12,"stab":0.96,"res":1.08,"base":0.32,"n":561},"Kingen":{"big":-0.28,"ko":-1.25,"stab":1.09,"res":0.86,"base":0.19,"n":452},"Kino":{"big":0.0,"ko":0.04,"stab":0.72,"res":1.14,"base":-0.14,"n":94},"Kratos":{"big":0.4,"ko":-0.07,"stab":0.95,"res":1.19,"base":-0.37,"n":192},"KryRa":{"big":0.0,"ko":0.0,"stab":1.21,"res":0.77,"base":0.91,"n":60},"Kuri":{"big":0.35,"ko":0.48,"stab":1.07,"res":0.98,"base":-0.76,"n":190},"Kyeahoo":{"big":1.17,"ko":0.95,"stab":1.15,"res":0.82,"base":0.71,"n":255},"LIDER":{"big":0.0,"ko":0.0,"stab":0.8,"res":1.12,"base":-0.33,"n":57},"Labrov":{"big":-0.35,"ko":0.72,"stab":1.05,"res":0.76,"base":-0.01,"n":413},"Leave":{"big":0.0,"ko":-1.26,"stab":1.17,"res":1.04,"base":-0.8,"n":286},"Lehends":{"big":-1.01,"ko":0.01,"stab":1.28,"res":0.85,"base":-0.3,"n":469},"Life":{"big":0.0,"ko":-0.43,"stab":1.18,"res":1.01,"base":-1.3,"n":306},"Lospa":{"big":0.0,"ko":0.0,"stab":0.76,"res":1.02,"base":0.04,"n":67},"Lot":{"big":0.0,"ko":-0.52,"stab":0.7,"res":0.99,"base":-0.46,"n":115},"Lucid":{"big":-0.07,"ko":-0.06,"stab":0.84,"res":0.88,"base":-0.12,"n":406},"Lyncas":{"big":0.0,"ko":-1.27,"stab":1.05,"res":0.9,"base":0.26,"n":148},"Lyonz":{"big":-0.45,"ko":1.03,"stab":1.27,"res":0.92,"base":0.11,"n":253},"Maple":{"big":-0.69,"ko":0.67,"stab":1.24,"res":1.05,"base":-0.4,"n":186},"Marble":{"big":0.0,"ko":-0.14,"stab":1.27,"res":0.93,"base":-1.5,"n":292},"Massu":{"big":-0.28,"ko":0.89,"stab":1.09,"res":1.26,"base":-0.75,"n":264},"Maynter":{"big":0.0,"ko":-0.35,"stab":0.71,"res":1.04,"base":0.31,"n":86},"Meiko":{"big":-0.64,"ko":-0.49,"stab":1,"res":0.93,"base":-0.18,"n":480},"Mikyx":{"big":1.22,"ko":1.88,"stab":1.09,"res":1.06,"base":-0.77,"n":360},"Mireu":{"big":-0.03,"ko":-0.43,"stab":1.17,"res":1.22,"base":-0.58,"n":218},"Missing":{"big":0.97,"ko":-1.47,"stab":1.13,"res":1.06,"base":-0.68,"n":350},"Moham":{"big":-0.05,"ko":-0.04,"stab":0.87,"res":1.16,"base":-0.1,"n":133},"Momochi":{"big":0.0,"ko":0.15,"stab":1.02,"res":1.02,"base":-0.88,"n":54},"Monki":{"big":0.0,"ko":-0.03,"stab":0.85,"res":1.16,"base":-0.27,"n":272},"Morgan":{"big":0.81,"ko":1.32,"stab":1.15,"res":1.07,"base":1.27,"n":380},"Morttheus":{"big":0.04,"ko":-1.22,"stab":1.13,"res":0.86,"base":-0.15,"n":149},"Myrwn":{"big":0.36,"ko":-0.06,"stab":0.86,"res":1.18,"base":-0.08,"n":313},"Naak Nako":{"big":0.0,"ko":-1.29,"stab":1.04,"res":0.98,"base":0.26,"n":138},"Namgung":{"big":0.0,"ko":-0.14,"stab":0.73,"res":1.07,"base":0.19,"n":99},"Noah":{"big":-0.05,"ko":0.18,"stab":0.77,"res":0.97,"base":-0.71,"n":273},"ON":{"big":1.0,"ko":0.79,"stab":0.85,"res":1.27,"base":0.05,"n":674},"Oner":{"big":1.48,"ko":-0.72,"stab":0.88,"res":1.13,"base":-0.31,"n":655},"Orca":{"big":0.0,"ko":-0.06,"stab":0.93,"res":1.19,"base":-1.09,"n":180},"Oscarinin":{"big":-0.35,"ko":-0.14,"stab":0.89,"res":1.12,"base":-0.43,"n":279},"Paduck":{"big":0.0,"ko":0.0,"stab":0.71,"res":0.85,"base":-0.55,"n":120},"Palafox":{"big":0.16,"ko":0.57,"stab":1.07,"res":1.02,"base":-1.13,"n":224},"Parukia":{"big":0.0,"ko":-0.56,"stab":1.19,"res":0.75,"base":-0.63,"n":87},"Parus":{"big":0.0,"ko":-0.77,"stab":0.7,"res":1.05,"base":0.43,"n":136},"Peach":{"big":0.0,"ko":-0.84,"stab":0.96,"res":1.02,"base":-0.85,"n":123},"PerfecT":{"big":1.53,"ko":-0.01,"stab":0.93,"res":0.79,"base":-0.37,"n":320},"Peter":{"big":1.55,"ko":0.47,"stab":0.98,"res":0.8,"base":0.32,"n":299},"Peyz":{"big":-0.66,"ko":-0.13,"stab":1.02,"res":0.96,"base":-0.41,"n":576},"Photon":{"big":0.0,"ko":-0.49,"stab":1.17,"res":0.83,"base":-0.88,"n":130},"Poby":{"big":0.0,"ko":0.33,"stab":1.05,"res":1.07,"base":0.31,"n":134},"Pollu":{"big":0.0,"ko":-0.1,"stab":0.89,"res":1.22,"base":-0.14,"n":175},"Pout":{"big":0.0,"ko":0.0,"stab":0.9,"res":0.98,"base":-0.04,"n":70},"Puddin":{"big":0.0,"ko":-0.14,"stab":0.76,"res":0.89,"base":0.29,"n":99},"Pun":{"big":-0.06,"ko":0.1,"stab":1.21,"res":0.88,"base":0.43,"n":268},"Pungyeon":{"big":0.0,"ko":0.0,"stab":1.01,"res":1,"base":0.31,"n":38},"Pyosik":{"big":0.0,"ko":1.06,"stab":1.13,"res":1.25,"base":-1.42,"n":328},"Quad":{"big":0.07,"ko":0.88,"stab":1.12,"res":1.33,"base":-0.63,"n":243},"Quid":{"big":0.24,"ko":0.28,"stab":0.98,"res":0.97,"base":0.58,"n":269},"Rahel":{"big":0.0,"ko":-1.14,"stab":1.19,"res":0.96,"base":0.08,"n":140},"Raptor":{"big":-0.14,"ko":0.18,"stab":0.94,"res":0.95,"base":0.12,"n":282},"RayFarky":{"big":0.0,"ko":-0.1,"stab":1.21,"res":0.66,"base":-0.39,"n":196},"Razork":{"big":-0.18,"ko":0.51,"stab":0.97,"res":0.98,"base":-0.48,"n":336},"Rest":{"big":-0.12,"ko":0.63,"stab":1,"res":1.14,"base":-0.59,"n":272},"Rhilech":{"big":0.0,"ko":-0.46,"stab":0.71,"res":1.09,"base":0.22,"n":86},"Rich":{"big":0.0,"ko":-0.27,"stab":0.7,"res":1.37,"base":0.41,"n":223},"Roamer":{"big":0.0,"ko":-0.07,"stab":0.95,"res":1.08,"base":0.11,"n":132},"Robo":{"big":0.14,"ko":0.79,"stab":1.1,"res":0.82,"base":-1.08,"n":226},"Rookie":{"big":0.19,"ko":0.12,"stab":1.03,"res":0.97,"base":-0.08,"n":459},"Rooster":{"big":0.0,"ko":0.0,"stab":0.73,"res":0.92,"base":-0.34,"n":73},"Ruler":{"big":-0.33,"ko":0.17,"stab":0.94,"res":1.12,"base":0.22,"n":522},"STEPZ":{"big":0.0,"ko":-0.76,"stab":1.14,"res":0.65,"base":-0.46,"n":66},"Saber":{"big":0.0,"ko":0.0,"stab":0.83,"res":1.23,"base":0.2,"n":95},"Saint":{"big":0.76,"ko":0.55,"stab":1.12,"res":0.93,"base":-0.46,"n":169},"Sajed":{"big":0.0,"ko":0.0,"stab":1.16,"res":0.73,"base":0.83,"n":66},"Scamber":{"big":0.0,"ko":-1.41,"stab":1.03,"res":1.29,"base":0.02,"n":98},"Scout":{"big":-1.11,"ko":-0.16,"stab":1.01,"res":1.19,"base":-0.04,"n":459},"Serin":{"big":0.0,"ko":0.0,"stab":1.04,"res":1,"base":-0.19,"n":59},"Shad0w":{"big":0.41,"ko":-0.18,"stab":0.87,"res":1.06,"base":-0.14,"n":98},"Shanks":{"big":0.43,"ko":0.69,"stab":0.86,"res":0.99,"base":-0.61,"n":500},"Shaoye":{"big":0.0,"ko":-0.68,"stab":0.91,"res":1.03,"base":0.11,"n":192},"Sheo":{"big":0.84,"ko":0.34,"stab":1.1,"res":0.82,"base":-1.14,"n":281},"ShiauC":{"big":-0.07,"ko":0.19,"stab":1.09,"res":1.11,"base":-0.86,"n":170},"ShowMaker":{"big":0.44,"ko":0.05,"stab":0.8,"res":0.81,"base":-0.01,"n":512},"SiuLoong":{"big":0.47,"ko":-0.61,"stab":0.85,"res":1.23,"base":-0.23,"n":156},"Siwoo":{"big":0.57,"ko":0.01,"stab":0.7,"res":0.94,"base":-0.07,"n":284},"Skeanz":{"big":0.0,"ko":0.0,"stab":0.73,"res":1.15,"base":0.25,"n":67},"SkewMond":{"big":-0.89,"ko":1.94,"stab":1.12,"res":0.84,"base":-0.26,"n":249},"Smash":{"big":0.82,"ko":0.15,"stab":0.86,"res":0.88,"base":-0.19,"n":177},"Snaker":{"big":0.0,"ko":1.14,"stab":1.35,"res":0.83,"base":-1.5,"n":192},"Soboro":{"big":0.0,"ko":-0.04,"stab":0.81,"res":1.02,"base":0.41,"n":75},"Sponge":{"big":0.0,"ko":0.0,"stab":0.92,"res":1,"base":0.64,"n":275},"Srtty":{"big":0.0,"ko":0.0,"stab":1.13,"res":0.87,"base":0.74,"n":69},"Starry":{"big":0.0,"ko":-0.31,"stab":1.11,"res":1.07,"base":0.18,"n":100},"Stend":{"big":0.0,"ko":-1.04,"stab":0.89,"res":1.21,"base":-0.4,"n":91},"Supa":{"big":0.39,"ko":-0.02,"stab":0.92,"res":1.2,"base":-0.1,"n":313},"Tactical":{"big":0.12,"ko":0.14,"stab":1.01,"res":0.97,"base":-0.23,"n":119},"Taeyoon":{"big":0.0,"ko":0.8,"stab":0.95,"res":1.02,"base":0.44,"n":321},"Taki":{"big":0.12,"ko":-1.15,"stab":0.94,"res":0.89,"base":-0.07,"n":324},"Tangyuan":{"big":0.0,"ko":-0.39,"stab":0.89,"res":0.84,"base":0.38,"n":246},"Tarzan":{"big":-0.79,"ko":0.04,"stab":0.82,"res":1.16,"base":-0.62,"n":528},"Tatu":{"big":-0.79,"ko":1.57,"stab":1.08,"res":0.95,"base":-0.41,"n":166},"Teddy":{"big":0.0,"ko":-0.17,"stab":0.85,"res":1.04,"base":0.4,"n":282},"Thanatos":{"big":-0.12,"ko":-1.33,"stab":1.05,"res":0.93,"base":-0.83,"n":183},"TheShy":{"big":0.11,"ko":-0.52,"stab":0.84,"res":1.11,"base":-0.2,"n":318},"Tian":{"big":-1.29,"ko":-0.45,"stab":0.93,"res":0.95,"base":-0.28,"n":477},"TopLop":{"big":0.0,"ko":0.0,"stab":0.97,"res":0.92,"base":-1.07,"n":72},"Tracyn":{"big":0.0,"ko":0.0,"stab":0.99,"res":1,"base":-0.19,"n":59},"Trigger":{"big":0.0,"ko":0.06,"stab":1.03,"res":0.99,"base":-0.85,"n":69},"Trymbi":{"big":0.4,"ko":-1.3,"stab":1.05,"res":0.92,"base":-0.14,"n":227},"Tutsz":{"big":-0.63,"ko":1.72,"stab":1.08,"res":1.08,"base":-0.1,"n":243},"Upset":{"big":0.0,"ko":0.06,"stab":1.11,"res":0.93,"base":-0.37,"n":222},"Vampire":{"big":-0.06,"ko":0.18,"stab":0.96,"res":1.14,"base":0.18,"n":370},"VicLa":{"big":-0.11,"ko":0.41,"stab":0.98,"res":1.01,"base":0.16,"n":334},"Viper":{"big":1.63,"ko":0.47,"stab":0.92,"res":0.99,"base":0.01,"n":587},"Vladi":{"big":0.51,"ko":0.77,"stab":0.87,"res":1.15,"base":-0.12,"n":196},"Vsta":{"big":0.0,"ko":-0.3,"stab":1.21,"res":1.04,"base":-1.5,"n":238},"Vulcan":{"big":-0.22,"ko":-0.3,"stab":1.12,"res":0.75,"base":-0.67,"n":202},"Way":{"big":0.0,"ko":0.0,"stab":0.88,"res":1,"base":-0.14,"n":66},"Wei":{"big":0.29,"ko":0.73,"stab":1.05,"res":0.83,"base":0.17,"n":408},"Woody":{"big":-0.1,"ko":1.08,"stab":1.28,"res":0.91,"base":-1.5,"n":310},"Wunder":{"big":0.0,"ko":0.08,"stab":0.86,"res":1.13,"base":-0.08,"n":126},"XUN":{"big":2.52,"ko":0.37,"stab":0.95,"res":1.3,"base":0.14,"n":548},"Xiaohao":{"big":0.0,"ko":-0.66,"stab":1.13,"res":0.82,"base":-0.49,"n":295},"Xiaohu":{"big":0.99,"ko":-0.47,"stab":0.78,"res":1.2,"base":-0.29,"n":488},"Xiaoxia":{"big":0.0,"ko":0.0,"stab":0.84,"res":1.18,"base":-0.06,"n":83},"Xiaoxu":{"big":-0.6,"ko":0.43,"stab":0.88,"res":0.93,"base":0.26,"n":405},"Yeon":{"big":-0.18,"ko":1.02,"stab":1.06,"res":1.32,"base":0.46,"n":325},"Yike":{"big":0.23,"ko":1.05,"stab":0.95,"res":1.05,"base":0.24,"n":483},"YoungJae":{"big":0.16,"ko":0.01,"stab":0.92,"res":0.92,"base":0.13,"n":182},"ZUIAN":{"big":-0.32,"ko":0.71,"stab":1.05,"res":0.68,"base":-0.46,"n":112},"Zdz":{"big":0.0,"ko":-0.64,"stab":1.15,"res":0.77,"base":-0.67,"n":310},"Zeka":{"big":-1.47,"ko":-0.21,"stab":0.98,"res":0.93,"base":-0.59,"n":476},"ZekaS":{"big":0.0,"ko":-0.53,"stab":1.09,"res":0.99,"base":-0.17,"n":36},"Zest":{"big":0.36,"ko":0.17,"stab":0.93,"res":1.07,"base":-0.22,"n":125},"Zeus":{"big":1.66,"ko":-0.71,"stab":0.97,"res":1.1,"base":-0.58,"n":622},"Zeyzal":{"big":0.0,"ko":-0.06,"stab":0.93,"res":0.95,"base":-0.15,"n":85},"Zhuo":{"big":-0.04,"ko":0.93,"stab":1.01,"res":0.8,"base":0.25,"n":403},"Zika":{"big":-0.83,"ko":0.05,"stab":1.07,"res":1.01,"base":-0.5,"n":369},"Zinie":{"big":0.0,"ko":-0.17,"stab":0.95,"res":0.81,"base":0.23,"n":63},"Zven":{"big":-0.74,"ko":-0.36,"stab":1.14,"res":0.9,"base":-0.6,"n":223},"cody":{"big":0.0,"ko":0.18,"stab":1.21,"res":0.97,"base":-1.42,"n":222},"curty":{"big":0.0,"ko":0.12,"stab":1,"res":1.16,"base":0.16,"n":56},"deokdam":{"big":1.55,"ko":0.71,"stab":1.17,"res":0.73,"base":0.05,"n":337},"eXyu":{"big":0.0,"ko":0.0,"stab":1.21,"res":1.02,"base":-0.44,"n":100},"fengyue":{"big":-0.35,"ko":1.11,"stab":1.07,"res":1,"base":0.74,"n":121},"frostyy":{"big":0.0,"ko":0.0,"stab":1,"res":1,"base":-0.56,"n":31},"guigo":{"big":-0.59,"ko":0.45,"stab":1.07,"res":1.13,"base":-0.47,"n":270},"haichao":{"big":0.0,"ko":0.25,"stab":1.02,"res":0.77,"base":-0.14,"n":236},"keine":{"big":0.3,"ko":1.17,"stab":1.27,"res":1.02,"base":-0.19,"n":197},"knight":{"big":2.43,"ko":1.21,"stab":0.7,"res":1.16,"base":0.28,"n":378},"nuc":{"big":0.55,"ko":0.58,"stab":0.92,"res":0.75,"base":-0.98,"n":275},"sasi":{"big":0.0,"ko":0.0,"stab":1.01,"res":1.1,"base":-0.1,"n":91},"sheer":{"big":0.0,"ko":0.05,"stab":1.28,"res":1.04,"base":-0.83,"n":209},"uZent":{"big":0.0,"ko":-0.6,"stab":0.97,"res":0.9,"base":0.52,"n":54},"ucal":{"big":0.0,"ko":0.0,"stab":0.73,"res":1.16,"base":-0.17,"n":157},"xyno":{"big":0.05,"ko":-1.0,"stab":1.1,"res":0.89,"base":0.2,"n":91},"yaoyao":{"big":0.0,"ko":-0.61,"stab":0.93,"res":0.72,"base":-0.59,"n":96},"ycx":{"big":0.0,"ko":-0.87,"stab":0.92,"res":1.12,"base":-0.66,"n":115}};
+<script>window.TRAITS={"1Jiang":{"big":0.0,"ko":0.84,"stab":0.91,"res":1.12,"base":0.22,"n":240},"1xn":{"big":0.0,"ko":-0.07,"stab":1.23,"res":0.87,"base":-0.9,"n":260},"369":{"big":-1.41,"ko":0.51,"stab":1.03,"res":1,"base":-0.41,"n":492},"665":{"big":0.0,"ko":-0.4,"stab":1.05,"res":0.89,"base":0.66,"n":105},"APA":{"big":0.09,"ko":-0.11,"stab":1.23,"res":1.19,"base":-0.44,"n":241},"About":{"big":0.0,"ko":0.21,"stab":1.01,"res":0.84,"base":0.07,"n":133},"Ackerman":{"big":0.15,"ko":1.24,"stab":1.14,"res":1.15,"base":-0.08,"n":289},"Aiming":{"big":-1.03,"ko":-0.17,"stab":0.96,"res":0.96,"base":-1.03,"n":469},"Alvaro":{"big":0.67,"ko":-0.19,"stab":0.87,"res":1.19,"base":0.2,"n":313},"Andil":{"big":0.0,"ko":0.0,"stab":0.89,"res":1.22,"base":0.1,"n":281},"Angel":{"big":0.0,"ko":-1.03,"stab":1.12,"res":0.76,"base":0.16,"n":248},"Aress":{"big":0.16,"ko":-1.49,"stab":0.95,"res":0.87,"base":0.0,"n":185},"Aria":{"big":-0.3,"ko":0.11,"stab":1.35,"res":0.69,"base":-1.5,"n":277},"Artemis":{"big":0.71,"ko":-0.59,"stab":0.88,"res":1.14,"base":-0.1,"n":367},"Assum":{"big":0.0,"ko":-0.32,"stab":1.01,"res":0.98,"base":0.62,"n":303},"Ayu":{"big":-0.32,"ko":1.35,"stab":1.01,"res":1.04,"base":-0.19,"n":264},"Azhi":{"big":-1.36,"ko":-0.15,"stab":1.18,"res":0.99,"base":-0.62,"n":271},"BAO":{"big":0.0,"ko":0.07,"stab":1,"res":1.05,"base":-0.85,"n":53},"Bdd":{"big":0.7,"ko":0.46,"stab":0.99,"res":0.88,"base":-0.4,"n":470},"Berserker":{"big":0.57,"ko":0.75,"stab":1.31,"res":0.91,"base":-0.63,"n":346},"Betty":{"big":-0.16,"ko":0.84,"stab":1.2,"res":0.89,"base":-0.11,"n":286},"Bie":{"big":-0.68,"ko":-0.24,"stab":1.15,"res":0.98,"base":-0.07,"n":296},"Bin":{"big":1.16,"ko":1.25,"stab":0.76,"res":1.29,"base":0.1,"n":645,"regionEdge":[["LEC",19,8.5]]},"Blaber":{"big":-0.84,"ko":-1.2,"stab":1.11,"res":0.88,"base":-0.77,"n":281},"Booki":{"big":0.0,"ko":0.0,"stab":0.99,"res":0.73,"base":-0.69,"n":55},"Boukada":{"big":0.0,"ko":0.0,"stab":0.8,"res":0.7,"base":0.01,"n":59},"Breathe":{"big":0.28,"ko":-0.32,"stab":0.87,"res":0.92,"base":-0.23,"n":439},"BrokenBlade":{"big":-0.61,"ko":2.42,"stab":1.04,"res":0.99,"base":-0.46,"n":459,"regionEdge":[["LCK",15,14.9]]},"BuLLDoG":{"big":0.0,"ko":-0.26,"stab":1.13,"res":0.92,"base":-0.35,"n":320},"Bull":{"big":-0.07,"ko":-0.49,"stab":0.92,"res":1.02,"base":-0.09,"n":117},"Busio":{"big":-0.16,"ko":0.29,"stab":1.1,"res":1.05,"base":0.37,"n":390},"Bvoy":{"big":0.0,"ko":-1.01,"stab":1.08,"res":0.9,"base":-0.69,"n":220},"Caliste":{"big":-0.19,"ko":-0.1,"stab":0.93,"res":0.99,"base":0.28,"n":268},"Calix":{"big":0.0,"ko":-0.27,"stab":1.09,"res":1.11,"base":-0.13,"n":85},"Canna":{"big":0.07,"ko":0.03,"stab":0.85,"res":0.91,"base":0.22,"n":392},"Canyon":{"big":-0.98,"ko":0.41,"stab":0.9,"res":0.9,"base":0.21,"n":535},"Caps":{"big":-0.87,"ko":2.21,"stab":1.06,"res":1.01,"base":-0.44,"n":464},"Care":{"big":0.0,"ko":0.24,"stab":1.09,"res":1.12,"base":1.22,"n":370},"Career":{"big":0.68,"ko":0.26,"stab":0.74,"res":0.84,"base":-0.01,"n":153},"Cariok":{"big":0.33,"ko":-0.18,"stab":1.06,"res":0.96,"base":-0.38,"n":270},"Carzzy":{"big":-0.36,"ko":-0.7,"stab":1.06,"res":0.91,"base":0.44,"n":279},"Casting":{"big":0.0,"ko":-0.03,"stab":0.71,"res":0.98,"base":0.3,"n":121},"Castle":{"big":0.0,"ko":0.0,"stab":1.24,"res":0.96,"base":-0.47,"n":114},"Ceo":{"big":0.0,"ko":-0.55,"stab":1,"res":1.23,"base":-0.69,"n":96},"Ceos":{"big":-0.1,"ko":0.2,"stab":1.2,"res":0.71,"base":-0.02,"n":226},"Chika":{"big":0.33,"ko":0.0,"stab":0.81,"res":0.96,"base":-0.37,"n":61},"Chovy":{"big":-1.44,"ko":0.64,"stab":0.86,"res":1.01,"base":-0.07,"n":565},"Citrus":{"big":0.0,"ko":0.68,"stab":1.08,"res":1.24,"base":-0.18,"n":75},"Clear":{"big":-0.11,"ko":0.23,"stab":0.9,"res":0.88,"base":0.27,"n":332},"Clozer":{"big":0.0,"ko":-0.6,"stab":0.94,"res":1.02,"base":0.46,"n":378},"Contractz":{"big":0.1,"ko":-0.12,"stab":0.93,"res":0.97,"base":-0.4,"n":242},"CoreJJ":{"big":0.06,"ko":0.88,"stab":1.09,"res":1.28,"base":0.67,"n":325},"Creme":{"big":-1.67,"ko":0.23,"stab":0.99,"res":0.96,"base":-0.24,"n":566},"Croco":{"big":0.0,"ko":-0.64,"stab":1.16,"res":1.09,"base":0.61,"n":249},"Cryogen":{"big":0.0,"ko":-0.01,"stab":0.71,"res":1.13,"base":-0.25,"n":85},"Cube":{"big":0.0,"ko":0.1,"stab":0.91,"res":1.03,"base":-0.14,"n":387},"Curse":{"big":0.29,"ko":-0.29,"stab":0.93,"res":1.19,"base":-0.35,"n":116},"Cuzz":{"big":1.03,"ko":0.18,"stab":1.06,"res":0.81,"base":-0.34,"n":455},"DARKWINGS":{"big":0.0,"ko":-0.55,"stab":0.96,"res":1.07,"base":-0.24,"n":109},"Daglas":{"big":0.0,"ko":0.52,"stab":1.13,"res":0.66,"base":-0.7,"n":68},"Daystar":{"big":0.0,"ko":0.0,"stab":1.11,"res":1,"base":0.53,"n":30},"Delight":{"big":-2.22,"ko":0.31,"stab":0.94,"res":0.91,"base":-0.98,"n":545},"Devost":{"big":0.0,"ko":0.0,"stab":0.99,"res":0.76,"base":-0.66,"n":55},"Diable":{"big":-0.16,"ko":0.43,"stab":1.06,"res":1.08,"base":0.36,"n":220},"Dire":{"big":-1.11,"ko":-0.27,"stab":1.24,"res":0.83,"base":-0.11,"n":192},"Disamis":{"big":0.03,"ko":-2.02,"stab":1.14,"res":1.16,"base":-0.41,"n":247},"Doggo":{"big":2.26,"ko":2.37,"stab":1.26,"res":0.99,"base":-0.28,"n":361},"Doran":{"big":-0.91,"ko":0.18,"stab":0.83,"res":0.98,"base":-0.29,"n":589},"Draktharr":{"big":0.13,"ko":-0.64,"stab":0.84,"res":1.17,"base":0.13,"n":204},"DuDu":{"big":0.0,"ko":0.0,"stab":1.01,"res":1.04,"base":0.47,"n":356},"Duduhh":{"big":0.33,"ko":0.14,"stab":0.88,"res":1.11,"base":-0.32,"n":125},"Duro":{"big":-0.38,"ko":-0.19,"stab":0.99,"res":1.01,"base":0.37,"n":334},"Eddie":{"big":-0.34,"ko":0.72,"stab":1.19,"res":0.82,"base":-0.11,"n":296},"Elk":{"big":0.72,"ko":0.88,"stab":0.96,"res":1.22,"base":-0.92,"n":577},"Elyoya":{"big":0.09,"ko":0.31,"stab":0.94,"res":1.17,"base":-0.02,"n":408},"Empyros":{"big":0.0,"ko":0.0,"stab":0.79,"res":0.96,"base":0.38,"n":45},"Enga":{"big":0.0,"ko":0.0,"stab":0.98,"res":0.81,"base":-0.74,"n":64},"Envy":{"big":0.03,"ko":-0.09,"stab":0.95,"res":0.88,"base":-0.26,"n":185},"Erha":{"big":0.0,"ko":1.15,"stab":0.92,"res":1.05,"base":-0.04,"n":194},"Evi":{"big":0.0,"ko":0.04,"stab":1.3,"res":0.84,"base":-1.5,"n":261},"FBI":{"big":-0.22,"ko":0.43,"stab":1.13,"res":0.88,"base":-1.44,"n":232},"FIESTA":{"big":0.0,"ko":-0.09,"stab":1.02,"res":1.06,"base":0.85,"n":106},"Faker":{"big":1.64,"ko":-0.98,"stab":0.92,"res":1.19,"base":-0.14,"n":642},"Feather":{"big":0.0,"ko":-0.12,"stab":1.11,"res":0.82,"base":-0.66,"n":239},"Feisty":{"big":0.26,"ko":0.26,"stab":0.94,"res":1.15,"base":-0.27,"n":126},"Feng":{"big":-0.15,"ko":-0.37,"stab":0.94,"res":1.15,"base":-0.77,"n":218},"Fisher":{"big":0.0,"ko":0.0,"stab":0.99,"res":0.86,"base":-0.6,"n":147},"Flakked":{"big":0.0,"ko":-1.64,"stab":0.92,"res":1.2,"base":0.21,"n":152},"Flandre":{"big":0.42,"ko":-0.07,"stab":0.83,"res":1.12,"base":-0.04,"n":342},"Flauren":{"big":-0.21,"ko":0.28,"stab":1.22,"res":1.07,"base":-1.0,"n":117},"Fleshy":{"big":0.0,"ko":-0.83,"stab":1.16,"res":0.92,"base":0.44,"n":121},"Fudge":{"big":-0.16,"ko":-0.06,"stab":1.16,"res":0.83,"base":-0.67,"n":224},"GALA":{"big":-1.67,"ko":-0.68,"stab":0.89,"res":1.08,"base":-0.33,"n":531},"GIDEON":{"big":0.0,"ko":-0.66,"stab":1.07,"res":1,"base":0.32,"n":255},"Gakgos":{"big":0.0,"ko":0.23,"stab":0.82,"res":1.06,"base":-0.34,"n":90},"Grizzly":{"big":0.0,"ko":-0.88,"stab":1.14,"res":0.65,"base":-0.78,"n":56},"Gryffinn":{"big":0.0,"ko":-0.22,"stab":0.86,"res":1.12,"base":-0.22,"n":104},"Gumayusi":{"big":1.62,"ko":-0.48,"stab":0.93,"res":1.09,"base":-0.71,"n":615,"regionEdge":[["LPL",22,7.7]]},"Gury":{"big":0.3,"ko":-0.38,"stab":0.96,"res":1.29,"base":-0.49,"n":315},"Guwon":{"big":0.0,"ko":0.26,"stab":1.21,"res":0.98,"base":1.04,"n":127},"HOYA":{"big":0.0,"ko":-0.22,"stab":1.09,"res":0.84,"base":1.08,"n":344},"HamBak":{"big":0.0,"ko":-0.51,"stab":1,"res":0.97,"base":0.05,"n":114},"Hans SamD":{"big":0.0,"ko":-1.05,"stab":1.4,"res":0.76,"base":-1.5,"n":66},"Hans Sama":{"big":-1.83,"ko":2.36,"stab":1.1,"res":0.92,"base":-0.59,"n":450,"regionEdge":[["LCK",15,14.9]]},"Harky":{"big":0.53,"ko":-0.29,"stab":0.82,"res":0.97,"base":-0.15,"n":77},"Harp":{"big":-0.34,"ko":-0.38,"stab":1.38,"res":0.69,"base":-0.76,"n":205},"Hena":{"big":0.0,"ko":-0.12,"stab":0.76,"res":0.85,"base":0.28,"n":266},"Heng":{"big":0.0,"ko":-0.52,"stab":0.74,"res":0.97,"base":0.2,"n":269},"Heru":{"big":0.0,"ko":-0.09,"stab":1.03,"res":1,"base":-0.47,"n":81},"Hery":{"big":0.0,"ko":-0.23,"stab":1.03,"res":0.85,"base":-0.48,"n":211},"Hiro02":{"big":0.0,"ko":-0.24,"stab":1.11,"res":0.65,"base":0.62,"n":160},"Hizto":{"big":-0.59,"ko":-0.43,"stab":1.17,"res":0.83,"base":-0.08,"n":192},"HongQ":{"big":-0.87,"ko":0.01,"stab":0.97,"res":1.14,"base":-0.57,"n":288},"HongSuo":{"big":-0.22,"ko":-0.28,"stab":1.12,"res":1.07,"base":-0.82,"n":115},"Hope":{"big":0.07,"ko":0.82,"stab":0.9,"res":1,"base":-0.53,"n":500},"Huhi":{"big":0.12,"ko":-0.82,"stab":1.13,"res":0.93,"base":0.2,"n":259},"Humanoid":{"big":-0.14,"ko":-0.41,"stab":1,"res":1.05,"base":-0.74,"n":295},"Hype":{"big":0.0,"ko":-0.02,"stab":0.89,"res":1.09,"base":-0.87,"n":110},"ISMA":{"big":0.0,"ko":-0.86,"stab":0.85,"res":1.07,"base":-0.05,"n":193},"Ice":{"big":0.0,"ko":0.44,"stab":1.19,"res":0.77,"base":-1.5,"n":171},"IgNar":{"big":0.08,"ko":0.41,"stab":1,"res":1.24,"base":-0.77,"n":144},"Impact":{"big":0.26,"ko":0.11,"stab":1.08,"res":1.14,"base":-0.3,"n":283},"Inspired":{"big":-1.35,"ko":0.36,"stab":1.07,"res":1.15,"base":-0.86,"n":331},"Isles":{"big":1.31,"ko":-0.51,"stab":1.19,"res":1.05,"base":-0.29,"n":223},"JackeyLove":{"big":-1.92,"ko":-0.36,"stab":1.03,"res":0.89,"base":-0.46,"n":524},"Jackies":{"big":0.0,"ko":-1.3,"stab":0.7,"res":1.22,"base":0.23,"n":196},"JiaQi":{"big":0.75,"ko":1.22,"stab":0.92,"res":1.15,"base":0.44,"n":195},"Jiejie":{"big":0.0,"ko":0.12,"stab":1.01,"res":0.86,"base":-0.98,"n":233},"Jiwoo":{"big":0.0,"ko":-0.24,"stab":1.01,"res":0.97,"base":0.4,"n":293},"Jojo":{"big":-0.43,"ko":0.76,"stab":0.99,"res":1.05,"base":-0.04,"n":280},"Jojopyun":{"big":0.32,"ko":-0.72,"stab":0.89,"res":1.13,"base":0.01,"n":275},"Jopa":{"big":0.0,"ko":0.0,"stab":0.76,"res":1.07,"base":0.23,"n":58},"Josedeodo":{"big":-0.2,"ko":-0.5,"stab":1.13,"res":0.98,"base":0.34,"n":302},"Juhan":{"big":0.0,"ko":0.0,"stab":0.88,"res":1.23,"base":-0.44,"n":67},"Jun":{"big":0.52,"ko":0.25,"stab":0.7,"res":1.05,"base":-0.01,"n":297},"JunJia":{"big":-1.97,"ko":0.49,"stab":1.12,"res":1.02,"base":-0.7,"n":452},"Junhao":{"big":0.0,"ko":-0.31,"stab":0.95,"res":1.16,"base":-0.72,"n":151},"Kael":{"big":0.47,"ko":0.89,"stab":0.89,"res":0.99,"base":-0.31,"n":506,"regionEdge":[["LCK",27,7.6]]},"Kakkun":{"big":0.0,"ko":0.68,"stab":1.01,"res":1.13,"base":-0.14,"n":131},"Kanavi":{"big":-2.14,"ko":0.03,"stab":1.07,"res":1.06,"base":-1.03,"n":550},"Karis":{"big":0.0,"ko":0.83,"stab":1,"res":1.08,"base":0.27,"n":396},"Karsa":{"big":0.0,"ko":-1.11,"stab":0.95,"res":0.96,"base":-0.23,"n":205},"Kati":{"big":-0.11,"ko":-0.03,"stab":1.02,"res":1.23,"base":-0.33,"n":286},"Kaze":{"big":0.0,"ko":-1.53,"stab":0.97,"res":0.78,"base":0.32,"n":243},"Kellin":{"big":-0.22,"ko":0.84,"stab":0.98,"res":0.82,"base":0.14,"n":414},"Keria":{"big":1.56,"ko":-0.56,"stab":0.92,"res":1.15,"base":-0.02,"n":660,"regionEdge":[["LPL",22,7.7]]},"Keshi":{"big":0.0,"ko":-0.05,"stab":1.04,"res":1,"base":-0.55,"n":81},"Kiaya":{"big":0.56,"ko":0.66,"stab":1.05,"res":1.22,"base":-0.45,"n":400},"Kiin":{"big":-1.66,"ko":0.12,"stab":0.96,"res":1.08,"base":0.32,"n":561},"Kingen":{"big":-0.28,"ko":-1.25,"stab":1.09,"res":0.86,"base":0.19,"n":452},"Kino":{"big":0.0,"ko":0.04,"stab":0.72,"res":1.14,"base":-0.14,"n":94},"Kratos":{"big":0.4,"ko":-0.07,"stab":0.95,"res":1.19,"base":-0.37,"n":192},"KryRa":{"big":0.0,"ko":0.0,"stab":1.21,"res":0.77,"base":0.91,"n":60},"Kuri":{"big":0.35,"ko":0.48,"stab":1.07,"res":0.98,"base":-0.76,"n":190},"Kyeahoo":{"big":1.17,"ko":0.95,"stab":1.15,"res":0.82,"base":0.71,"n":255},"LIDER":{"big":0.0,"ko":0.0,"stab":0.8,"res":1.12,"base":-0.33,"n":57},"Labrov":{"big":-0.35,"ko":0.72,"stab":1.05,"res":0.76,"base":-0.01,"n":413,"regionEdge":[["LCK",15,14.9]]},"Leave":{"big":0.0,"ko":-1.26,"stab":1.17,"res":1.04,"base":-0.8,"n":286},"Lehends":{"big":-1.01,"ko":0.01,"stab":1.28,"res":0.85,"base":-0.3,"n":469},"Life":{"big":0.0,"ko":-0.43,"stab":1.18,"res":1.01,"base":-1.3,"n":306},"Lospa":{"big":0.0,"ko":0.0,"stab":0.76,"res":1.02,"base":0.04,"n":67},"Lot":{"big":0.0,"ko":-0.52,"stab":0.7,"res":0.99,"base":-0.46,"n":115},"Lucid":{"big":-0.07,"ko":-0.06,"stab":0.84,"res":0.88,"base":-0.12,"n":406},"Lyncas":{"big":0.0,"ko":-1.27,"stab":1.05,"res":0.9,"base":0.26,"n":148},"Lyonz":{"big":-0.45,"ko":1.03,"stab":1.27,"res":0.92,"base":0.11,"n":253},"Maple":{"big":-0.69,"ko":0.67,"stab":1.24,"res":1.05,"base":-0.4,"n":186},"Marble":{"big":0.0,"ko":-0.14,"stab":1.27,"res":0.93,"base":-1.5,"n":292},"Massu":{"big":-0.28,"ko":0.89,"stab":1.09,"res":1.26,"base":-0.75,"n":264},"Maynter":{"big":0.0,"ko":-0.35,"stab":0.71,"res":1.04,"base":0.31,"n":86},"Meiko":{"big":-0.64,"ko":-0.49,"stab":1,"res":0.93,"base":-0.18,"n":480},"Mikyx":{"big":1.22,"ko":1.88,"stab":1.09,"res":1.06,"base":-0.77,"n":360},"Mireu":{"big":-0.03,"ko":-0.43,"stab":1.17,"res":1.22,"base":-0.58,"n":218},"Missing":{"big":0.97,"ko":-1.47,"stab":1.13,"res":1.06,"base":-0.68,"n":350},"Moham":{"big":-0.05,"ko":-0.04,"stab":0.87,"res":1.16,"base":-0.1,"n":133},"Momochi":{"big":0.0,"ko":0.15,"stab":1.02,"res":1.02,"base":-0.88,"n":54},"Monki":{"big":0.0,"ko":-0.03,"stab":0.85,"res":1.16,"base":-0.27,"n":272},"Morgan":{"big":0.81,"ko":1.32,"stab":1.15,"res":1.07,"base":1.27,"n":380},"Morttheus":{"big":0.04,"ko":-1.22,"stab":1.13,"res":0.86,"base":-0.15,"n":149},"Myrwn":{"big":0.36,"ko":-0.06,"stab":0.86,"res":1.18,"base":-0.08,"n":313},"Naak Nako":{"big":0.0,"ko":-1.29,"stab":1.04,"res":0.98,"base":0.26,"n":138},"Namgung":{"big":0.0,"ko":-0.14,"stab":0.73,"res":1.07,"base":0.19,"n":99},"Noah":{"big":-0.05,"ko":0.18,"stab":0.77,"res":0.97,"base":-0.71,"n":273},"ON":{"big":1.0,"ko":0.79,"stab":0.85,"res":1.27,"base":0.05,"n":674},"Oner":{"big":1.48,"ko":-0.72,"stab":0.88,"res":1.13,"base":-0.31,"n":655},"Orca":{"big":0.0,"ko":-0.06,"stab":0.93,"res":1.19,"base":-1.09,"n":180},"Oscarinin":{"big":-0.35,"ko":-0.14,"stab":0.89,"res":1.12,"base":-0.43,"n":279},"Paduck":{"big":0.0,"ko":0.0,"stab":0.71,"res":0.85,"base":-0.55,"n":120},"Palafox":{"big":0.16,"ko":0.57,"stab":1.07,"res":1.02,"base":-1.13,"n":224},"Parukia":{"big":0.0,"ko":-0.56,"stab":1.19,"res":0.75,"base":-0.63,"n":87},"Parus":{"big":0.0,"ko":-0.77,"stab":0.7,"res":1.05,"base":0.43,"n":136},"Peach":{"big":0.0,"ko":-0.84,"stab":0.96,"res":1.02,"base":-0.85,"n":123},"PerfecT":{"big":1.53,"ko":-0.01,"stab":0.93,"res":0.79,"base":-0.37,"n":320},"Peter":{"big":1.55,"ko":0.47,"stab":0.98,"res":0.8,"base":0.32,"n":299},"Peyz":{"big":-0.66,"ko":-0.13,"stab":1.02,"res":0.96,"base":-0.41,"n":576},"Photon":{"big":0.0,"ko":-0.49,"stab":1.17,"res":0.83,"base":-0.88,"n":130},"Poby":{"big":0.0,"ko":0.33,"stab":1.05,"res":1.07,"base":0.31,"n":134},"Pollu":{"big":0.0,"ko":-0.1,"stab":0.89,"res":1.22,"base":-0.14,"n":175},"Pout":{"big":0.0,"ko":0.0,"stab":0.9,"res":0.98,"base":-0.04,"n":70},"Puddin":{"big":0.0,"ko":-0.14,"stab":0.76,"res":0.89,"base":0.29,"n":99},"Pun":{"big":-0.06,"ko":0.1,"stab":1.21,"res":0.88,"base":0.43,"n":268},"Pungyeon":{"big":0.0,"ko":0.0,"stab":1.01,"res":1,"base":0.31,"n":38},"Pyosik":{"big":0.0,"ko":1.06,"stab":1.13,"res":1.25,"base":-1.42,"n":328},"Quad":{"big":0.07,"ko":0.88,"stab":1.12,"res":1.33,"base":-0.63,"n":243},"Quid":{"big":0.24,"ko":0.28,"stab":0.98,"res":0.97,"base":0.58,"n":269},"Rahel":{"big":0.0,"ko":-1.14,"stab":1.19,"res":0.96,"base":0.08,"n":140},"Raptor":{"big":-0.14,"ko":0.18,"stab":0.94,"res":0.95,"base":0.12,"n":282},"RayFarky":{"big":0.0,"ko":-0.1,"stab":1.21,"res":0.66,"base":-0.39,"n":196},"Razork":{"big":-0.18,"ko":0.51,"stab":0.97,"res":0.98,"base":-0.48,"n":336},"Rest":{"big":-0.12,"ko":0.63,"stab":1,"res":1.14,"base":-0.59,"n":272},"Rhilech":{"big":0.0,"ko":-0.46,"stab":0.71,"res":1.09,"base":0.22,"n":86},"Rich":{"big":0.0,"ko":-0.27,"stab":0.7,"res":1.37,"base":0.41,"n":223},"Roamer":{"big":0.0,"ko":-0.07,"stab":0.95,"res":1.08,"base":0.11,"n":132},"Robo":{"big":0.14,"ko":0.79,"stab":1.1,"res":0.82,"base":-1.08,"n":226},"Rookie":{"big":0.19,"ko":0.12,"stab":1.03,"res":0.97,"base":-0.08,"n":459},"Rooster":{"big":0.0,"ko":0.0,"stab":0.73,"res":0.92,"base":-0.34,"n":73},"Ruler":{"big":-0.33,"ko":0.17,"stab":0.94,"res":1.12,"base":0.22,"n":522},"STEPZ":{"big":0.0,"ko":-0.76,"stab":1.14,"res":0.65,"base":-0.46,"n":66},"Saber":{"big":0.0,"ko":0.0,"stab":0.83,"res":1.23,"base":0.2,"n":95},"Saint":{"big":0.76,"ko":0.55,"stab":1.12,"res":0.93,"base":-0.46,"n":169},"Sajed":{"big":0.0,"ko":0.0,"stab":1.16,"res":0.73,"base":0.83,"n":66},"Scamber":{"big":0.0,"ko":-1.41,"stab":1.03,"res":1.29,"base":0.02,"n":98},"Scout":{"big":-1.11,"ko":-0.16,"stab":1.01,"res":1.19,"base":-0.04,"n":459},"Serin":{"big":0.0,"ko":0.0,"stab":1.04,"res":1,"base":-0.19,"n":59},"Shad0w":{"big":0.41,"ko":-0.18,"stab":0.87,"res":1.06,"base":-0.14,"n":98},"Shanks":{"big":0.43,"ko":0.69,"stab":0.86,"res":0.99,"base":-0.61,"n":500,"regionEdge":[["LCK",27,7.6]]},"Shaoye":{"big":0.0,"ko":-0.68,"stab":0.91,"res":1.03,"base":0.11,"n":192},"Sheo":{"big":0.84,"ko":0.34,"stab":1.1,"res":0.82,"base":-1.14,"n":281},"ShiauC":{"big":-0.07,"ko":0.19,"stab":1.09,"res":1.11,"base":-0.86,"n":170},"ShowMaker":{"big":0.44,"ko":0.05,"stab":0.8,"res":0.81,"base":-0.01,"n":512},"SiuLoong":{"big":0.47,"ko":-0.61,"stab":0.85,"res":1.23,"base":-0.23,"n":156},"Siwoo":{"big":0.57,"ko":0.01,"stab":0.7,"res":0.94,"base":-0.07,"n":284},"Skeanz":{"big":0.0,"ko":0.0,"stab":0.73,"res":1.15,"base":0.25,"n":67},"SkewMond":{"big":-0.89,"ko":1.94,"stab":1.12,"res":0.84,"base":-0.26,"n":249,"regionEdge":[["LCK",15,14.9]]},"Smash":{"big":0.82,"ko":0.15,"stab":0.86,"res":0.88,"base":-0.19,"n":177},"Snaker":{"big":0.0,"ko":1.14,"stab":1.35,"res":0.83,"base":-1.5,"n":192},"Soboro":{"big":0.0,"ko":-0.04,"stab":0.81,"res":1.02,"base":0.41,"n":75},"Sponge":{"big":0.0,"ko":0.0,"stab":0.92,"res":1,"base":0.64,"n":275},"Srtty":{"big":0.0,"ko":0.0,"stab":1.13,"res":0.87,"base":0.74,"n":69},"Starry":{"big":0.0,"ko":-0.31,"stab":1.11,"res":1.07,"base":0.18,"n":100},"Stend":{"big":0.0,"ko":-1.04,"stab":0.89,"res":1.21,"base":-0.4,"n":91},"Supa":{"big":0.39,"ko":-0.02,"stab":0.92,"res":1.2,"base":-0.1,"n":313},"Tactical":{"big":0.12,"ko":0.14,"stab":1.01,"res":0.97,"base":-0.23,"n":119},"Taeyoon":{"big":0.0,"ko":0.8,"stab":0.95,"res":1.02,"base":0.44,"n":321},"Taki":{"big":0.12,"ko":-1.15,"stab":0.94,"res":0.89,"base":-0.07,"n":324},"Tangyuan":{"big":0.0,"ko":-0.39,"stab":0.89,"res":0.84,"base":0.38,"n":246},"Tarzan":{"big":-0.79,"ko":0.04,"stab":0.82,"res":1.16,"base":-0.62,"n":528,"regionEdge":[["LCK",27,7.6]]},"Tatu":{"big":-0.79,"ko":1.57,"stab":1.08,"res":0.95,"base":-0.41,"n":166},"Teddy":{"big":0.0,"ko":-0.17,"stab":0.85,"res":1.04,"base":0.4,"n":282},"Thanatos":{"big":-0.12,"ko":-1.33,"stab":1.05,"res":0.93,"base":-0.83,"n":183},"TheShy":{"big":0.11,"ko":-0.52,"stab":0.84,"res":1.11,"base":-0.2,"n":318},"Tian":{"big":-1.29,"ko":-0.45,"stab":0.93,"res":0.95,"base":-0.28,"n":477},"TopLop":{"big":0.0,"ko":0.0,"stab":0.97,"res":0.92,"base":-1.07,"n":72},"Tracyn":{"big":0.0,"ko":0.0,"stab":0.99,"res":1,"base":-0.19,"n":59},"Trigger":{"big":0.0,"ko":0.06,"stab":1.03,"res":0.99,"base":-0.85,"n":69},"Trymbi":{"big":0.4,"ko":-1.3,"stab":1.05,"res":0.92,"base":-0.14,"n":227},"Tutsz":{"big":-0.63,"ko":1.72,"stab":1.08,"res":1.08,"base":-0.1,"n":243},"Upset":{"big":0.0,"ko":0.06,"stab":1.11,"res":0.93,"base":-0.37,"n":222},"Vampire":{"big":-0.06,"ko":0.18,"stab":0.96,"res":1.14,"base":0.18,"n":370},"VicLa":{"big":-0.11,"ko":0.41,"stab":0.98,"res":1.01,"base":0.16,"n":334},"Viper":{"big":1.63,"ko":0.47,"stab":0.92,"res":0.99,"base":0.01,"n":587,"regionEdge":[["LEC",15,13.1]]},"Vladi":{"big":0.51,"ko":0.77,"stab":0.87,"res":1.15,"base":-0.12,"n":196},"Vsta":{"big":0.0,"ko":-0.3,"stab":1.21,"res":1.04,"base":-1.5,"n":238},"Vulcan":{"big":-0.22,"ko":-0.3,"stab":1.12,"res":0.75,"base":-0.67,"n":202},"Way":{"big":0.0,"ko":0.0,"stab":0.88,"res":1,"base":-0.14,"n":66},"Wei":{"big":0.29,"ko":0.73,"stab":1.05,"res":0.83,"base":0.17,"n":408},"Woody":{"big":-0.1,"ko":1.08,"stab":1.28,"res":0.91,"base":-1.5,"n":310},"Wunder":{"big":0.0,"ko":0.08,"stab":0.86,"res":1.13,"base":-0.08,"n":126},"XUN":{"big":2.52,"ko":0.37,"stab":0.95,"res":1.3,"base":0.14,"n":548},"Xiaohao":{"big":0.0,"ko":-0.66,"stab":1.13,"res":0.82,"base":-0.49,"n":295},"Xiaohu":{"big":0.99,"ko":-0.47,"stab":0.78,"res":1.2,"base":-0.29,"n":488},"Xiaoxia":{"big":0.0,"ko":0.0,"stab":0.84,"res":1.18,"base":-0.06,"n":83},"Xiaoxu":{"big":-0.6,"ko":0.43,"stab":0.88,"res":0.93,"base":0.26,"n":405},"Yeon":{"big":-0.18,"ko":1.02,"stab":1.06,"res":1.32,"base":0.46,"n":325},"Yike":{"big":0.23,"ko":1.05,"stab":0.95,"res":1.05,"base":0.24,"n":483},"YoungJae":{"big":0.16,"ko":0.01,"stab":0.92,"res":0.92,"base":0.13,"n":182},"ZUIAN":{"big":-0.32,"ko":0.71,"stab":1.05,"res":0.68,"base":-0.46,"n":112},"Zdz":{"big":0.0,"ko":-0.64,"stab":1.15,"res":0.77,"base":-0.67,"n":310},"Zeka":{"big":-1.47,"ko":-0.21,"stab":0.98,"res":0.93,"base":-0.59,"n":476},"ZekaS":{"big":0.0,"ko":-0.53,"stab":1.09,"res":0.99,"base":-0.17,"n":36},"Zest":{"big":0.36,"ko":0.17,"stab":0.93,"res":1.07,"base":-0.22,"n":125},"Zeus":{"big":1.66,"ko":-0.71,"stab":0.97,"res":1.1,"base":-0.58,"n":622},"Zeyzal":{"big":0.0,"ko":-0.06,"stab":0.93,"res":0.95,"base":-0.15,"n":85},"Zhuo":{"big":-0.04,"ko":0.93,"stab":1.01,"res":0.8,"base":0.25,"n":403},"Zika":{"big":-0.83,"ko":0.05,"stab":1.07,"res":1.01,"base":-0.5,"n":369},"Zinie":{"big":0.0,"ko":-0.17,"stab":0.95,"res":0.81,"base":0.23,"n":63},"Zven":{"big":-0.74,"ko":-0.36,"stab":1.14,"res":0.9,"base":-0.6,"n":223},"cody":{"big":0.0,"ko":0.18,"stab":1.21,"res":0.97,"base":-1.42,"n":222},"curty":{"big":0.0,"ko":0.12,"stab":1,"res":1.16,"base":0.16,"n":56},"deokdam":{"big":1.55,"ko":0.71,"stab":1.17,"res":0.73,"base":0.05,"n":337},"eXyu":{"big":0.0,"ko":0.0,"stab":1.21,"res":1.02,"base":-0.44,"n":100},"fengyue":{"big":-0.35,"ko":1.11,"stab":1.07,"res":1,"base":0.74,"n":121},"frostyy":{"big":0.0,"ko":0.0,"stab":1,"res":1,"base":-0.56,"n":31},"guigo":{"big":-0.59,"ko":0.45,"stab":1.07,"res":1.13,"base":-0.47,"n":270},"haichao":{"big":0.0,"ko":0.25,"stab":1.02,"res":0.77,"base":-0.14,"n":236},"keine":{"big":0.3,"ko":1.17,"stab":1.27,"res":1.02,"base":-0.19,"n":197},"knight":{"big":2.43,"ko":1.21,"stab":0.7,"res":1.16,"base":0.28,"n":378},"nuc":{"big":0.55,"ko":0.58,"stab":0.92,"res":0.75,"base":-0.98,"n":275},"sasi":{"big":0.0,"ko":0.0,"stab":1.01,"res":1.1,"base":-0.1,"n":91},"sheer":{"big":0.0,"ko":0.05,"stab":1.28,"res":1.04,"base":-0.83,"n":209},"uZent":{"big":0.0,"ko":-0.6,"stab":0.97,"res":0.9,"base":0.52,"n":54},"ucal":{"big":0.0,"ko":0.0,"stab":0.73,"res":1.16,"base":-0.17,"n":157},"xyno":{"big":0.05,"ko":-1.0,"stab":1.1,"res":0.89,"base":0.2,"n":91},"yaoyao":{"big":0.0,"ko":-0.61,"stab":0.93,"res":0.72,"base":-0.59,"n":96},"ycx":{"big":0.0,"ko":-0.87,"stab":0.92,"res":1.12,"base":-0.66,"n":115}};
 </script>
 <script>// 英雄池：roles 可打位置；tags 阵容标签；dmg 伤害类型
 // tags: engage 开团, poke 消耗, pick 抓单, scale 后期, protect 保护, split 分推, early 前期
@@ -2755,7 +2763,7 @@ function champOverride(p){ return p ? (p.legend ? LEGEND_BY_PID[p.pid] : LEGENDS
 function topChamps(table,n){ return Object.keys(table||{}).filter(c=>CH[c]).sort((a,b)=>table[b]-table[a]).slice(0,n); }
 const PROFESSIONAL_HEROES = Object.fromEntries(ROLES.map(r=>[r,CHAMP_KEYS.filter(c=>CH[c].roles.includes(r) && (PRO_DATA.roles[r]?.[c]||0)>=6)]));
 const rnd = () => Math.random();
-const randn = () => { let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+const randn = (random=rnd) => { let u=0,v=0; while(!u)u=random(); while(!v)v=random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
 const pick = a => a[Math.floor(rnd()*a.length)];
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
 const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
@@ -3311,7 +3319,8 @@ function playerTraits(p){
   const hit = _trCache[cacheKey];
   if(hit && hit._v === ver) return hit;
   const tagKey = p.tag || p.pid;
-  const T0 = ((typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null) || (p.legend ? LEGEND_BY_PID[p.pid]?.traits : null);
+  const hist=(typeof TRAITS!=='undefined' && TRAITS) ? (TRAITS[tagKey] || TRAITS[String(tagKey).toLowerCase()]) : null;
+  const T0=hist?.stab!=null ? hist : p.legend ? LEGEND_BY_PID[p.pid]?.traits : null;
   let tr;
   if(T0){ tr = {stab:T0.stab, big:T0.big, ko:T0.ko, res:T0.res, base:T0.base||0, n:T0.n||0, src:'data'}; }
   else {
@@ -3435,6 +3444,14 @@ function traitTags(tr){
   if(tr.stab <= 0.8) out.push({t:'稳定输出', c:'up'}); else if(tr.stab >= 1.22) out.push({t:'起伏较大', c:'down'});
   if(tr.res >= 1.22) out.push({t:'抗压强', c:'up'}); else if(tr.res <= 0.8) out.push({t:'容易上头', c:'down'});
   return out;
+}
+
+function playerRegionalTags(p){
+  if(!p || typeof TRAITS==='undefined') return [];
+  const id=String(playerTag(p));
+  return ((TRAITS[id] || TRAITS[id.toLowerCase()])?.regionEdge || []).map(([region,games,edge])=>({
+    region, games, edge, label:region+' 杀手'
+  }));
 }
 // 比赛场合：intl 国际赛、ko 淘汰赛、decider 决胜局
 function pressureOf(ctx){
@@ -3948,7 +3965,7 @@ function draftBotPairFilter(picks, unavailableChamps){
 }
 
 // 经典职业选边 AI 决策（蓝色方 = 固定 BP 先手；红色方 = 固定 BP 后手拿五楼康特位）
-function aiChooseSide(meKey, oppKey, locked){
+function aiChooseSide(meKey, oppKey, locked, gameSeed){
   const un = new Set(locked||[]);
   const t0Left = CHAMP_KEYS.filter(c=>!un.has(c) && (S.meta[c]||0)>=2);
   const lu = lineupMap(meKey);
@@ -3958,7 +3975,8 @@ function aiChooseSide(meKey, oppKey, locked){
   }
   // 版本强势多或常规情况下绝大多数选蓝色方先手，少数情况选红色方抢五楼康特
   const pBlue = clamp(0.68 + t0Fit*0.06, 0.62, 0.88);
-  return rnd() < pBlue ? 'blue' : 'red';
+  const random=gameSeed==null ? rnd : srand(hash(gameSeed+':side'));
+  return random() < pBlue ? 'blue' : 'red';
 }
 
 // 赛前峡谷 1v1 SOLO 选边赛：默认推选本队最佳 SOLO 选手与英雄
@@ -4092,7 +4110,11 @@ function draftAct(d, c, role, allowOffrole){
   d.step++; return true;
 }
 
+function draftSimulationRandom(d){
+  return d.ctx?.gameSeed==null ? rnd : srand(hash(d.ctx.gameSeed+':bp:'+d.step));
+}
 function aiDraftCandidates(d, limit=1, varied=true){
+  const random=varied ? draftSimulationRandom(d) : rnd;
   const cur=draftSide(d); if(!cur) return [];
   const un=unavailable(d);
   const me=cur.side, opp= me==='A'?'B':'A';
@@ -4138,7 +4160,7 @@ function aiDraftCandidates(d, limit=1, varied=true){
         const myMatch = myOpen.filter(r=>CH[c].roles.includes(r));
         if(myMatch.length && Math.max(...myMatch.map(r=>champFit(myLu[r],c,r)))>=5) s -= 2.5;
       }
-      if(varied) s += rnd()*1.05;
+      if(varied) s += random()*1.05;
       consider(c,s);
     }
     if(!ranked.length){
@@ -4184,7 +4206,7 @@ function aiDraftCandidates(d, limit=1, varied=true){
       if(earlyPhase && CH[c].roles.length>=2) s += 0.55;
       // 版本 T0 优先级
       if((S.meta[c]||0)>=2) s += 1.1;
-      if(varied) s += rnd()*1.05;
+      if(varied) s += random()*1.05;
       consider(c,s,r);
     }
   }
@@ -4259,7 +4281,7 @@ function aiDraftLevelOptions(d, level){
   const eligible=all.filter(x=>x.gain>=0 && x.value>-Infinity).slice(0,rule.take);
   return {rule, all, eligible};
 }
-function aiChooseLevel(d, level='normal', rand=rnd){
+function aiChooseLevel(d, level='normal', rand=draftSimulationRandom(d)){
   if(!AI_DRAFT_LEVEL_RULES[level]) return aiChoose(d,{lookahead:true});
   const {rule, all, eligible}=aiDraftLevelOptions(d, level);
   if(!all.length) return {c:null};
@@ -4652,7 +4674,7 @@ function fmtClock(minFloat){
 // 5v5 对局模拟：见 sim.js（playGame / createGame5 / step5）
 
 // 赛后联动：选手状态 form 波动 & 英雄熟练度成长
-function applyGameImpact(g, teamA, teamB){
+function applyGameImpact(g, teamA, teamB, random=rnd){
   const impacts = [];
   g.masteryChanges=[];
   const handleSide = (side, stats) => {
@@ -4669,13 +4691,13 @@ function applyGameImpact(g, teamA, teamB){
       development.games++;
       development.performance+=perf;
       const f0 = p.form||0;
-      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn()*0.3*tr.stab);
+      p.form = stepTier(f0, f0 + perf*0.9*tr.stab + (tr.base - f0)*0.18 + randn(random)*0.3*tr.stab);
       // 小局对心态的即时影响：胜负只占一部分，个人发挥（被打爆还是carry）同样关键，并向个人性格基线回归
       const m0 = p.mental||0;
       const ind = gamePerf(row, isMvp);
       const dTeam = won ? 0.14*tr.res : -0.2/tr.res;
       const dInd = ind >= 0 ? ind*0.32*tr.res : ind*0.38/tr.res;
-      p.mental = stepTier(m0, m0 + dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn()*0.15);
+      p.mental = stepTier(m0, m0 + dTeam + dInd + (mentalBase(p) - m0)*0.08 + randn(random)*0.15);
       // 英雄熟练度经验累积（每次出场累积熟练度数值，跨过档位线时晋升档位）
       if(row.c && CH[row.c]){
         const prev=champProfVal(p,row.c);
@@ -4707,9 +4729,15 @@ const FORM_SWING = { game:6, series:2.5 };
 const REGION_RANK_NOISE = 3;     // 非 LPL 赛区按战力 + 噪声排名
 const DEV_GROWTH_MUL = 1.5;
 function ensureSeriesForm(ctx){
-  if(ctx && !ctx.sform) ctx.sform = {A:randn()*FORM_SWING.series, B:randn()*FORM_SWING.series};
+  if(!ctx) return ctx;
+  if(ctx.simSeed==null) ctx.simSeed=rnd()*0x100000000>>>0;
+  if(!ctx.sform){
+    const random=srand(seriesSimulationSeed(ctx,-2));
+    ctx.sform={A:randn(random)*FORM_SWING.series,B:randn(random)*FORM_SWING.series};
+  }
   return ctx;
 }
+function seriesSimulationSeed(ctx,gameIndex){ return hash(ctx.simSeed+':game:'+gameIndex); }
 
 // 系列赛（AI 自动）
 function simSeries(m, keepGames){
@@ -4718,13 +4746,14 @@ function simSeries(m, keepGames){
   m.ctx = baseCtx;
   ensureSeriesForm(baseCtx);
   // 仅首局通过 1v1 决定选边权；此后 BO3/BO5 每打一把一律由上一局输方选边
-  let chooser = simSolo1v1(m.a, m.b).winner;
+  let chooser = simSolo1v1(m.a, m.b,null,null,{seed:seriesSimulationSeed(baseCtx,-1)}).winner;
   while(wa<need && wb<need){
     const other = chooser==='A'?'B':'A';
-    const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked);
+    const gameSeed=seriesSimulationSeed(baseCtx,games.length);
+    const sidePick = aiChooseSide(m[chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], locked,gameSeed);
     const blue = sidePick==='blue' ? chooser : other;
     const d=newDraft(m.a,m.b,blue,locked);
-    d.ctx = Object.assign({}, baseCtx, {decider: wa===need-1 && wb===need-1 && m.bo>1});
+    d.ctx = Object.assign({}, baseCtx, {decider: wa===need-1 && wb===need-1 && m.bo>1,gameSeed});
     autoDraftRest(d);
     const g=playGame(d); games.push(g);
     if(g.w==='A')wa++; else wb++;
@@ -4755,6 +4784,7 @@ function finishSeries(m, wa, wb, games, keep){
 // 系列赛结束：心态结算（连胜连败、淘汰赛与国际赛放大、夺冠/出局带动全队），幅度乘以抗压
 function settleSeriesMental(m, games){
   const ctx = m.ctx || findMatchCtx(m) || {};
+  const random=ctx.simSeed==null ? rnd : srand(seriesSimulationSeed(ctx,-3));
   const amp = 1 + (ctx.ko?0.6:0) + (ctx.intl?0.4:0);
   const isFinal = ctx.ko && /总决赛|决赛/.test(m.label||'') && !/半决赛|败者组决赛|胜者组决赛/.test(m.label||'');
   for(const [key, won] of [[m.w,true],[m.l,false]]){
@@ -4781,7 +4811,7 @@ function settleSeriesMental(m, games){
       // 越接近顶点/谷底越难再推：同队一路夺冠时，能否到「无畏」取决于个人发挥与性格
       if(dm*m0 > 0) dm *= Math.max(0.25, 1 - Math.abs(m0)/6.5);
       dm += (mentalBase(p) - m0) * 0.3 * tr.res;
-      p.mental = stepTier(m0, m0 + dm + randn()*0.25);
+      p.mental = stepTier(m0, m0 + dm + randn(random)*0.25);
     }
     // 替补：没有比赛的选手状态在基线附近漂移；实力够首发却坐板凳的人心态慢慢下滑
     for(const pid of t.roster){
@@ -4789,12 +4819,12 @@ function settleSeriesMental(m, games){
       const p = P(pid); if(!p || p.retired) continue;
       const tr = playerTraits(p);
       const f0 = p.form||0, m0 = p.mental||0;
-      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn()*0.22*tr.stab);
+      p.form = stepTier(f0, f0 + (tr.base - f0)*0.12 + randn(random)*0.22*tr.stab);
       const cur = P(t.lineup[p.role]);
       const deserves = cur && p.rating >= cur.rating - 1;
       const mb = mentalBase(p);
       const dm = deserves && m0 > mb - 3 ? -0.28/tr.res : 0;
-      p.mental = stepTier(m0, m0 + dm + (mb - m0)*(deserves?0.03:0.1) + randn()*0.12);
+      p.mental = stepTier(m0, m0 + dm + (mb - m0)*(deserves?0.03:0.1) + randn(random)*0.12);
     }
   }
 }
@@ -5360,6 +5390,32 @@ function simUntilUser(limitAll){
     playAI(it); n++; if(n>2000) break; }
   return null;
 }
+function canSimRegularSeason(){
+  const ev=curEvent();
+  return !!ev && !ev.done && /^lpl_s[123]$/.test(ev.type) &&
+    (!ev.started || ev.stages[ev.si]?.kind==='rr');
+}
+function simRegularSeason(){
+  const result={played:0, userMatches:[]};
+  if(!canSimRegularSeason()) return result;
+  startEvent();
+  const ev=curEvent(), stage=ev.stages[ev.si];
+  while(canSimRegularSeason() && ev.stages[ev.si]===stage){
+    const it=nextReadyMatch();
+    if(!it || it.st!==stage) break;
+    playPhaseMatch(it, result);
+  }
+  return result;
+}
+function playPhaseMatch(it, result){
+  playAI(it);
+  result.played++;
+  const m=it.m;
+  if(!userInvolved(m)) return;
+  const won=m.w===S.user;
+  addNews(`${won?'胜':'负'}：${teamName(m.a)} ${m.s[0]}:${m.s[1]} ${teamName(m.b)}（${m.label}）`);
+  result.userMatches.push({a:m.a,b:m.b,s:m.s.slice(),won,label:m.label});
+}
 // 模拟当前单轮（常规赛仅推完本轮、瑞士轮仅推完本轮、淘汰赛仅推完本轮对阵），包含玩家本轮的比赛，本轮打完即止
 function simCurrentRound(){
   startEvent();
@@ -5372,8 +5428,8 @@ function simCurrentRound(){
   const targetRnd = st0.kind==='rr' ? firstPool[0].m.rnd : st0.kind==='swiss' ? st0.round : null;
   const targetCol = st0.kind==='br' ? Math.min(...firstPool.map(x => x.m.col != null ? x.m.col : 0)) : null;
 
-  let played = 0, guard = 0;
-  const userMatches = [];
+  let guard = 0;
+  const result={played:0,userMatches:[]};
   while(!ev.done && ev.si === startSi && guard++ < 200){
     const pool = stageMatches(ev).filter(({m, st}) => {
       if(st.kind==='rr') return m.rnd === targetRnd;
@@ -5382,19 +5438,9 @@ function simCurrentRound(){
       return true;
     });
     if(!pool.length) break;
-    const it = pool[0];
-    if(userInvolved(it.m)){
-      simSeries(it.m, true);
-      afterMatch(it.st, it.m);
-      const won = it.m.w === S.user;
-      addNews(`${won?'胜':'负'}：${teamName(it.m.a)} ${it.m.s[0]}:${it.m.s[1]} ${teamName(it.m.b)}（${it.m.label}）`);
-      userMatches.push({ a: it.m.a, b: it.m.b, s: it.m.s.slice(), won, label: it.m.label });
-    } else {
-      playAI(it);
-    }
-    played++;
+    playPhaseMatch(pool[0], result);
   }
-  return { played, userMatches };
+  return result;
 }
 function advanceEvent(){
   const ev=curEvent(); if(!ev.done) return;
@@ -5725,13 +5771,14 @@ const dec1 = (s,i) => B64I[s[i]]||0;
 const dec2 = (s,i) => ((B64I[s[i]]||0)<<6) | (B64I[s[i+1]]||0);
 const hyp = (x,y) => Math.sqrt(x*x + y*y);   // 比 Math.hypot 快很多
 const fmtSec = sec => { sec = Math.max(0, Math.floor(sec)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; };
-function wpick(arr, wfn){
+function wpick(arr, wfn, random){
   let tot = 0; const w = arr.map(x=>{ const v=Math.max(0.0001, wfn(x)); tot+=v; return v; });
-  let r = rnd()*tot;
+  let r = random()*tot;
   for(let i=0;i<arr.length;i++){ r-=w[i]; if(r<=0) return arr[i]; }
   return arr[arr.length-1];
 }
-const pickOne = a => a[Math.floor(rnd()*a.length)];
+const pickOne = (a, random) => a[Math.floor(random()*a.length)];
+const matchRandom = seed => srand(seed ?? (rnd()*0x100000000 >>> 0));
 
 // =====================================================================
 //                       1v1 SOLO 中路对线状态机
@@ -5742,7 +5789,7 @@ const SOLO_LAST_TICK = 12*60 - 1;
 const XP_LV = [0,0,280,660,1140,1720,2400,3180,4060,5040,6120,7300,8580,9960,11440,13020,14700,16480,18360];
 const lvlOf = xp => { let l=1; while(l<18 && xp>=XP_LV[l+1]) l++; return l; };
 
-function soloFighter(side, pl, c, role){
+function soloFighter(side, pl, c, role, random){
   const ch = CH[c];
   const mr = (pl ? matchRating(pl, pl.role, {}) : 70) + champFit(pl, c, pl?pl.role:role)*0.8;
   const tags = new Set(ch.tags);
@@ -5756,7 +5803,7 @@ function soloFighter(side, pl, c, role){
     mental: mentalTier(pl),
     s: side==='A'?0.38:0.62, hp:1, mp:1, lvl:1, xp:0, cs:0, gold:500-ITEMS[start][1]-50*2, items:[start], pots:2, potT:0,
     flash:0, sum2: (tags.has('early')||tags.has('pick')) ? 'ig' : (ranged ? 'bar' : 'ig'), s2cd:0,
-    recall:0, away:0, trd: 4+rnd()*4, comboCd:0, invested: ITEMS[start][1], dead:false, mood:0
+    recall:0, away:0, trd: 4+random()*4, comboCd:0, invested: ITEMS[start][1], dead:false, mood:0
   };
 }
 function soloMaxHp(f){ return 560 + 92*(f.lvl-1) + (f.items.includes(1054)?110:f.items.includes(1055)?80:f.items.includes(1056)?70:0) + (f.invested>1200?150:0); }
@@ -5779,9 +5826,10 @@ function createSolo(teamA, teamB, pickA, pickB, opts){
   const plB = (pb.pid && P(pb.pid)) || luB[pb.role] || Object.values(luB)[0];
   const cA = pa.champ && CH[pa.champ] ? pa.champ : defaultSoloPick(teamA).champ;
   const cB = pb.champ && CH[pb.champ] ? pb.champ : defaultSoloPick(teamB).champ;
+  const random = matchRandom(opts?.seed);
   const g = {
-    kind:'solo', teamA, teamB, t:90, over:false, winner:null, winReason:'',
-    F:{A:soloFighter('A', plA, cA, pa.role), B:soloFighter('B', plB, cB, pb.role)},
+    random, kind:'solo', teamA, teamB, t:90, over:false, winner:null, winReason:'',
+    F:{A:soloFighter('A', plA, cA, pa.role, random), B:soloFighter('B', plB, cB, pb.role, random)},
     wave:0.5, waveT:0, waveN:0, tw:{A:1, B:1}, ring:0, log:[], fx:null, fxT:0,
     first:{lv2:null, lv6:null},
     rec: opts && opts.record ? [] : null
@@ -5816,8 +5864,8 @@ function soloStep(g){
     for(const [f,o,pres] of [[A,B,presA],[B,A,presB]]){
       if(!pres){ continue; }
       const harass = clamp((o.hp - f.hp)*0.25 + (o.ranged && !f.ranged ? 0.06 : 0), -0.05, 0.25);
-      const eff = clamp(0.74 + (f.mr-78)/70 - harass + randn()*0.04 - (f.mental<0 && g.t>400 ? 0.04 : 0), 0.45, 0.99);
-      let got = 0; for(let i=0;i<minions;i++) if(rnd()<eff) got++;
+      const eff = clamp(0.74 + (f.mr-78)/70 - harass + randn(g.random)*0.04 - (f.mental<0 && g.t>400 ? 0.04 : 0), 0.45, 0.99);
+      let got = 0; for(let i=0;i<minions;i++) if(g.random()<eff) got++;
       f.cs += got; f.gold += got*21 + 1; f.xp += 250 + (cannon?90:0);
     }
     if(!presA && presB){ g.tw.A = Math.max(0, g.tw.A - 0.2 - (B.lvl>=6?0.04:0)); g.wave = 0.12; soloLog(g, 'B', '推线磨塔', `${B.tag} 趁 ${A.tag} 不在线上把兵线推进塔下，猛点防御塔，剩余 ${Math.round(g.tw.A*100)}%。`); }
@@ -5825,9 +5873,9 @@ function soloStep(g){
     else if(presA && presB){
       const pushA = (A.ranged?1.15:1) * (A.tags.has('poke')?1.1:1) * Math.exp((A.mr-B.mr)/60) * (0.5+A.hp) ;
       const pushB = (B.ranged?1.15:1) * (B.tags.has('poke')?1.1:1) * (0.5+B.hp);
-      g.wave = clamp(g.wave + (pushA-pushB)*0.16 + randn()*0.07, 0.2, 0.8);
-      if(g.wave>=0.72){ g.tw.B = Math.max(0, g.tw.B - 0.055); if(g.tw.B>0 && rnd()<0.5) soloLog(g, 'A', '兵线压制', `${A.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.B*100)}%。`); }
-      if(g.wave<=0.28){ g.tw.A = Math.max(0, g.tw.A - 0.055); if(g.tw.A>0 && rnd()<0.5) soloLog(g, 'B', '兵线压制', `${B.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.A*100)}%。`); }
+      g.wave = clamp(g.wave + (pushA-pushB)*0.16 + randn(g.random)*0.07, 0.2, 0.8);
+      if(g.wave>=0.72){ g.tw.B = Math.max(0, g.tw.B - 0.055); if(g.tw.B>0 && g.random()<0.5) soloLog(g, 'A', '兵线压制', `${A.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.B*100)}%。`); }
+      if(g.wave<=0.28){ g.tw.A = Math.max(0, g.tw.A - 0.055); if(g.tw.A>0 && g.random()<0.5) soloLog(g, 'B', '兵线压制', `${B.tag} 把兵线压进塔下，防御塔剩余 ${Math.round(g.tw.A*100)}%。`); }
     }
     // 升级与抢 2 / 抢 6
     for(const f of [A,B]){
@@ -5850,7 +5898,7 @@ function soloStep(g){
     if(f.recall>0 || f.away>0) continue;
     const dir = f.side==='A' ? -1 : 1;
     const want = g.wave + dir*(f.ranged?0.09:0.05) + dir*(f.hp<0.4?0.06:0) - dir*(f.mood>0?0.03:0);
-    f.s += clamp(want - f.s, -0.04, 0.04) + randn()*0.006;
+    f.s += clamp(want - f.s, -0.04, 0.04) + randn(g.random)*0.006;
     f.s = clamp(f.s, SOLO_TW.A+0.02, SOLO_TW.B-0.02);
     if(f.mood>0) f.mood--;
   }
@@ -5864,26 +5912,26 @@ function soloStep(g){
       f.hp -= 0.004 + elapsed*0.00006;
     }
     if(A.hp<=0 || B.hp<=0 || g.t>=SOLO_LAST_TICK){
-      const w = A.hp===B.hp ? (rnd()<0.5?'A':'B') : (A.hp>B.hp?'A':'B');
+      const w = A.hp===B.hp ? (g.random()<0.5?'A':'B') : (A.hp>B.hp?'A':'B');
       g.F[w].hp = Math.max(0, g.F[w].hp);
       return soloEnd(g, w, '决死缩圈击杀', `🔥 火圈收缩终极一战！${g.F[w].tag} 顶住压力完成终结，为 ${teamName(w==='A'?g.teamA:g.teamB)} 赢下选边权！`);
     }
     // 火圈越小越容易爆发决战：10:00 刚开始缩圈时以拉扯为主，越接近 12:00 越可能强开
-    if(g.t % 5 === 0 && rnd() < 0.1 + elapsed/140){
-      if(soloAllIn(g, A.hp*rnd() > B.hp*rnd() ? 'A' : 'B', true)) return;
+    if(g.t % 5 === 0 && g.random() < 0.1 + elapsed/140){
+      if(soloAllIn(g, A.hp*g.random() > B.hp*g.random() ? 'A' : 'B', true)) return;
     }
   }
   if(presA && presB && g.ring===0){
     // 双方都在线：各自判断换血 / 抢级 All-in / 控线
-    const order = rnd()<0.5 ? [A,B] : [B,A];
+    const order = g.random()<0.5 ? [A,B] : [B,A];
     for(const f of order){
       if(g.over) break;
       const o = g.F[oppSide(f.side)];
       if(f.recall||o.recall) continue;
       // 回城判断
-      if(f.hp < 0.36 && (o.hp > f.hp + 0.2 || (f.pots===0 && f.potT===0)) && rnd() < 0.7 + f.mental*0.05){ f.recall = 8; soloLog(g, f.side, '回城补给', `${f.tag} 血量见底只能交出线权回城，${o.tag} 获得推线磨塔的机会。`); continue; }
+      if(f.hp < 0.36 && (o.hp > f.hp + 0.2 || (f.pots===0 && f.potT===0)) && g.random() < 0.7 + f.mental*0.05){ f.recall = 8; soloLog(g, f.side, '回城补给', `${f.tag} 血量见底只能交出线权回城，${o.tag} 获得推线磨塔的机会。`); continue; }
       if(f.hp < 0.55 && f.pots>0 && f.potT===0){ f.pots--; f.potT = 15; }
-      if(f.gold >= 1100 && g.wave > 0.6 === (f.side==='A') && f.hp<0.8 && rnd()<0.08){ f.recall = 8; soloLog(g, f.side, '回城出装', `${f.tag} 推完兵线果断回城，准备把 ${f.gold} 金币换成装备。`); continue; }
+      if(f.gold >= 1100 && g.wave > 0.6 === (f.side==='A') && f.hp<0.8 && g.random()<0.08){ f.recall = 8; soloLog(g, f.side, '回城出装', `${f.tag} 推完兵线果断回城，准备把 ${f.gold} 金币换成装备。`); continue; }
       // All-in 判定（击杀线）
       const killLine = soloDps(f)*3.1*(f.lvl>=6?1.35:1) + (f.sum2==='ig'&&f.s2cd===0 ? 0.14*o.maxhp : 0);
       const oHp = o.hp*o.maxhp + (o.sum2==='bar'&&o.s2cd===0 ? 140 : 0);
@@ -5896,9 +5944,9 @@ function soloStep(g){
       // 换血
       if(f.trd<=0 && f.mp > 0.25){
         const edge = (soloDps(f)/f.maxhp*o.maxhp)/(soloDps(o)) ;
-        const want = sigmoid((edge-1)*3 + (f.ranged&&!o.ranged?0.5:0) + (f.tags.has('poke')?0.4:0) + lvAdv*0.4 + (f.hp-o.hp)*1.5 + f.mental*0.08 + randn()*0.6);
-        if(rnd() < want*0.45){ soloTrade(g, f, o); }
-        f.trd = 6 + Math.floor(rnd()*7);
+        const want = sigmoid((edge-1)*3 + (f.ranged&&!o.ranged?0.5:0) + (f.tags.has('poke')?0.4:0) + lvAdv*0.4 + (f.hp-o.hp)*1.5 + f.mental*0.08 + randn(g.random)*0.6);
+        if(g.random() < want*0.45){ soloTrade(g, f, o); }
+        f.trd = 6 + Math.floor(g.random()*7);
       }
     }
   }
@@ -5918,19 +5966,19 @@ function soloBase(g, f){
 }
 function soloTrade(g, f, o){
   const dodge = clamp(0.18 + (o.mr - f.mr)/90 + (o.ranged?0.04:0), 0.05, 0.45);
-  const hit = rnd() > dodge;
+  const hit = g.random() > dodge;
   const rel = soloDps(f)/Math.max(1,soloDps(o));
-  const dmgF = hit ? 0.085*Math.pow(rel,0.8)*(0.6+rnd()*0.9) : 0.03;
-  const retF = 0.085*Math.pow(1/rel,0.8)*(o.ranged&&!f.ranged ? 0.75 : f.ranged&&!o.ranged ? 0.4 : 0.6)*(0.5+rnd()*0.9);
+  const dmgF = hit ? 0.085*Math.pow(rel,0.8)*(0.6+g.random()*0.9) : 0.03;
+  const retF = 0.085*Math.pow(1/rel,0.8)*(o.ranged&&!f.ranged ? 0.75 : f.ranged&&!o.ranged ? 0.4 : 0.6)*(0.5+g.random()*0.9);
   const dmg = dmgF*o.maxhp;
   o.hp = Math.max(0.04, o.hp - dmgF);
   f.hp = Math.max(0.04, f.hp - retF);
-  f.mp = Math.max(0, f.mp - 0.18 - rnd()*0.1); o.mp = Math.max(0, o.mp - 0.06);
+  f.mp = Math.max(0, f.mp - 0.18 - g.random()*0.1); o.mp = Math.max(0, o.mp - 0.06);
   g.wave = clamp(g.wave + (f.side==='A'?0.05:-0.05), 0.15, 0.85);
   g.fx = {k:'trade', s:(f.s+o.s)/2, side:f.side}; g.fxT = 2;
   const big = dmg/o.maxhp > 0.25;
   soloLog(g, f.side, hit?(big?'精准连招':'拉扯换血'):'技能落空',
-    hit ? `${f.tag} ${pickOne(['抓住技能空档','卡住补刀时机','绕到兵线侧面','用一套技能'])}${big?'打出完整连招':'主动换血'}，${o.tag} 血量掉到 ${Math.round(o.hp*100)}%。`
+    hit ? `${f.tag} ${pickOne(['抓住技能空档','卡住补刀时机','绕到兵线侧面','用一套技能'], g.random)}${big?'打出完整连招':'主动换血'}，${o.tag} 血量掉到 ${Math.round(o.hp*100)}%。`
         : `${f.tag} 的关键技能被 ${o.tag} 侧身躲开，反手被 ${o.tag} 消耗了一口。`);
 }
 // 全力 All-in：比较双方击杀所需时间，闪现 / 点燃 / 屏障 / 防御塔都会改变结局
@@ -5946,20 +5994,20 @@ function soloAllIn(g, side, forced){
   const nearTower = side==='A' ? f.s > 0.8 : f.s < 0.2;
   if(nearTower) fHp -= 180 + 20*f.lvl;
   const skill = (f.mr - o.mr)/14 + (f.mental - o.mental)*0.12*(0.5+pressureOf(null));
-  const tf = oHp/Math.max(1,fDps) * Math.exp(-(randn()*0.32 + skill*0.12));
-  const to = fHp/Math.max(1,oDps) * Math.exp(randn()*0.32);
+  const tf = oHp/Math.max(1,fDps) * Math.exp(-(randn(g.random)*0.32 + skill*0.12));
+  const to = fHp/Math.max(1,oDps) * Math.exp(randn(g.random)*0.32);
   f.comboCd = 22; f.mp = Math.max(0, f.mp-0.4);
   g.fx = {k:'allin', s:(f.s+o.s)/2, side}; g.fxT = 3;
   // 势均力敌：双方交完技能各自后撤
   const ratio = to/Math.max(0.01, tf);
-  if(!forced && ratio > 0.7 && ratio < 1.45 && rnd() < 0.5){
-    f.hp = Math.max(0.06, f.hp - 0.18 - rnd()*0.12); o.hp = Math.max(0.06, o.hp - 0.18 - rnd()*0.12);
+  if(!forced && ratio > 0.7 && ratio < 1.45 && g.random() < 0.5){
+    f.hp = Math.max(0.06, f.hp - 0.18 - g.random()*0.12); o.hp = Math.max(0.06, o.hp - 0.18 - g.random()*0.12);
     soloLog(g, side, '激烈对拼', `${f.tag} 与 ${o.tag} 打出一波激烈对拼，双方都只剩 ${Math.round(Math.min(f.hp,o.hp)*100)}% 左右血量，各自后撤！`, true);
     return false;
   }
   if(tf < to){
     // 守方闪现逃生的机会
-    if(o.flash===0 && !forced && tf > to*0.55 && rnd()<0.7){
+    if(o.flash===0 && !forced && tf > to*0.55 && g.random()<0.7){
       o.flash = 300; o.hp = Math.max(0.05, (o.hp*o.maxhp*0.25)/o.maxhp); f.hp = Math.max(0.08, f.hp - (oDps*tf*0.6)/f.maxhp);
       soloLog(g, side, '闪现逃生', `${f.tag} ${notes.length?notes.join('、')+'，':''}强开 All-in，${o.tag} 残血交闪现极限逃生！`, true);
       return false;
@@ -5970,7 +6018,7 @@ function soloAllIn(g, side, forced){
     return true;
   } else {
     // 反杀
-    if(f.flash===0 && to > tf*0.72 && rnd()<0.6 && !forced){
+    if(f.flash===0 && to > tf*0.72 && g.random()<0.6 && !forced){
       f.flash = 300; f.hp = Math.max(0.05, f.hp*0.3); o.hp = Math.max(0.08, o.hp - (fDps*to*0.5)/o.maxhp);
       soloLog(g, side, '闪现撤退', `${f.tag} 主动开团却没打出伤害，及时交闪现撤离，血量只剩 ${Math.round(f.hp*100)}%。`, true);
       return false;
@@ -6048,9 +6096,15 @@ function lanePt(lane, s){
 }
 const LANE_OF = {TOP:'top', JUG:null, MID:'mid', ADC:'bot', SUP:'bot'};
 const LANES3 = ['top','mid','bot'];
+// 2026 召唤师峡谷兵线。刷新时间和到达交战位置的时间分开记。
+const MINION = {melee:[21,60], caster:[14,30], cannon:[60,93], super:[45,95]};
+const CAMP_START = [55,67,55,55,55,67];
+const CAMP_RESPAWN = [300,135,135,135,300,135];
+const CAMP_GOLD = [100,82,85,85,100,105];
+const CAMP_XP = [205,170,175,180,205,190];
 const DRAKES = [['infernal','炼狱亚龙'],['ocean','海洋亚龙'],['mountain','山脉亚龙'],['cloud','云端亚龙'],['hextech','海克斯科技亚龙'],['chemtech','化学科技亚龙']];
 const BRW = [10,10,12,12,14,16,20,25,28,32.5,35,37.5,40,42.5,45,47.5,50,52.5];
-const SIM5 = { TD:0.0075, FN:0.5, SK:90, IT:9000, LV:0.07, SPD:27, ENC:80, DT:3 };   // 战斗强度刻度（校准用）
+const SIM5 = { TD:0.0075, FN:0.5, SK:74, IT:9000, LV:0.07, SPD:27, ENC:80, DT:3 };   // 战斗强度刻度（校准用）
 const dist = (a,b) => hyp(a.x-b.x, a.y-b.y);
 
 function buildTowers(){
@@ -6075,11 +6129,13 @@ function createGame5(d, opts){
   opts = opts || {};
   const ev = evalDraft(d);
   const G = {
-    kind:'g5', d, ev, t:0, over:false, winner:null, rec: !!opts.record,
+    kind:'g5', random:matchRandom(opts.seed ?? d.ctx?.gameSeed), d, ev, t:0, over:false, winner:null, rec: !!opts.record,
     champs:[], towers: buildTowers(), front:{top:0.5, mid:0.5, bot:0.5},
     obj:{ drag:{next:300, up:false, prog:0, by:null, type:null, mapType:null, n:0}, grubs:{next:360, up:false, wave:0, prog:0},
           herald:{next:900, up:false, prog:0, until:1185}, baron:{next:1200, up:false, prog:0}, elder:{next:null, up:false, prog:0} },
     team:{}, feed:[], key:[], evs:[], frames:[], stats:[], gs:[], fx:[],
+    nextWave:30, waveNumber:0, laneWaves:{top:[],mid:[],bot:[]},
+    camps:{A:CAMP_START.slice(),B:CAMP_START.slice()}, engagements:[], bountySide:null,
     firstBlood:null, firstTower:null, lastKill:{}, laneT:{top:20, mid:18, bot:22}, planT:0,
     stance:{A:opts.stanceA||'auto', B:opts.stanceB||'auto'}   // 预留：全队倾向（战术指令接口）
   };
@@ -6087,11 +6143,12 @@ function createGame5(d, opts){
     const blue = d.blue===side;
     const lu = lineupMap(d[side]);
     const dp = side==='A' ? ev.a : ev.b;
+    const threats=draftThreats(d.picks[side==='A'?'B':'A']);
     G.team[side] = { side, blue, color: blue?'blue':'red', key:d[side], name:teamName(d[side]), dp,
-      drakes:[], soul:null, baronT:0, elderT:0, heraldT:0, grubs:0, kills:0, towers:0, barons:0, gankT: 150 + rnd()*40, roamT: 300 + rnd()*120,
+      drakes:[], soul:null, baronT:0, elderT:0, heraldT:0, grubs:0, kills:0, towers:0, barons:0, gankT: 150 + G.random()*40, roamT: 300 + G.random()*120,
       split: null, focus:null, comp: dp.comp, tags: dp.comp.tags, calmT:0,
       // 临场发挥：本局浮动 + 系列赛共享浮动（见 engine.js FORM_SWING），叠加在全队阶段强度上
-      dayForm: randn()*FORM_SWING.game + ((d.ctx && d.ctx.sform && d.ctx.sform[side]) || 0) };
+      dayForm: randn(G.random)*FORM_SWING.game + ((d.ctx && d.ctx.sform && d.ctx.sform[side]) || 0) };
     ROLES.forEach(r=>{
       const p = lu[r], c = d.picks[side][r];
       const sk = draftPlayerRating(p,r,d.ctx) + (c ? champFit(p,c,r)*DRAFT_FIT_WEIGHT : 0);
@@ -6103,9 +6160,11 @@ function createGame5(d, opts){
       const cm = {
         i: G.champs.length, side, blue, role:r, p, pid:p?p.pid:null, tag:playerTag(p), c, cn: ch?ch.cn:r,
         sk, mental: mentalTier(p), arche, build:b, tags: new Set(ch?ch.tags:[]), ranged: c?isRanged(c):false, combat:draftCombatProfile(c),
+        counter:DRAFT_COUNTERS[c] ? counterStrength(DRAFT_COUNTERS[c],threats) : 0,
         x:fx, y:fy, px:fx, py:fy, hp:1, alive:true, rt:0, lvl:1, xp:0, gold:500, tg:500, cs:0, k:0, d:0, a:0,
         items:[], invest:0, coreIdx:0, bootsDone:false, supDone:false, streak:0,
-        task:TK({k: r==='JUG'?'jungle':'lane', lane:LANE_OF[r]}), recall:0, lastBack:0, fightCd:0, camp:0, campT:0, pw:0, partial:0,
+        task:TK({k: r==='JUG'?'jungle':'lane', lane:LANE_OF[r]}), recall:0, lastBack:0, fightCd:0, camp:4, campT:0, campPlanT:0, pw:0, partial:0,
+        laneCs:0, jungleCs:0, supportExecute:65,
         powerLevel:0, powerInvest:0, powerBase:0
       };
       for(const id of start){ cm.gold -= ITEMS[id][1]; cm.invest += ITEMS[id][1]; cm.items.push(id); }
@@ -6140,7 +6199,7 @@ function champPow(G, c, pressure){
   if(c.powerLevel!==c.lvl || c.powerInvest!==c.invest){
     c.powerLevel=c.lvl;
     c.powerInvest=c.invest;
-    c.powerBase=Math.exp((c.sk-80)/SIM5.SK + SIM5.LV*c.lvl + c.invest/SIM5.IT);
+    c.powerBase=Math.exp((c.sk-80)/SIM5.SK + SIM5.LV*c.lvl + Math.log1p(c.invest/SIM5.IT)*1.18);
   }
   const phase=G.phasePower ? G.phasePower[c.side] : Math.exp(phaseAdj(G,c.side,G.t)/SIM5.SK);
   let p = c.powerBase * phase * (0.3 + 0.7*c.hp);
@@ -6163,25 +6222,36 @@ function step5(G){
   G.t += DT;
   const t = G.t;
   objTimers(G);
-  // 每秒缓存：战斗强度、各路线上人数
+  // 每个时间步缓存阵容阶段战力。
   const adj = G.adj || (G.adj = {A:0, B:0});
   adj.A = phaseAdj(G,'A',t); adj.B = phaseAdj(G,'B',t);
   const power=G.phasePower||(G.phasePower={A:1,B:1});
   power.A=Math.exp(adj.A/SIM5.SK); power.B=Math.exp(adj.B/SIM5.SK);
-  const crowd = G.crowd || (G.crowd = {A:{top:0,mid:0,bot:0}, B:{top:0,mid:0,bot:0}});
-  crowd.A.top = crowd.A.mid = crowd.A.bot = crowd.B.top = crowd.B.mid = crowd.B.bot = 0;
   for(const c of G.champs){
     c.pw = c.alive && c.recall===0 ? champPow(G, c, 0) : 0;
-    const k = c.task.k;
-    if(c.alive && c.role!=='SUP' && c.task.lane && (k==='lane'||k==='push'||k==='split')) crowd[c.side][c.task.lane]++;
   }
-  if(t >= G.planT){ G.planT = t + 4; plan5(G, 'A'); plan5(G, 'B'); }
-  for(const c of G.champs) tickChamp(G, c);
+  const aFirst=(t/DT&1)===0;
+  if(t >= G.planT){
+    G.planT = t + 9;
+    plan5(G,aFirst?'A':'B'); plan5(G,aFirst?'B':'A');
+  }
+  for(const c of G.rosters[aFirst?'A':'B']) tickChamp(G,c);
+  for(const c of G.rosters[aFirst?'B':'A']) tickChamp(G,c);
+  farmWaves(G);
   laneTrades(G);
   encounters(G);
   objectives(G);
   lanesAndTowers(G);
-  if(t%21===0){ const gA = G.champs.filter(c=>c.side==='A').reduce((s,c)=>s+c.tg,0), gB = G.champs.filter(c=>c.side==='B').reduce((s,c)=>s+c.tg,0); G.gs.push([t, Math.round(gA-gB)]); }
+  if(t%21===0){
+    let goldA=0, goldB=0, levelEdge=0;
+    for(const c of G.rosters.A){ goldA+=c.tg; levelEdge+=c.lvl; }
+    for(const c of G.rosters.B){ goldB+=c.tg; levelEdge-=c.lvl; }
+    G.gs.push([t,Math.round(goldA-goldB)]);
+    const a=G.team.A,b=G.team.B;
+    const edge=goldA-goldB+levelEdge*90+(a.towers-b.towers)*120+(a.drakes.length-b.drakes.length)*180;
+    const threshold=Math.max(3000,0.055*(goldA+goldB));
+    if(t>=840) G.bountySide=edge>threshold?'B':edge< -threshold?'A':null;
+  }
   if(G.fx.length && G.fx[0].t < t-4) G.fx = G.fx.filter(f=>f.t>=t-4);
   if(t >= 3600 && !G.over){ // 安全阀：极端拉锯时由经济领先方终结
     const gA = G.champs.filter(c=>c.side==='A').reduce((s,c)=>s+c.tg,0), gB = G.champs.filter(c=>c.side==='B').reduce((s,c)=>s+c.tg,0);
@@ -6202,8 +6272,8 @@ function objTimers(G){
       const cands = DRAKES.filter(x=>!used.has(x[0]));
       const nTaken = G.team.A.drakes.length + G.team.B.drakes.length;
       if(nTaken >= 2 && o.drag.mapType) o.drag.type = o.drag.mapType;
-      else o.drag.type = pickOne(cands.length?cands:DRAKES)[0];
-      if(nTaken === 1 && !o.drag.mapType){ o.drag.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.drag.type && !used.has(x[0])))[0]; }
+      else o.drag.type = pickOne(cands.length?cands:DRAKES, G.random)[0];
+      if(nTaken === 1 && !o.drag.mapType){ o.drag.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.drag.type && !used.has(x[0])), G.random)[0]; }
     }
   }
   if(!o.grubs.up && o.grubs.next!=null && t >= o.grubs.next && t < 840){ o.grubs.up = true; o.grubs.prog = 0; }
@@ -6216,7 +6286,81 @@ function objTimers(G){
   for(const tw of G.towers) if(!tw.alive && tw.tier===4 && tw.resp && t >= tw.resp){ tw.alive = true; tw.hp = 1; tw.resp = 0; G.towerDirty = true; if(G.rec) G.evs.push([t,'R',tw.id]); }
 }
 
-function campPos(G, c){ const camps = MAP5.camps[c.blue?'blue':'red']; return camps[c.camp % camps.length]; }
+function farmCamp(G,c){
+  const points=MAP5.camps[c.blue?'blue':'red'], ready=G.camps[c.side], t=G.t;
+  let i=c.camp;
+  if(ready[i]>t+SIM5.DT && t>=c.campPlanT){
+    c.campPlanT=t+12;
+    let best=Infinity;
+    for(let j=0;j<points.length;j++){
+      const [x,y]=points[j];
+      const score=Math.max(0,ready[j]-t)*13+Math.abs(c.x-x)+Math.abs(c.y-y);
+      if(score<best){ best=score; i=j; }
+    }
+    if(c.camp!==i){ c.camp=i; c.campT=0; }
+  }
+  const pt=points[i];
+  if(t>=ready[i] && Math.abs(c.x-pt[0])+Math.abs(c.y-pt[1])<35){
+    c.campT+=SIM5.DT;
+    const clear=(t<180?18:12)-clamp((c.sk-80)*0.20+c.invest/1800,-3,6);
+    if(c.campT>=clear){
+      ready[i]=t+CAMP_RESPAWN[i]; c.campT=0; c.campPlanT=0;
+      c.cs+=4; c.jungleCs+=4; c.gold+=CAMP_GOLD[i]; c.tg+=CAMP_GOLD[i]; c.xp+=CAMP_XP[i];
+    }
+  } else c.campT=0;
+  return pt;
+}
+
+function spawnWaves(G){
+  const sec=G.nextWave, n=++G.waveNumber;
+  G.nextWave+=sec<840?30:sec<1800?25:20;
+  const cannon=sec>=1500 || n%(sec<840?3:2)===0;
+  for(const lane of LANES3){
+    const melee=cannon&&sec>=840?2:3, caster=sec>=1800?2:3;
+    if(G.towerDirty || !G.first) refreshTowers(G);
+    const superA=!!G.supLane[G.team.B.color][lane], superB=!!G.supLane[G.team.A.color][lane];
+    G.laneWaves[lane].push({due:sec+(lane==='mid'?22:28), minion:0, melee,caster,cannon, superA,superB});
+  }
+}
+function farmWaves(G){
+  if(G.t>=G.nextWave) spawnWaves(G);
+  for(const lane of LANES3){
+    const q=G.laneWaves[lane];
+    const wave=q[0]; if(!wave || wave.due>G.t) continue;
+    const idx=wave.minion++, base=wave.melee+wave.caster;
+    const [x,y]=lanePt(lane,G.front[lane]);
+    const regular=idx<wave.melee?MINION.melee:idx<base?MINION.caster:wave.cannon&&idx===base?MINION.cannon:null;
+    const t=G.t;
+    const superIndex=base+Number(wave.cannon);
+    if(regular || (wave.superB && idx===superIndex)) contestLastHit(G,'A',lane,x,y,regular||MINION.super);
+    if(regular || (wave.superA && idx===superIndex)) contestLastHit(G,'B',lane,x,y,regular||MINION.super);
+    if(wave.minion>=superIndex+Number(wave.superA||wave.superB)) q.shift();
+    else wave.due=t+SIM5.DT;
+  }
+}
+function contestLastHit(G,side,lane,x,y,minion){
+  let count=0, present=0, farmer=null, support=null, farmScore=-Infinity;
+  const roster=G.rosters[side];
+  for(const c of roster){
+    if(!c.alive || c.recall>0 || Math.abs(c.x-x)+Math.abs(c.y-y)>145) continue;
+    count++; present |= 1<<c.i;
+    const k=c.task.k;
+    if(c.task.lane!==lane || (k!=='lane'&&k!=='push'&&k!=='split'&&k!=='defend')) continue;
+    if(c.role==='SUP'){ support=c; continue; }
+    const score=c.sk + (LANE_OF[c.role]===lane?7:0) + (c.role==='ADC'&&G.t>=840?8:0) + c.hp*7;
+    if(score>farmScore){ farmer=c; farmScore=score; }
+  }
+  if(!count) return;
+  const xp=minion[1]*(count===1?1:1.24/count);
+  for(const c of roster) if(present & (1<<c.i)) c.xp+=xp;
+  const execute=support && farmer && G.t>=support.supportExecute && !support.supDone;
+  if(execute){ support.supportExecute=G.t+40; support.gold+=15; support.tg+=15; }
+  if(!farmer && support && G.random()<0.28) farmer=support;
+  const push=G.front[lane]-0.5;
+  const underPressure=G.team[side].blue?Math.min(0,push):Math.min(0,-push);
+  if(!farmer || (!execute && G.random()>=clamp(0.89+(farmer.sk-80)*0.004+(farmer.hp-0.7)*0.16+underPressure*0.24,0.52,0.98))) return;
+  farmer.cs++; farmer.laneCs++; farmer.gold+=minion[0]; farmer.tg+=minion[0];
+}
 function lanePos(G, c, lane, off){
   const dir = c.blue ? 1 : -1;
   const s = clamp(G.front[lane] - dir*(off==null?0.03:off), 0.05, 0.95);
@@ -6247,11 +6391,11 @@ function tickChamp(G, c){
   else c.hp = Math.min(1, c.hp + 0.0025*DT);
   // 目标点
   const tk = c.task;
+  if(tk.k!=='jungle') c.campT=0;
   let tx = c.x, ty = c.y;
   if(tk.k==='lane' || tk.k==='split'){ [tx,ty] = lanePos(G, c, tk.lane, tk.k==='split' ? -0.01 : (c.role==='SUP'?0.045:c.ranged?0.04:0.025)); }
   else if(tk.k==='jungle'){
-    const [cx,cy] = campPos(G, c); tx=cx; ty=cy;
-    if(Math.abs(c.x-cx) + Math.abs(c.y-cy) < 35){ c.campT += DT; if(c.campT >= 9){ c.campT=0; c.camp = (c.camp+1+(rnd()<0.3?1:0)) % 6; } }
+    [tx,ty] = farmCamp(G,c);
   }
   else if(tk.k==='go' || tk.k==='obj' || tk.k==='gank' || tk.k==='push' || tk.k==='defend'){
     if(tk.lane && (tk.k==='push'||tk.k==='defend')) [tx,ty] = lanePos(G, c, tk.lane, tk.k==='push' ? 0.0 : 0.05);
@@ -6276,33 +6420,13 @@ function tickChamp(G, c){
   }
   const dx = tx-c.x, dy = ty-c.y, dd = hyp(dx,dy);
   const spd = SIM5.SPD * (c.bootsDone?1.12:1) * (G.team[c.side].baronT>t?1.1:1);
-  if(dd > 1){ const m = Math.min(dd, spd*DT); c.x += dx/dd*m + (rnd()-0.5)*3; c.y += dy/dd*m + (rnd()-0.5)*3; }
-  // 发育
-  const inLane = (tk.k==='lane'||tk.k==='split'||tk.k==='push') && tk.lane && dd < 110;
-  const m = t/60;
-  if(inLane && t>90){
-    const solo = c.role!=='ADC' && c.role!=='SUP';
-    const share = c.role==='SUP' ? 0.04 : 1;
-    const crowd = Math.max(0, G.crowd[c.side][tk.lane] - (c.role==='SUP'?0:1));
-    const farm = clamp(0.8 + (c.sk-78)/60 + (c.hp-0.6)*0.15, 0.5, 1.15) * share / (1 + crowd*0.6);
-    const csr = (0.132 + Math.min(0.03, m*0.0012)) * farm;
-    c.cs += csr*DT; const gg = csr*DT*(20 + Math.min(14, m*0.45)); c.gold += gg; c.tg += gg;
-    c.xp += (solo ? 7.4 : 5.0) * (1 + m*0.025) / (1 + crowd*0.4) * DT;
-    if(c.role==='SUP'){ c.gold += 0.25*DT; c.tg += 0.25*DT; }
-  } else if(tk.k==='jungle' && t>85){
-    const csr = 0.085 * clamp(0.85 + (c.sk-78)/60, 0.6, 1.1);
-    c.cs += csr*DT; const gg = csr*DT*(32 + Math.min(12, m*0.4)); c.gold += gg; c.tg += gg;
-    c.xp += 6.6 * (1 + m*0.02) * DT;
-  } else if(t > 90){
-    // 抱团/转线途中也会顺手清兵、刷野
-    c.xp += 4.2 * (1 + m*0.03) * DT;
-    const gg = (c.role==='SUP' ? 1.0 : 2.0) * Math.min(1, m/14) * DT; c.gold += gg; c.tg += gg; c.cs += (c.role==='SUP'?0:0.06*Math.min(1,m/14))*DT;
-  }
+  if(dd > 1){ const m = Math.min(dd, spd*DT); c.x += dx/dd*m + (G.random()-0.5)*3; c.y += dy/dd*m + (G.random()-0.5)*3; }
+  if(t>65 && c.role==='SUP'){ c.gold+=0.55*DT; c.tg+=0.55*DT; }
   while(c.lvl < 18 && c.xp >= XP_LV[c.lvl+1]) c.lvl++;
   // 回城：残血或者钱够了
   const lowHp = c.hp < (t<840 && c.task.k==='lane' ? 0.36 : 0.3);
   const rich = t-c.lastBack>140 && (tk.k==='lane'||tk.k==='jungle'||tk.k==='split') && G.front[tk.lane||'mid']!==undefined && c.gold>=nextItemCost(c);
-  if((lowHp || (rich && rnd()<0.06*DT)) && tk.k!=='obj' && tk.k!=='defend' && !nearEnemy(G, c, 160)){
+  if((lowHp || (rich && G.random()<0.06*DT)) && tk.k!=='obj' && tk.k!=='defend' && !nearEnemy(G, c, 160)){
     startRecall5(c);
   }
 }
@@ -6391,7 +6515,7 @@ function plan5(G, side){
     }
     return count;
   };
-  const goObj = (list, pt, kind) => list.forEach(c=>{ if(c.alive) setTask(c, {k:'obj', x:pt[0]+(rnd()-0.5)*30, y:pt[1]+(rnd()-0.5)*30, o:kind}); });
+  const goObj = (list, pt, kind) => list.forEach(c=>{ if(c.alive) setTask(c, {k:'obj', x:pt[0]+(G.random()-0.5)*30, y:pt[1]+(G.random()-0.5)*30, o:kind}); });
 
   if(t < 840){
     // ===== 对线期 =====
@@ -6412,13 +6536,13 @@ function plan5(G, side){
         const over = blue ? (0.5 - G.front[lane]) : (G.front[lane]-0.5); // 敌方压线越深越好抓
         const setup=allies.reduce((s,a)=>s+a.combat.control*a.hp,0);
         const escape=foes.reduce((s,f)=>s+f.combat.escape,0);
-        const sc = foes.reduce((s,f)=>s+(1-f.hp),0)*1.4 + over*3 + allies.reduce((s,a)=>s+a.hp,0)*0.4 + setup*0.35 - escape*0.22 + (lane==='bot'&&t>300?0.3:0) + rnd()*0.9;
+        const sc = foes.reduce((s,f)=>s+(1-f.hp),0)*1.4 + over*3 + allies.reduce((s,a)=>s+a.hp,0)*0.4 + setup*0.35 - escape*0.22 + (lane==='bot'&&t>300?0.3:0) + G.random()*0.9;
         if(sc > bs){ bs = sc; best = lane; }
       }
       if(best){
         const [gx,gy] = lanePt(best, clamp(G.front[best] + (blue?0.02:-0.02), 0.08, 0.92));
         setTask(jg, {k:'gank', lane:best, x:gx, y:gy, until: t+38});
-        tm.gankT = t + 150 + rnd()*80 - early*14;
+        tm.gankT = t + 150 + G.random()*80 - early*14;
       } else tm.gankT = t + 30;
     }
     // 辅助游走
@@ -6426,7 +6550,7 @@ function plan5(G, side){
     if(sup && sup.alive && t >= tm.roamT && sup.task.k==='lane' && lanePriority(G,side,'bot')>-0.15 && (sup.tags.has('engage')||sup.tags.has('pick'))){
       const [gx,gy] = lanePt('mid', clamp(G.front.mid + (blue?0.03:-0.03), 0.1, 0.9));
       setTask(sup, {k:'gank', lane:'mid', x:gx, y:gy, until:t+30});
-      tm.roamT = t + 200 + rnd()*120;
+      tm.roamT = t + 200 + G.random()*120;
     }
     // 小龙
     if(o.drag.up || (o.drag.next!=null && o.drag.next - t < 25 && o.drag.next - t > 0)){
@@ -6435,7 +6559,7 @@ function plan5(G, side){
       const enAtPit = enemyAt(MAP5.dragon, 220);
       const ourAtPit = mine.filter(c=>c.task.k==='obj' && c.task.o==='drag').length;
       const want = grp.some(c=>c.role==='JUG') && grp.length>=2 && grp.every(c=>c.hp>0.45) && (prioBot>0.05 || enAtPit>0 || R>1.15) && (enAtPit===0 || R + prioBot*0.10 > 0.8);
-      if(want || ourAtPit){ goObj(grp, MAP5.dragon, 'drag'); const md = mine.find(c=>c.role==='MID'); if(md && md.alive && md.recall===0 && md.hp>0.5 && (enAtPit>=2 || (lanePriority(G,side,'mid')>-0.1 && rnd()<0.4))) goObj([md], MAP5.dragon, 'drag'); }
+      if(want || ourAtPit){ goObj(grp, MAP5.dragon, 'drag'); const md = mine.find(c=>c.role==='MID'); if(md && md.alive && md.recall===0 && md.hp>0.5 && (enAtPit>=2 || (lanePriority(G,side,'mid')>-0.1 && G.random()<0.4))) goObj([md], MAP5.dragon, 'drag'); }
     }
     // 巢虫
     if(o.grubs.up){
@@ -6465,7 +6589,16 @@ function plan5(G, side){
     const soon = ob.up || (ob.next!=null && ob.next - t < 30 && ob.next - t > 0);
     if(!soon) return false;
     const enAtPit = enemyAt(pt, 260);
-    return R >= need || enAlive <= myAlive-2 || (enAtPit>0 && R>=need*0.85);
+    if(R >= need || enAlive <= myAlive-2 || (enAtPit>0 && R>=need*0.85)) return true;
+    // 落后方可以靠近资源的一侧先到，等满血队友集结后争夺。
+    if(G.bountySide!==side || myAlive<4 || enAtPit>=4 || R<0.72) return false;
+    let ready=0, jungleReady=false;
+    for(const c of mine){
+      if(!c.alive || c.recall || c.hp<0.64 || Math.abs(c.x-pt[0])+Math.abs(c.y-pt[1])>365) continue;
+      ready++;
+      if(c.role==='JUG') jungleReady=true;
+    }
+    return ready>=3 && jungleReady && ready>enAtPit;
   };
   if(o.elder.up && objOK('elder', MAP5.dragon, 0.85)) focus = {k:'obj', o:'elder', pt:MAP5.dragon};
   else if(o.baron.up && objOK('baron', MAP5.baron, late?1.05:1.2)) focus = {k:'obj', o:'baron', pt:MAP5.baron};
@@ -6482,14 +6615,14 @@ function plan5(G, side){
   }
   const aggro = stance==='push' ? 0.85 : stance==='safe' ? 1.25 : 1;
   if(!focus){
-    if(R >= 1.06*aggro || enAlive <= myAlive-1 || (late && R>=0.94*aggro && rnd()<0.6)){
+    if(R >= 1.06*aggro || enAlive <= myAlive-1 || (late && R>=0.94*aggro && G.random()<0.6)){
       // 选最容易推的路：敌方该路第一座存活建筑层级越低越好、兵线越深越好
       let best=null, bs=-1e9;
       for(const lane of LANES3){
         const tw = firstAlive(G, G.team[en].color, lane) || null;
         const tier = tw ? tw.tier : 7;
         const depth = blue ? G.front[lane] : 1-G.front[lane];
-        const sc = depth*2 - (tier>=5?0:tier*0.3) + (lane==='mid'?0.4:0) + rnd()*0.5 + (tw&&tw.tier===4?0.8:0);
+        const sc = depth*2 - (tier>=5?0:tier*0.3) + (lane==='mid'?0.4:0) + G.random()*0.5 + (tw&&tw.tier===4?0.8:0);
         if(sc>bs){ bs=sc; best=lane; }
       }
       siege = best;
@@ -6499,7 +6632,14 @@ function plan5(G, side){
       if(inhibDown && (enAlive <= 2 || R > 1.6)) { focus = {k:'go', pt: nexT ? [nexT.x,nexT.y] : MAP5.nexus[G.team[en].color], o:'nexus'}; }
     }
   }
-  if(defend && !focus && R >= 0.85) focus = {k:'defend', lane:defend.lane};
+  if(defend && !focus && (R >= 0.85 || defend.tw.tier>=3)) focus = {k:'defend', lane:defend.lane};
+  // 对手已在一侧集结，而本方没有争夺窗口时，用另一侧兵线换取空间。
+  if(!focus && !siege && t < 2100){
+    const opposite=enemyAt(MAP5.dragon,205)>=3 && o.drag.up ? 'top' :
+      enemyAt(MAP5.baron,205)>=3 && (o.baron.up||o.herald.up) ? 'bot' : null;
+    const front=opposite && (blue?G.front[opposite]:1-G.front[opposite]);
+    if(front>0.44 && myAlive>=3 && R>0.72) siege=opposite;
+  }
   const grouped = [];
   for(const c of mine){
     if(c.task.k==='gank' && t <= c.task.until) continue;
@@ -6511,7 +6651,7 @@ function plan5(G, side){
     grouped.push(c);
   }
   if(focus && focus.k==='obj') goObj(grouped, focus.pt, focus.o);
-  else if(focus && focus.k==='go') grouped.forEach(c=>setTask(c, {k:'go', x:focus.pt[0]+(rnd()-0.5)*40, y:focus.pt[1]+(rnd()-0.5)*40}));
+  else if(focus && focus.k==='go') grouped.forEach(c=>setTask(c, {k:'go', x:focus.pt[0]+(G.random()-0.5)*40, y:focus.pt[1]+(G.random()-0.5)*40}));
   else if(focus && focus.k==='defend') grouped.forEach(c=>setTask(c, {k:'defend', lane:focus.lane}));
   else if(siege) grouped.forEach(c=>setTask(c, {k:'push', lane:siege}));
   else {
@@ -6525,7 +6665,7 @@ function plan5(G, side){
     }
     // 中期抓单：有抓单英雄且敌方分推手孤立时，派人包夹
     const enSplit = G.team[en].split>=0 ? G.champs[G.team[en].split] : null;
-    if(enSplit && enSplit.alive && enSplit.task.k==='split' && (tm.tags.pick||0) + (tm.tags.engage||0) >= 2 && rnd()<0.35){
+    if(enSplit && enSplit.alive && enSplit.task.k==='split' && (tm.tags.pick||0) + (tm.tags.engage||0) >= 2 && G.random()<0.35){
       const lonely = !G.champs.some(x=>x.side===en && x!==enSplit && x.alive && hyp(x.x-enSplit.x,x.y-enSplit.y)<300);
       if(lonely){
         const hunters = mine.filter(c=>c.alive && c!==splitter && (c.role==='JUG' || c.tags.has('pick') || c.tags.has('engage'))).slice(0,3);
@@ -6547,37 +6687,78 @@ function laneTrades(G){
   const t = G.t;
   for(const lane of LANES3){
     if(t < G.laneT[lane]) continue;
-    G.laneT[lane] = t + (t<840 ? 22 + rnd()*16 : 30 + rnd()*20);
+    G.laneT[lane] = t + (t<840 ? 22 + G.random()*16 : 30 + G.random()*20);
     const [x,y]=lanePt(lane,G.front[lane]);
     const near = (c) => c.alive && c.recall===0 && c.task.lane===lane && (c.task.k==='lane'||c.task.k==='split') && hyp(c.x-x,c.y-y) < 120;
     const a = G.champs.filter(c=>c.side==='A' && near(c)), b = G.champs.filter(c=>c.side==='B' && near(c));
     if(!a.length || !b.length) continue;
-    const pa = a.reduce((s,c)=>s+champPow(G,c,0)*(1+(c.tags.has('early')?0.12:0)+(c.tags.has('poke')?0.08:0)),0);
-    const pb = b.reduce((s,c)=>s+champPow(G,c,0)*(1+(c.tags.has('early')?0.12:0)+(c.tags.has('poke')?0.08:0)),0);
+    const tradePower=(own,enemy)=>{
+      const theirLevel=Math.max(...enemy.map(c=>c.lvl));
+      const theirRange=enemy.some(c=>c.ranged);
+      return own.reduce((sum,c)=>{
+        const spike=t<840 && ((c.lvl>=2 && theirLevel<2)||(c.lvl>=6 && theirLevel<6)) ? 0.14 : 0;
+        const reach=c.ranged && !theirRange ? 0.08 : 0;
+        return sum+champPow(G,c,0)*(1+spike+reach+(c.tags.has('early')?0.12:0)+(c.tags.has('poke')?0.08:0));
+      },0);
+    };
+    const pa=tradePower(a,b), pb=tradePower(b,a);
     const pA = pa*pa/(pa*pa+pb*pb);
-    const aWin = rnd() < pA;
+    const aWin = G.random() < pA;
     const [W,L] = aWin ? [a,b] : [b,a];
     const marg = Math.abs(pA-0.5)*2;
-    L.forEach(c=>c.hp = Math.max(0.05, c.hp - (0.07 + rnd()*0.12 + marg*0.08)));
-    W.forEach(c=>c.hp = Math.max(0.08, c.hp - (0.02 + rnd()*0.08)));
+    const depth=W[0].blue?G.front[lane]:1-G.front[lane];
+    L.forEach(c=>c.hp = Math.max(0.05, c.hp - (0.07 + G.random()*0.12 + marg*0.08)*(depth>0.61?0.72:1)));
+    W.forEach(c=>c.hp = Math.max(0.08, c.hp - (0.02 + G.random()*0.08)));
     G.front[lane] = clamp(G.front[lane] + ((W[0].blue)?1:-1)*0.035, 0.12, 0.88);
     // 残血被击杀：单杀 / 二打二
     const dying = L.filter(c=>c.hp < 0.2);
-    if(dying.length && rnd() < 0.2 + marg*0.25){
+    if(dying.length && G.random() < 0.2 + marg*0.25){
       resolveFight(G, a, b, 'lane', true);
     }
   }
 }
 
 // ---------------- 遭遇检测 → 团战 / 抓人 ----------------
+function fightObjective(G, x, y){
+  const atDragon=Math.abs(x-MAP5.dragon[0])+Math.abs(y-MAP5.dragon[1])<190;
+  if(atDragon && (G.obj.elder.up || G.obj.drag.up)) return G.obj.elder.up?'elder':'drag';
+  const atBaron=Math.abs(x-MAP5.baron[0])+Math.abs(y-MAP5.baron[1])<190;
+  if(atBaron){
+    if(G.obj.baron.up) return 'baron';
+    if(G.obj.herald.up) return 'herald';
+    if(G.obj.grubs.up) return 'grubs';
+  }
+  return null;
+}
+function advanceEngagements(G,used){
+  for(let i=G.engagements.length-1;i>=0;i--){
+    const battle=G.engagements[i], A=[], B=[];
+    const entry=battle.resource?142:122;
+    for(const c of G.champs){
+      if(!c.alive || c.recall>0 || c.fightCd>0 || used[c.i]) continue;
+      if(Math.abs(c.x-battle.x)+Math.abs(c.y-battle.y)>entry) continue;
+      used[c.i]=true;
+      if(!battle.arrival[c.i]) battle.arrival[c.i]=G.t;
+      (c.side==='A'?A:B).push(c);
+    }
+    if(G.t<battle.end) continue;
+    G.engagements.splice(i,1);
+    if(!A.length || !B.length) continue;
+    const n=A.length+B.length;
+    const kind=A.length>=2&&B.length>=2&&n>=6?'team':Math.min(A.length,B.length)===1&&n>=3?'gank':'skirm';
+    resolveFight(G,A,B,kind,false,battle);
+  }
+}
 function encounters(G){
   const cs = G.champs, R = SIM5.ENC, early = G.t < 840;
+  const offset=(G.t/SIM5.DT&1)*5;
   const used = G._used || (G._used = new Array(10));
   for(let i=0;i<10;i++) used[i] = false;
+  if(G.engagements.length) advanceEngagements(G,used);
   for(let i=0;i<10;i++){
-    const c = cs[i]; if(!c.alive || c.recall>0 || c.fightCd>0 || used[i]) continue;
+    const c = cs[(i+offset)%10]; if(!c.alive || c.recall>0 || c.fightCd>0 || used[c.i]) continue;
     for(let j=i+1;j<10;j++){
-      const o = cs[j]; if(o.side===c.side || !o.alive || o.recall>0 || o.fightCd>0 || used[j]) continue;
+      const o = cs[(j+offset)%10]; if(o.side===c.side || !o.alive || o.recall>0 || o.fightCd>0 || used[o.i]) continue;
       const dx = o.x-c.x, dy = o.y-c.y;
       if(dx > R || dx < -R || dy > R || dy < -R || dx*dx+dy*dy > R*R) continue;
       // 对线期：线上对峙由 laneTrades 处理，只有 Gank / 资源争夺 / 入侵才会爆发遭遇战
@@ -6585,11 +6766,11 @@ function encounters(G){
         const ck = c.task.k, ok = o.task.k;
         const act = ck==='gank'||ck==='obj'||ok==='gank'||ok==='obj'||ck==='push'||ok==='push'||ck==='defend'||ok==='defend'||ck==='go'||ok==='go';
         const calm = G.team.A.calmT > G.t && G.team.B.calmT > G.t;
-        if(calm){ const hot = ck==='obj'||ok==='obj'; if(rnd() < (hot ? 0.75 : 0.9)) continue; }
+        if(calm){ const hot = ck==='obj'||ok==='obj'; if(G.random() < (hot ? 0.75 : 0.9)) continue; }
         if(!act){
-          if(early){ if(!(ck==='jungle' && ok==='jungle' && rnd() < 0.04)) continue; }
+          if(early){ if(!(ck==='jungle' && ok==='jungle' && G.random() < 0.04)) continue; }
           else if((ck==='lane'||ck==='split') && (ok==='lane'||ok==='split') && c.task.lane===o.task.lane) continue;
-          else if(rnd() > 0.35) continue;
+          else if(G.random() > 0.35) continue;
         }
       }
       const cx = (c.x+o.x)/2, cy = (c.y+o.y)/2;
@@ -6608,12 +6789,19 @@ function encounters(G){
       const defending = weak.some(x=>x.task.k==='defend');
       const n = A.length + B.length;
       const escape = ratio < 0.7 ? (defending ? (ratio < 0.55 ? 0.55 : 0) : 0.7 + (weak.some(x=>x.tags.has('protect'))?0.08:0) - (n>=7?0.15:0)) : 0;
-      if(rnd() < escape){
+      if(G.random() < escape){
         for(const x of weak){ x.fightCd = 8; x.hp = Math.max(0.1, x.hp-0.1); if(x.hp<0.45) startRecall5(x); else setTask(x, {k:'base'}); }
         break;
       }
-      const kind = n >= 6 ? 'team' : (A.length===1||B.length===1) && n>=3 ? 'gank' : 'skirm';
-      resolveFight(G, A, B, kind, false);
+      const resource=fightObjective(G,cx,cy);
+      const arrival=[];
+      for(const x of A) arrival[x.i]=G.t;
+      for(const x of B) arrival[x.i]=G.t;
+      G.engagements.push({x:cx,y:cy,resource,arrival,end:G.t+(resource?9:6)});
+      if(G.rec){
+        G.fx.push({t:G.t,x:cx,y:cy,n:0});
+        G.evs.push([G.t,'F',Math.round(cx),Math.round(cy),0]);
+      }
       break;
     }
   }
@@ -6624,6 +6812,14 @@ function fightProfile(group){
   for(const c of group){
     const k=c.combat, ready=0.45+0.55*c.hp;
     for(const key in k) sum[key]+=k[key]*ready;
+    // 只有反制英雄实际进场时才会加强这一手。对手没有对应机制时不产生收益。
+    if(c.counter){
+      const prepared=c.counter*ready*0.85;
+      sum.antiDash+=k.antiDash*prepared;
+      sum.antiMagic+=k.antiMagic*prepared;
+      sum.antiAuto+=k.antiAuto*prepared;
+      sum.guardProjectile+=k.guardProjectile*prepared;
+    }
     if(c.tags.has('poke')) sum.poke+=ready;
   }
   return sum;
@@ -6639,9 +6835,10 @@ function localFightBonus(own, enemy, kind, river){
   return clamp(chain + opening*0.019 + zoning + defense + screen + peel + own.poke*(river?0.014:0.008),0,0.19);
 }
 // 团战/抓人结算：集火、击杀、助攻（严格对账），存活者状态
-function resolveFight(G, A, B, kind, laneFight){
+function resolveFight(G, A, B, kind, laneFight, battle){
   const t = G.t;
-  const near = (pt, r) => hyp(A[0].x-pt[0], A[0].y-pt[1]) < r;
+  const fx=battle?.x ?? (A[0].x+B[0].x)/2, fy=battle?.y ?? (A[0].y+B[0].y)/2;
+  const near = (pt, r) => hyp(fx-pt[0], fy-pt[1]) < r;
   const atBaron = near(MAP5.baron, 200), atDragon = near(MAP5.dragon, 200);
   const big = (atBaron && (G.obj.baron.up)) || (atDragon && (G.obj.elder.up || (G.team.A.drakes.length>=3||G.team.B.drakes.length>=3)));
   let goldA=0,goldB=0;
@@ -6656,60 +6853,66 @@ function resolveFight(G, A, B, kind, laneFight){
   const sidePow = (L, s, own, enemy) => {
     let p = 0;
     const pressure=pressSide(s);
-    for(const c of L) p += champPow(G, c, pressure);
+    for(const c of L){
+      const late=battle ? Math.min(2,(t-battle.arrival[c.i])/SIM5.DT) : 2;
+      p += champPow(G, c, pressure)*(0.90+late*0.05);
+    }
     // 塔下防守优势
     const myColor = G.team[s].color;
     for(const tw of G.towers){ if(tw.side===myColor && tw.alive && Math.abs(tw.x-L[0].x)+Math.abs(tw.y-L[0].y) < 170){ p *= tw.tier===1 ? 1.1 : 1.18; break; } }
     return p * (1+localFightBonus(own,enemy,kind,atBaron||atDragon));
   };
-  const pa = sidePow(A,'A',profileA,profileB)*Math.exp(randn()*SIM5.FN), pb = sidePow(B,'B',profileB,profileA)*Math.exp(randn()*SIM5.FN);
+  const pa = sidePow(A,'A',profileA,profileB)*Math.exp(randn(G.random)*SIM5.FN), pb = sidePow(B,'B',profileB,profileA)*Math.exp(randn(G.random)*SIM5.FN);
   const pAwin = pa*pa/(pa*pa+pb*pb);
-  const aWin = rnd() < pAwin;
+  const aWin = G.random() < pAwin;
   const W = aWin ? A : B, L = aWin ? B : A;
   const margin = Math.abs(pa*pa-pb*pb)/(pa*pa+pb*pb);
   const plBase = laneFight ? 0.2 : kind==='gank' ? 0.12 : kind==='team' ? 0.11 : 0.13;
   const deathsL = [], deathsW = [];
   const lossProfile=aWin?profileB:profileA, winProfile=aWin?profileA:profileB;
+  const stoppedDive=laneFight?0:Math.min(0.23,lossProfile.antiDash*winProfile.dash*0.075);
   for(const c of L){
     let pl = plBase + margin*0.5 + (1-c.hp)*0.2 - (c.tags.has('protect')?0.04:0) + (c.mental<=-2?0.06:0);
-    if(!laneFight) pl += Math.min(2,winProfile.control)*0.017 - c.combat.frontline*0.034 - c.combat.escape*0.026 - Math.min(2,lossProfile.protect)*0.013;
+    if(!laneFight) pl += Math.min(2,winProfile.control)*0.017 - c.combat.frontline*0.034 - c.combat.escape*0.026 - Math.min(2,lossProfile.protect)*0.013 - stoppedDive;
     if(laneFight && c.hp < 0.2) pl += 0.5;
-    if(rnd() < clamp(pl, 0.05, 0.95)) deathsL.push(c);
+    if(G.random() < clamp(pl, 0.05, 0.95)) deathsL.push(c);
   }
   for(const c of W){
     const pw = laneFight ? 0.02 : 0.03 + 0.22*(1-margin)*(kind==='team'?1:0.5) + (1-c.hp)*0.08;
-    if(rnd() < clamp(pw, 0.01, 0.4)) deathsW.push(c);
+    if(G.random() < clamp(pw, 0.01, 0.4)) deathsW.push(c);
   }
-  if(!deathsL.length && !laneFight && kind!=='skirm' && rnd() < 0.55){ deathsL.push(wpick(L, c=>1.5-c.hp)); }
+  if(!deathsL.length && !laneFight && kind!=='skirm' && G.random() < 0.55-stoppedDive){ deathsL.push(wpick(L, c=>1.5-c.hp, G.random)); }
   if(laneFight && !deathsL.length){ const lo = L.slice().sort((x,y)=>x.hp-y.hp)[0]; if(lo.hp<0.2) deathsL.push(lo); }
-  const fx = (A[0].x+B[0].x)/2, fy = (A[0].y+B[0].y)/2;
   G.fx.push({t, x:fx, y:fy, n: deathsL.length+deathsW.length});
   if(G.rec) G.evs.push([t,'F',Math.round(fx),Math.round(fy),deathsL.length+deathsW.length]);
   const killW = {TOP:1, JUG:1.1, MID:1.35, ADC:1.6, SUP:0.3};
   const doKill = (victim, killers, allies) => {
     const alive = killers.filter(c=>c.alive);
     const pool = alive.length ? alive : killers;
-    const killer = wpick(pool, c=>killW[c.role]*champPow(G,c,0)*(c.tags.has('pick')?1.15:1)+0.01);
-    const assists = allies.filter(c=>c!==killer && rnd() < (kind==='team'?0.82:0.7));
+    const killer = wpick(pool, c=>killW[c.role]*champPow(G,c,0)*(c.tags.has('pick')?1.15:1)+0.01, G.random);
+    const assists = allies.filter(c=>c!==killer && G.random() < (kind==='team'?0.82:0.7));
     applyKill(G, killer, victim, assists);
   };
   // 交错结算：败方阵亡与胜方阵亡按顺序穿插
   const order = [];
   deathsL.forEach(v=>order.push([v, W]));
-  deathsW.forEach(v=>order.splice(Math.floor(rnd()*(order.length+1)), 0, [v, L]));
+  deathsW.forEach(v=>order.splice(Math.floor(G.random()*(order.length+1)), 0, [v, L]));
   let killsBy = {A:0, B:0};
   for(const [v, ks] of order){ if(!v.alive) continue; const kset = ks; doKill(v, kset, kset); killsBy[v.side==='A'?'B':'A']++; }
   // 存活者状态
-  for(const c of L) if(c.alive){ c.hp = Math.max(0.06, c.hp*(0.35+rnd()*0.3)); c.fightCd = 15; if(c.hp < 0.45){ setTask(c, {k:'base'}); startRecall5(c); } }
-  for(const c of W) if(c.alive){ c.hp = Math.max(0.1, c.hp*(0.55+rnd()*0.35)); c.fightCd = 9; }
+  for(const c of L) if(c.alive){ c.hp = Math.max(0.06, c.hp*(0.35+G.random()*0.3)); c.fightCd = 15; if(c.hp < 0.45){ setTask(c, {k:'base'}); startRecall5(c); } }
+  for(const c of W) if(c.alive){ c.hp = Math.max(0.1, c.hp*(0.55+G.random()*0.35)); c.fightCd = 9; }
   if(!laneFight){ G.planT = t; if(kind!=='gank'){ G.team.A.calmT = t + 75; G.team.B.calmT = t + 75; } }
   // 团灭 / 团战播报
   const lSide = L[0].side;
-  if(kind==='team' && deathsL.length>=3){
+  if(battle?.resource && (deathsL.length||deathsW.length)){
+    const target={drag:'小龙',elder:'远古龙',baron:'男爵',herald:'先锋',grubs:'虚空巢虫'}[battle.resource];
+    feed(G,W[0].side,'资源争夺',`${target}河道 ${A.length} 对 ${B.length}，${G.team[W[0].side].name} 打出 ${killsBy[W[0].side]} 换 ${killsBy[lSide]}。`,true);
+  } else if(kind==='team' && deathsL.length>=3){
     const aced = aliveN(G, lSide)===0;
     feed(G, W[0].side, aced?'团灭':'团战胜利', aced ? `☠️ ${G.team[W[0].side].name} 打出一波团灭！${G.team[lSide].name} 全员阵亡！` : `⚔️ ${G.team[W[0].side].name} 团战 ${killsBy[W[0].side]} 换 ${killsBy[lSide]} 大获全胜！`, true);
-  } else if(kind==='team' && (deathsL.length||deathsW.length)){
-    feed(G, W[0].side, '团战', `${G.team[W[0].side].name} 在${atBaron?'大龙坑':atDragon?'小龙坑':'野区'}附近打出 ${killsBy[W[0].side]} 换 ${killsBy[lSide]} 的交换。`);
+  } else if((kind==='team'||kind==='skirm') && (deathsL.length||deathsW.length)){
+    feed(G, W[0].side, kind==='team'?'团战':'小规模交战', `${G.team[W[0].side].name} 在${atBaron?'大龙坑':atDragon?'小龙坑':'野区'}附近打出 ${killsBy[W[0].side]} 换 ${killsBy[lSide]} 的交换。`);
   }
   // 抢龙：团战败方的打野在资源快被拿下时惩戒抢走
   for(const key of ['baron','drag','elder']){
@@ -6719,7 +6922,7 @@ function resolveFight(G, A, B, kind, laneFight){
     if(hyp(fx-pit[0], fy-pit[1]) > 220) continue;
     const jg = G.champs.find(c=>c.side===lSide && c.role==='JUG' && c.alive && c.recall===0 && hyp(c.x-pit[0],c.y-pit[1])<200);
     const defendingJg=W.some(c=>c.role==='JUG' && c.alive && c.recall===0);
-    if(jg && ob.by===W[0].side && rnd() < (defendingJg?0.14:0.28)){ takeObj(G, key, lSide, true); }
+    if(jg && ob.by===W[0].side && G.random() < (defendingJg?0.14:0.28)){ takeObj(G, key, lSide, true); }
   }
 }
 
@@ -6732,10 +6935,10 @@ function applyKill(G, killer, victim, assists){
   victim.task = TK({k: victim.role==='JUG'?'jungle':'lane', lane: LANE_OF[victim.role]});
   killer.k++; killer.streak++;
   assists.forEach(a=>a.a++);
-  const shut = victim.streak >= 3 ? Math.min(700, 150*(victim.streak-2)) : 0;
+  const shut = victim.streak >= 3 && G.bountySide!==victim.side ? Math.min(700, 200*(victim.streak-2)) : 0;
   victim.streak = 0;
-  let gold = 300 + shut + (G.firstBlood ? 0 : 100);
-  killer.gold += gold; killer.tg += gold;
+  const gold = 300 + (G.firstBlood ? 0 : 100);
+  killer.gold += gold+shut; killer.tg += gold+shut;
   if(assists.length){ const share = gold*0.5/assists.length; assists.forEach(a=>{ a.gold += share; a.tg += share; }); }
   const xp = 140 + victim.lvl*28; killer.xp += xp*0.6; assists.forEach(a=>a.xp += xp*0.4/assists.length);
   G.team[killer.side].kills++;
@@ -6761,6 +6964,12 @@ function applyKill(G, killer, victim, assists){
 }
 
 // ---------------- 资源争夺 ----------------
+function claimObjectiveBounty(G, side, amount, target){
+  if(G.bountySide!==side) return;
+  const share=amount/5;
+  for(const c of G.rosters[side]){ c.gold+=share; c.tg+=share; }
+  feed(G,side,'目标赏金',`${G.team[side].name} 拿下${target}，全队获得额外 ${amount} 金币。`,true);
+}
 function objectives(G){
   const t = G.t, o = G.obj;
   const check = (key, pt, need) => {
@@ -6798,7 +7007,7 @@ function takeObj(G, key, side, steal){
     tm.drakes.push(o.type);
     G.drakeSeen = (G.drakeSeen||[]).concat(o.type);
     const total = G.team.A.drakes.length + G.team.B.drakes.length;
-    if(total===1 && !o.mapType) o.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.type))[0];
+    if(total===1 && !o.mapType) o.mapType = pickOne(DRAKES.filter(x=>x[0]!==o.type), G.random)[0];
     if(total>=2) o.type = o.mapType; else o.type = null;
     if(tm.drakes.length >= 4){
       tm.soul = o.mapType || dk[0];
@@ -6824,6 +7033,7 @@ function takeObj(G, key, side, steal){
     tm.heraldT = t + 240; o.next = null;
     feed(G, side, '峡谷先锋', `${nm} 拿下峡谷先锋，准备撞塔。`);
   }
+  if(key!=='grubs') claimObjectiveBounty(G,side,500,{drag:'小龙',elder:'远古龙',baron:'男爵',herald:'峡谷先锋'}[key]);
   if(G.rec) G.evs.push([t,'O',key,side,key==='drag'?(tm.drakes[tm.drakes.length-1]||''):'', steal?1:0]);
   // 资源到手后回到常规决策
   G.champs.filter(c=>c.side===side && c.task.k==='obj' && c.task.o===key).forEach(c=>{ c.task = TK({k: c.role==='JUG'?'jungle':'lane', lane: LANE_OF[c.role]}); });
@@ -6859,7 +7069,7 @@ function towerDamageable(G, tw){ if(G.towerDirty || !G.first) refreshTowers(G); 
 function lanesAndTowers(G){
   const t = G.t, DT = SIM5.DT;
   if(G.towerDirty || !G.first) refreshTowers(G);
-  const norm = Math.exp(SIM5.LV*Math.max(1, Math.min(18, 1+t/110)) + Math.min(18000, t*8)/SIM5.IT);
+  const norm = Math.exp(SIM5.LV*Math.min(18,1+t/110) + Math.log1p(Math.min(16000,t*6.8)/SIM5.IT)*1.18);
   const champs = G.champs;
   const alive=G.aliveN||(G.aliveN={blue:0,red:0});
   alive.blue=alive.red=0;
@@ -6878,7 +7088,7 @@ function lanesAndTowers(G){
     const supB = G.supLane.red[lane] ? 1.6 : 0, supR = G.supLane.blue[lane] ? 1.6 : 0;
     const fb = pB/norm + 0.6 + supB, fr = pR/norm + 0.6 + supR;
     let v = 0.008 * DT * (fb - fr) / (fb + fr);
-    if(pB===0 && pR===0 && !supB && !supR) v += (0.0012*(G.aliveN.blue - G.aliveN.red)/5 + (0.5 - G.front[lane]) * 0.0004 + randn()*0.002) * DT;
+    if(pB===0 && pR===0 && !supB && !supR) v += (0.0012*(G.aliveN.blue - G.aliveN.red)/5 + (0.5 - G.front[lane]) * 0.0004 + randn(G.random)*0.002) * DT;
     const rT = G.first.red[lane], bT = G.first.blue[lane];
     const maxS = rT ? rT.s - 0.012 : 0.93, minS = bT ? bT.s + 0.012 : 0.07;
     let nf = G.front[lane] + v;
@@ -6892,7 +7102,7 @@ function lanesAndTowers(G){
       const tm = G.team[atkSide];
       let dmg = (0.0006 + Math.min(1, t/1800)*0.0022 + (pw/norm) * SIM5.TD * (1 + tm.grubs*0.04)) * DT;
       if(tm.baronT > t) dmg *= 2.2;
-      if(tm.heraldT > t && tw.tier<=2 && pw>0 && rnd()<0.05*DT){ dmg += 0.3; tm.heraldT = 0; feed(G, atkSide, '先锋撞塔', `${tm.name} 放出峡谷先锋撞向${laneCN(lane)}防御塔！`); }
+      if(tm.heraldT > t && tw.tier<=2 && pw>0 && G.random()<0.05*DT){ dmg += 0.3; tm.heraldT = 0; feed(G, atkSide, '先锋撞塔', `${tm.name} 放出峡谷先锋撞向${laneCN(lane)}防御塔！`); }
       if(tw.tier===1 && t < 300) dmg *= 0.3;
       if(t > 3000) dmg *= 2.5;
       tw.hp -= dmg;
@@ -6928,6 +7138,7 @@ function destroyTower(G, tw, side){
   if(G.rec) G.evs.push([t,'T',tw.id,side]);
   if(tw.tier===6){ endGame5(G, side); return; }
   if(tw.tier===4){ tw.resp = t + 300; feed(G, side, '破水晶', `💎 ${tm.name} 攻破${laneCN(tw.lane)}召唤水晶，超级兵即将出动！`, true); return; }
+  if(tw.tier<=3) claimObjectiveBounty(G,side,tw.tier===1?250:400,TIER_CN[tw.tier]);
   tm.towers++;
   const near = G.champs.filter(c=>c.side===side && c.alive && hyp(c.x-tw.x,c.y-tw.y)<220);
   G.champs.filter(c=>c.side===side).forEach(c=>{ const g = 50 + (near.includes(c) ? 200/Math.max(1,near.length) : 0); c.gold += g; c.tg += g; });
@@ -6967,8 +7178,8 @@ function game5Result(G){
   const winStats = winA ? sa : sb;
   const winTotalK = Math.max(1, winA ? kA : kB);
   const mvpRow = winStats.slice().sort((x,y)=>{
-    const sx = x.k*2.4 + x.a*1.2 - x.d*1.6 + ((x.k+x.a)/winTotalK)*4 + x.gold/4000 + rnd()*0.5;
-    const sy = y.k*2.4 + y.a*1.2 - y.d*1.6 + ((y.k+y.a)/winTotalK)*4 + y.gold/4000 + rnd()*0.5;
+    const sx = x.k*2.4 + x.a*1.2 - x.d*1.6 + ((x.k+x.a)/winTotalK)*4 + x.gold/4000 + G.random()*0.5;
+    const sy = y.k*2.4 + y.a*1.2 - y.d*1.6 + ((y.k+y.a)/winTotalK)*4 + y.gold/4000 + G.random()*0.5;
     return sy - sx;
   })[0];
   const game = {
@@ -6982,7 +7193,7 @@ function game5Result(G){
     blue: d.blue, first: d.first, styleA: ev.a.comp.style, styleB: ev.b.comp.style
   };
   if(G.rec) game.rec = recordOf(G);
-  game.impacts = G.over ? applyGameImpact(game, d.A, d.B) : [];
+  game.impacts = G.over ? applyGameImpact(game, d.A, d.B, G.random) : [];
   if(G.over) G.result=game;
   return game;
 }
@@ -7002,10 +7213,14 @@ function playGame(d, opts){
 
 // ================= 回放存档：最多 200 条，最近 10 局 + 最多 10 局永久收藏 =================
 const REPLAY_MAX_RECENT = 10, REPLAY_MAX_KEPT = 10, REPLAY_MAX_ENTRIES = 200;
+let replaySequence = 0;
 function replayStore(){ if(!S.replays) S.replays = []; return S.replays; }
 function pushReplay(entry){
   const list = replayStore();
-  entry.id = entry.id || ('r' + Date.now().toString(36) + Math.floor(rnd()*1e4).toString(36));
+  if(!entry.id){
+    const prefix='r'+Date.now().toString(36)+'-';
+    do{ entry.id=prefix+(++replaySequence).toString(36); }while(list.some(r=>r.id===entry.id));
+  }
   list.unshift(entry);
   pushReplayTrim();
   return entry.id;
@@ -7664,7 +7879,7 @@ const CloudSync = {
 
 // ================= 云端版本自动更新检测 =================
 window.AppUpdater = {
-  currentVersion: '2.1.10',
+  currentVersion: '2.1.11',
   manifestUrl: 'https://raw.githubusercontent.com/D3cEuGod/esports-manager/main/version.json',
   releasesApi: 'https://api.github.com/repos/D3cEuGod/esports-manager/releases/latest',
   available: null,
@@ -8982,7 +9197,7 @@ VIEWS.home = () => {
   let stageCard = '';
   if(!ev.started){
     topBody = `<p class="muted">${ev.type==='lpl_s1'&&transferWindowOpen()?'开赛前转会窗仍开放，确认首发无误后即可开赛。':esc(info.fmt)}</p>${probs()}
-      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button><button class="btn ghost" data-a="simEvent">快速模拟整项赛事</button></div>`;
+      <div class="btns"><button class="btn big" data-a="startEv">开始 ${esc(info.name)} ▶</button>${simRegularBtn()}<button class="btn ghost" data-a="simEvent" title="一直模拟到本项赛事全部结束（含季后赛）">快速模拟整项赛事（含季后赛）</button></div>`;
   } else if(ev.done){
     topBody = `<div class="done">${ico('check','g')} ${esc(info.name)}已结束 ${ev.res.champ?`· ${ico('trophy','gold')} 冠军 ${teamTag(ev.res.champ)}`:''}</div>${eventSummary(ev)}
       <div class="btns"><button class="btn big" data-a="nextEvent">进入下一阶段 ${ico('play')}</button></div>`;
@@ -9000,8 +9215,9 @@ VIEWS.home = () => {
         `<p class="muted">${inEvent?'等待本轮其他比赛结果…':'本队未参加此项赛事（或已止步），可模拟观看赛果。'}</p>`}
       <div class="btns">
         ${myNext?`<button class="btn big" data-a="toMyMatch">${ico('play')} ${nxt&&userInvolved(nxt.m)?'进入比赛':'模拟至我的比赛'}</button>`:''}
-        <button class="btn" data-a="simStage">${ico('skip')} 模拟本轮</button>
-        <button class="btn ghost" data-a="simEvent">模拟整项赛事</button>
+        <button class="btn" data-a="simStage" title="只模拟当前这一轮的比赛">${ico('skip')} 模拟本轮</button>
+        ${simRegularBtn()}
+        <button class="btn ghost" data-a="simEvent" title="一直模拟到本项赛事全部结束（含季后赛）">模拟整项赛事（含季后赛）</button>
       </div>
       ${probs()}`;
     // 直接把当前赛事正在打的小组赛/瑞士轮/淘汰赛对阵放到主页下方
@@ -9018,6 +9234,12 @@ VIEWS.home = () => {
     ${stageCard}
     ${S.news.length?`<section class="card compact-news"><h4>${ico('news')} 最新赛场动态</h4><ul class="news">${S.news.slice(0,5).map(n=>`<li>${esc(n.t)}</li>`).join('')}</ul></section>`:''}`;
 };
+// 模拟常规赛：引擎 canSimRegularSeason() 为真时显示，截止到季后赛开始前
+function simRegularBtn(){
+  let ok=false;
+  try{ ok = typeof canSimRegularSeason==='function' && typeof simRegularSeason==='function' && !!canSimRegularSeason(); }catch(e){ ok=false; }
+  return ok ? `<button class="btn" data-a="simRegular" title="模拟到常规赛全部结束，季后赛开始前停下">${ico('skip')} 模拟常规赛（到季后赛前）</button>` : '';
+}
 function probs(){ const p=lineupProblems(S.user); return p.length?`<p class="warn">${ico('warn')} ${p.join('；')} —— 请到“阵容”调整后方可参赛</p>`:''; }
 function eventHasUser(ev){ return ev.stages.some(st=>st.matches.some(m=>userInvolved(m)&&!m.w)) || ev.stages.some(st=>(st.teams||[]).includes(S.user)&&st.kind==='swiss'&&st.rec[S.user][0]<3&&st.rec[S.user][1]<3) || (ev.stages[ev.si]&&ev.stages[ev.si].kind==='rr'&&Object.values(ev.stages[ev.si].groups).some(g=>g.includes(S.user))); }
 function findMyNext(){ const ev=curEvent(); if(!ev.started||ev.done) return null; for(const st of ev.stages){ if(st.kind==='br') resolveBR(st); const m=st.matches.find(m=>!m.w&&userInvolved(m)&&m.a&&m.b); if(m) return {m,st}; } return null; }
@@ -9097,7 +9319,7 @@ function legendStripHtml(){
   const ls=Object.values(S.players).filter(p=>p.legend && !p.team && !p.retired);
   if(!ls.length) return '';
   return `<div class="legend-strip"><b>传奇自由选手</b><span class="muted">无需转会费，只付年薪；AI 球队不会签约</span>
-    ${ls.map(p=>`<span class="legend-card"><b>${esc(playerTag(p))}</b> <small>${ROLE_CN[p.role]} · ${p.age}岁</small> ${ovrBadge(p.rating)} <small class="muted">${p.champs.slice(0,3).map(x=>CH[x.c]?.cn||x.c).join('、')}</small> <small>年薪 ${fmtMoney(Math.round(p.salary*1.1))}</small>${transferWindowOpen()?` <button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">签约</button>`:''}</span>`).join('')}
+    ${ls.map(p=>`<span class="legend-card"><button type="button" class="pl-link" data-a="mkPlayer" data-p="${esc(p.pid)}" title="查看选手资料"><b>${esc(playerTag(p))}</b></button> <small>${ROLE_CN[p.role]} · ${p.age}岁</small> ${ovrBadge(p.rating)} <small class="muted">${p.champs.slice(0,3).map(x=>CH[x.c]?.cn||x.c).join('、')}</small> <small>年薪 ${fmtMoney(Math.round(p.salary*1.1))}</small>${transferWindowOpen()?` <button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">签约</button>`:''}</span>`).join('')}
   </div>`;
 }
 // ---------- 转会市场（含季中建队非卖品过滤） ----------
@@ -9129,7 +9351,7 @@ function marketEmbedHtml(limit){
   ${ps.slice(0,maxShow).map(p=>{
     const locked = isUntouchable(p);
     const crossMid = midWin && isCrossRegionFor(p, S.user);
-    return `<tr><td><b>${esc(playerTag(p))}</b>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
+    return `<tr><td><button type="button" class="pl-link" data-a="mkPlayer" data-p="${esc(p.pid)}" title="查看选手资料"><b>${esc(playerTag(p))}</b></button>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}${isForeign(p)?'<small class="fx">外援</small>':''}${crossMid?`<small class="cr-tag" title="跨赛区年中极难离队">${ico('globe')}跨区极难</small>`:''}</td><td>${p.team?teamTag(p.team):'<i>自由球员</i>'}</td><td>${ROLE_CN[p.role]}</td><td>${p.age}</td><td>${ovrBadge(p.rating)}</td><td>${p.pot}</td><td>${fmtMoney(playerValue(p))}</td><td>${locked?'<span class="muted">非卖品</span>':p.team?fmtMoney(askPrice(p, S.user)):'—'}</td><td>${p.contract}</td>
     <td>${!open?'':locked?`<span class="nft-tag">${ico('lock')} 季中非卖</span>`:`<button class="btn sm" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`}</td></tr>`;
   }).join('')}</table>
   ${ps.length>maxShow?`<p class="muted">共 ${ps.length} 人，当前显示前 ${maxShow} 人，请使用上方筛选缩小范围。</p>`:''}
@@ -9279,7 +9501,7 @@ VIEWS.sys = () => {
   ${accountPanelHtml()}
   <hr class="sep">
   <h3>${ico('update')} 云端版本自动更新</h3>
-  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.5')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
+  <p>当前客户端版本：<b>v${esc(upd ? upd.currentVersion : '2.1.11')}</b> · 状态：<b>${esc(upd ? upd.statusText : '已是最新版本')}</b></p>
   <div class="btns">
     <button class="btn" data-a="checkAppUpdate">${ico('update')} 立即检查云端更新</button>
     ${upd && upd.available ? `<a class="btn big" href="${esc(upd.available.url)}" target="_blank" rel="noopener">下载最新版本 v${esc(upd.available.version)}</a>` : ''}
@@ -9463,7 +9685,7 @@ VIEWS.db = () => {
   if(team){
     const { slots, subs } = dbSquad(team);
     const head = '<tr><th>位置</th><th>选手</th><th>能力</th><th>状态/心态</th><th></th></tr>';
-    body = `<h3>${esc(team.name||team.short||team.key)} ${team.cn?`<small>${esc(team.cn)}</small>`:''}</h3>
+    body = `<h3>${esc(team.name||team.short||team.key)} ${team.cn?`<small>${esc(team.cn)}</small>`:''} <span class="db-ovr">战力 ${ovrBadge(teamOvr(team.key))}</span></h3>
       <h4>首发</h4>
       <table class="tbl db-tbl">${head}${slots.map(({r,p})=>p
         ? dbRow(p, `<span class="tagon">首发·${ROLE_CN[r]}</span>`, p.role!==r)
@@ -9477,15 +9699,18 @@ function dbPlayerModal(pid, opts={}){
   return () => {
     const p = P(pid);
     const t = p && p.team ? T(p.team) : null;
-    if(!p || !t || !(t.roster||[]).includes(pid)) return `<h3>资料库</h3><p class="muted">该选手已不在此战队名单中。</p><div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
-    const slot = ROLES.find(r=>(t.lineup||{})[r]===pid);
-    const bd = playerTeamBond(p);
+    // 自由球员（无战队）也可查看；有战队时须仍在该队名单中
+    if(!p || p.retired || (p.team && (!t || !(t.roster||[]).includes(pid)))) return `<h3>资料库</h3><p class="muted">该选手已不在此战队名单中。</p><div class="btns"><button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+    const slot = t ? ROLES.find(r=>(t.lineup||{})[r]===pid) : null;
+    const bd = t ? playerTeamBond(p) : null;
+    const regional = regionalTagsHtml(p);
     const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
     const pool = poolChipsHtml(p, {val:true});
     const dl = ratingDeltaHtml(p);
-    const manage = opts.manage && t.key===S.user;
-    return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small></h3>
-      <p>${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}${slot&&p.role!==slot?' <em class="muted">非本位</em>':''}</p>
+    const manage = opts.manage && t && t.key===S.user;
+    const market = opts.market && p.team!==S.user ? marketActHtml(p) : '';
+    return `<h3>${esc(playerTag(p))} <small>${esc(p.name||'')}</small>${p.legend?'<small class="legend-tag" title="传奇选手：只有你能签约">传奇</small>':''}</h3>
+      <p>${t ? `${teamTag(t.key)} ${slot?`<span class="tagon">首发·${ROLE_CN[slot]}</span>`:'<span class="tagoff">替补</span>'}${slot&&p.role!==slot?' <em class="muted">非本位</em>':''}` : '<span class="tagoff">自由球员</span>'}</p>
       <table class="tbl db-kv">
         ${kv('位置', ROLE_CN[p.role]||esc(p.role||''))}
         ${kv('国籍', esc(p.nat||'—')+(isForeign(p)?'<small class="fx">外援</small>':''))}
@@ -9495,14 +9720,35 @@ function dbPlayerModal(pid, opts={}){
         ${kv('状态', formChip(p,true))}
         ${kv('心态', mentalChip(p,true))}
         ${kv('特质', traitChips(p)||'<small class="muted">—</small>')}
-        ${kv('默契', `<span class="bd-val ${bondCls(bd)}">${bd}</span> <small class="muted">与其余首发队友的平均羁绊</small>`)}
+        ${regional?kv('赛区表现', regional):''}
+        ${t?kv('默契', `<span class="bd-val ${bondCls(bd)}">${bd}</span> <small class="muted">与其余首发队友的平均羁绊</small>`):''}
         ${kv('身价', fmtMoney(playerValue(p)))}
         ${kv('年薪', fmtMoney(p.salary||0))}
         ${kv('合同至', p.contract!=null?p.contract:'—')}
         ${kv('英雄池', pool?`<span class="pool">${pool}</span>`:'<small class="muted">—</small>')}
       </table>
-      <div class="btns">${manage?rosterActsHtml(p, slot, transferWindowOpen()):''}<button class="btn ghost" data-a="closeModal">关闭</button></div>`;
+      <div class="btns">${manage?rosterActsHtml(p, slot, transferWindowOpen()):''}${market}<button class="btn ghost" data-a="closeModal">关闭</button></div>`;
   };
+}
+// 资料卡上的报价/签约按钮：与转会表同一套条件（窗口开放、非季中非卖）
+function marketActHtml(p){
+  if(!transferWindowOpen()) return '<span class="muted">转会窗口关闭，仅可浏览</span>';
+  if(p.team && isUntouchable(p)) return `<span class="nft-tag">${ico('lock')} 季中非卖</span>`;
+  return `<button class="btn" data-a="offer" data-p="${esc(p.pid)}">${p.team?'报价':'签约'}</button>`;
+}
+// 赛区表现（引擎接口 playerRegionalTags，edge 为百分点）：没有数据时不显示
+function regionalTagsHtml(p){
+  if(typeof playerRegionalTags!=='function') return '';
+  let tags;
+  try{ tags = playerRegionalTags(p); }catch(e){ return ''; }
+  if(!Array.isArray(tags) || !tags.length) return '';
+  return tags.map(t=>{
+    const edge = Number(t && t.edge) || 0;
+    const games = Number(t && t.games) || 0;
+    const cls = edge>0 ? 'up' : edge<0 ? 'dn' : '';
+    const pts = `${edge>0?'+':''}${Math.round(edge*10)/10}`;
+    return `<span class="rg-tag ${cls}" title="对阵 ${esc(t.region||'')} 赛区：${edge<0?'低于':'高于'}赛前预期 ${Math.abs(Math.round(edge*10)/10)} 个百分点，样本 ${games} 局">${esc(t.label||t.region||'')} <b>${pts}%</b> <small>${games} 局</small></span>`;
+  }).join(' ');
 }
 
 // ================= 比赛（1v1 选边赛 + LoL 海克斯风格 BP）界面 =================
@@ -9527,7 +9773,7 @@ function enterNextGamePhase(M){
   if(M.chooser === me){
     M.phase = 'choose';
   } else {
-    const opSide = aiChooseSide(m[op==='A'?'a':'b'], m[me==='A'?'a':'b'], M.locked);
+    const opSide = aiChooseSide(m[op==='A'?'a':'b'], m[me==='A'?'a':'b'], M.locked, matchCtx(M).gameSeed);
     const blue = opSide === 'blue' ? op : me;
     setupDraft(blue);
     toast(`对手拥有选边权，选择了${opSide==='blue'?'蓝色方（BP先手）':'红色方（BP后手）'}，本局你位于${blue===me?'蓝色方（BP先手）':'红色方（BP后手）'}`);
@@ -9543,6 +9789,7 @@ function beginUserMatch(item){
     sel:null, roleSel:null, swapFrom:null,
     filter:'ALL', q:'', onlyAvail:false, showLocked:false, clock:30
   };
+  matchCtx(UI.match);   // 开赛即初始化系列赛种子与系列赛状态，手玩与快进共用同一随机流
   enterNextGamePhase(UI.match);
   render();
 }
@@ -9552,7 +9799,13 @@ function matchCtx(M){
   if(!m.ctx) m.ctx = findMatchCtx(m) || {intl:false, ko:false};
   ensureSeriesForm(m.ctx);
   const need = Math.ceil(m.bo/2);
-  return Object.assign({}, m.ctx, {decider: m.bo>1 && M.wa===need-1 && M.wb===need-1});
+  const gameSeed = typeof seriesSimulationSeed==='function' ? seriesSimulationSeed(m.ctx, M.games.length) : undefined;
+  return Object.assign({}, m.ctx, {decider: m.bo>1 && M.wa===need-1 && M.wb===need-1, gameSeed});
+}
+// 系列赛首局 1v1 的种子（与后端 simSeries 一致，gameIndex = -1）
+function soloSimOpts(M){
+  const ctx = matchCtx(M);
+  return typeof seriesSimulationSeed==='function' ? {record:true, seed:seriesSimulationSeed(ctx,-1)} : {record:true};
 }
 function setDraftCtx(M, d){ d.ctx = matchCtx(M); return d; }
 // 回放：1v1 录像在下一局 5v5 时一起存
@@ -9980,7 +10233,7 @@ function matchScreen(){
         </div>
         <div class="solo-go-row">
           <button class="lock-btn is-pick big-go" data-a="startSolo">⚔ 开始峡谷 1v1 选边赛</button>
-          <button class="hex-btn ghost" data-a="autoSeries">跳过，自动模拟剩余系列赛</button>
+          <button class="hex-btn ghost" data-a="skipSolo" title="用上面选定的选手和英雄直接得出 1v1 结果，之后照常选边和 BP">跳过 1v1，直接看结果</button>
         </div>
         ${intelPanel(M)}
       </div>
@@ -10046,9 +10299,6 @@ function matchScreen(){
         <div class="choose-cards single">
           <button class="hex-choice blue" data-a="chooseSideOnly" data-c="blue"><b>选择 蓝色方</b><small>BP 先手 · 一楼先抢核心英雄</small></button>
           <button class="hex-choice red" data-a="chooseSideOnly" data-c="red"><b>选择 红色方</b><small>BP 后手 · 握有五楼康特位</small></button>
-        </div>
-        <div class="choose-foot">
-          <button class="hex-btn ghost" data-a="autoSeries">跳过，自动模拟剩余系列赛</button>
         </div>
         ${intelPanel(M)}
       </div>
@@ -10383,6 +10633,7 @@ const ACT = {
   dbRegion:d=>{ UI.db={region:d.r, team:null}; render(); },
   dbTeam:d=>{ const t=T(d.k); UI.db={region:t?t.region:(UI.db||{}).region, team:d.k}; render(); },
   dbPlayer:d=>{ UI.modal=dbPlayerModal(d.p); render(); },
+  mkPlayer:d=>{ clearTimeout(UI._t); UI.modal=dbPlayerModal(d.p,{market:true}); render(); },
   rsPlayer:d=>{ UI.modal=dbPlayerModal(d.p,{manage:true}); render(); },
   authTab:d=>{ UI.authTab=d.t; UI.verifyEmail=null; render(); },
   cancelOtp:()=>{ UI.verifyEmail=null; render(); },
@@ -10523,6 +10774,15 @@ const ACT = {
       toast(`本轮 ${res.played} 场比赛模拟完毕`);
     }
   },
+  simRegular:()=>{
+    if(typeof canSimRegularSeason!=='function' || typeof simRegularSeason!=='function' || !canSimRegularSeason()) return;
+    const ps = lineupProblems(S.user);
+    if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
+    const res = simRegularSeason();
+    save(); render();
+    const n = res && Number.isFinite(res.played) ? res.played : null;
+    toast(n!=null ? `常规赛模拟完毕（共 ${n} 场），季后赛即将开始` : '常规赛模拟完毕，季后赛即将开始');
+  },
   simEvent:()=>{
     const ps = lineupProblems(S.user);
     if(ps.length){ toast('请先修复阵容问题：'+ps.join('；')); return; }
@@ -10556,28 +10816,38 @@ const ACT = {
   },
   soloChamp:d=>{ if(UI.match){ UI.match.soloMyChamp = d.c; render(); } },
   startSolo:()=>{
-    const M=UI.match, m=M.item.m, me=M.me, op=me==='A'?'B':'A';
+    const M=UI.match;
+    if(!M || M.phase!=='solo_pick') return;   // 防止重复开赛/重复结算
+    const m=M.item.m, me=M.me, op=me==='A'?'B':'A';
     const myTeamKey = m[me==='A'?'a':'b'], oppTeamKey = m[op==='A'?'a':'b'];
     const myLu = lineupMap(myTeamKey);
     const myPl = myLu[M.soloMyRole];
     const myPick = { role: M.soloMyRole, pid: myPl?myPl.pid:null, champ: M.soloMyChamp };
     const oppPick = defaultSoloPick(oppTeamKey);
-    const g = me==='A' ? createSolo(m.a, m.b, myPick, oppPick, {record:true}) : createSolo(m.a, m.b, oppPick, myPick, {record:true});
+    const soloOpts = soloSimOpts(M);
+    const g = me==='A' ? createSolo(m.a, m.b, myPick, oppPick, soloOpts) : createSolo(m.a, m.b, oppPick, myPick, soloOpts);
     M.solo = null;
     M.phase = 'solo_watch';
     Watch.start({ kind:'solo', g, teamA:m.a, teamB:m.b, me, onEnd: w=>{
-      if(UI.match!==M) return;
+      if(UI.match!==M || M.solo || M.phase!=='solo_watch') return;
       const res = soloResult(w.g);
       M.solo = res;
       M.chooser = res.winner;
       M.pendingSolo = soloReplayData(res);
       if(M.chooser !== me){
-        const opSide = aiChooseSide(oppTeamKey, myTeamKey, M.locked);
+        const opSide = aiChooseSide(oppTeamKey, myTeamKey, M.locked, matchCtx(M).gameSeed);
         M.soloAiBlue = opSide === 'blue' ? op : me;
       }
       render();
     }});
     render();
+  },
+  // 跳过 1v1：只用玩家选定的选手和英雄，复用 startSolo 后立即跑完结算
+  skipSolo:()=>{
+    const M=UI.match;
+    if(!M || M.phase!=='solo_pick') return;
+    ACT.startSolo();
+    if(UI.match===M && M.phase==='solo_watch' && !M.solo) Watch.control('skip');
   },
   wSpeed:d=>{ Watch.control('speed', d.v); render(); },
   wPause:()=>{ Watch.control('pause'); render(); },
@@ -10655,14 +10925,17 @@ const ACT = {
   },
   nextGame:()=>{ const M=UI.match; enterNextGamePhase(M); render(); },
   autoSeries:()=>{
-    const M=UI.match; const m=M.item.m; const need=Math.ceil(m.bo/2);
+    const M=UI.match;
+    if(!M || M._autoSettling) return;   // 防止连点重复结算
+    M._autoSettling = true;
+    const m=M.item.m; const need=Math.ceil(m.bo/2);
     stopBpClock(); Watch.stop();
     const play = d => { const g = playGame(d, {record:true}); storeUserReplay(M, g); endUserGame(g); };
     if(M.phase==='draft'||M.phase==='ready'){ autoDraftRest(M.draft); play(M.draft); }
     while(M.wa<need&&M.wb<need){
-      if(!M.chooser){ const r = simSolo1v1(m.a, m.b, null, null, {record:true}); M.chooser = r.winner; M.pendingSolo = soloReplayData(r); }
+      if(!M.chooser){ const r = simSolo1v1(m.a, m.b, null, null, soloSimOpts(M)); M.chooser = r.winner; M.pendingSolo = soloReplayData(r); }
       const other = M.chooser==='A'?'B':'A';
-      const sidePick = aiChooseSide(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked);
+      const sidePick = aiChooseSide(m[M.chooser==='A'?'a':'b'], m[other==='A'?'a':'b'], M.locked, matchCtx(M).gameSeed);
       const blue = sidePick==='blue' ? M.chooser : other;
       const d=newDraft(m.a,m.b,blue,M.locked); setDraftCtx(M, d); autoDraftRest(d); play(d);
     }

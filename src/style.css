@@ -1329,4 +1329,12 @@ body.cb-lock{overflow:hidden}
 .seg-field+.seg-field{margin-top:30px}
 @media(max-width:600px){.seg{width:100%}.seg-opt span{min-width:0;padding:6px 8px}}
 .legend-tag{margin-left:4px;padding:0 4px;border-radius:3px;font-size:11px;font-weight:700;color:#1a1204;background:linear-gradient(90deg,#f0c75e,#c89b3c)}
+/* 转会表/传奇条：点选手名查看资料卡 */
+.pl-link{appearance:none;background:none;border:0;padding:0;margin:0;font:inherit;line-height:inherit;cursor:pointer;color:inherit;text-align:inherit;text-decoration:underline dotted rgba(200,155,60,.7);text-underline-offset:3px}
+.pl-link:focus-visible{outline:2px solid var(--hex-gold-l,#f0e6d2);outline-offset:2px;border-radius:2px}
+.pl-link:hover{color:var(--hex-gold-l,#f0e6d2);text-decoration-style:solid}
+.db-ovr{font-size:13px;font-weight:400;margin-left:8px;white-space:nowrap}
+.rg-tag{display:inline-flex;align-items:baseline;gap:4px;margin:0 6px 4px 0;padding:1px 7px;border:1px solid var(--ln,#33496a);border-radius:4px;font-size:12px}
+.rg-tag b{font-family:var(--num)}.rg-tag small{opacity:.7}
+.rg-tag.up b{color:#0ac8b9}.rg-tag.dn b{color:#e84057}
 .legend-strip{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0;padding:10px 12px;border:1px solid #c89b3c;border-radius:6px;background:rgba(200,155,60,.08)}.legend-card{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
